@@ -36,7 +36,7 @@ if os.path.exists(DB_PATH):
     os.remove(DB_PATH)
 
 
-def external_llm_generate(agent_name: str, context: str, topic: str) -> str:
+def external_llm_generate(agent_name: str, context: str, topic: str, agent_profile: str) -> str:
     """
     Use ollama with llama3.2 to generate a response based on context.
     """
@@ -44,7 +44,7 @@ def external_llm_generate(agent_name: str, context: str, topic: str) -> str:
     print(f"  [Ollama LLM] Using context: {context[:100]}...")
 
     prompt = f"""
-    You are {agent_name}. Talking about {topic}.
+    You are {agent_name}: a {agent_profile}. Talking about {topic}.
     YOUR MEMORY: {context}
     Task: Write a short 1-sentence reply. Prioritize YOUR STANCE.
     """
@@ -241,7 +241,12 @@ def run_use_case():
 
         # Step C: Use context with external LLM to generate response
         print(f"\n🤖 {responding_agent} generates response using external LLM...")
-        response = external_llm_generate(responding_agent, context, topic)
+
+        if responding_agent == "Alice":
+            agent_profile = "environmentalist and climate activist"
+        else:
+            agent_profile = "economist concerned about market impacts"
+        response = external_llm_generate(responding_agent, context, topic, agent_profile)
         print(f"  ✓ Generated: '{response}'")
 
         # Step D: Update KG with the generated response
