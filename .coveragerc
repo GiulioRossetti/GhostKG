@@ -1,0 +1,15 @@
+[run]
+source = ghost_kg
+omit =
+    */tests/*
+    */examples/*
+    */__pycache__/*
+    */core_original_backup.py
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+
+[html]
+directory = htmlcov
