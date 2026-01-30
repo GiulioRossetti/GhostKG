@@ -1,0 +1,5 @@
+# All optional dependencies combined
+
+# Include all optional dependency sets
+-r llm.txt
+-r fast.txt

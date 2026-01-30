@@ -1,8 +1,116 @@
 [project]
-name = "pythonproject"
-version = "0.1.0"
-description = "Add your description here"
-requires-python = ">=3.13"
-dependencies = [
-    "black>=26.1.0",
+name = "ghost-kg"
+version = "0.2.0"
+description = "Dynamic Knowledge Graph with FSRS-6 Forgetting for LLM Agents"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Giulio Rossetti", email = "giulio.rossetti@gmail.com"}
 ]
+keywords = ["knowledge-graph", "llm", "fsrs", "spaced-repetition", "memory", "ai-agents"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+# Core dependencies (always required)
+dependencies = [
+    "networkx>=3.0,<4.0",
+    "fsrs>=1.0.0,<2.0",
+]
+
+[project.optional-dependencies]
+# LLM support for semantic triplet extraction
+llm = [
+    "ollama>=0.1.6,<1.0",
+]
+
+# Fast mode for local triplet extraction without LLM
+fast = [
+    "gliner>=0.1.0",
+    "textblob>=0.15.0,<1.0",
+]
+
+# Development tools
+dev = [
+    "pytest>=7.0,<8.0",
+    "pytest-cov>=4.0,<5.0",
+    "pytest-asyncio>=0.21,<1.0",
+    "mypy>=1.0,<2.0",
+    "black>=23.0,<27.0",
+    "flake8>=6.0,<7.0",
+    "pylint>=2.17,<4.0",
+    "radon>=5.1,<7.0",
+    "pre-commit>=3.0,<4.0",
+]
+
+# Documentation generation
+docs = [
+    "mkdocs>=1.4,<2.0",
+    "mkdocs-material>=9.0,<10.0",
+    "mkdocstrings[python]>=0.20,<1.0",
+    "pymdown-extensions>=10.0,<11.0",
+]
+
+# All optional dependencies
+all = [
+    "ollama>=0.1.6,<1.0",
+    "gliner>=0.1.0",
+    "textblob>=0.15.0,<1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/GiulioRossetti/GhostKG"
+Documentation = "https://github.com/GiulioRossetti/GhostKG/tree/main/docs"
+Repository = "https://github.com/GiulioRossetti/GhostKG"
+Issues = "https://github.com/GiulioRossetti/GhostKG/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0,<8.0",
+    "pytest-cov>=4.0,<5.0",
+    "black>=23.0,<27.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | _build
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

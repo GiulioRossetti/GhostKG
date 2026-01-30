@@ -1,0 +1,11 @@
+# Documentation dependencies for building API docs and user guides
+
+# Documentation generator
+mkdocs>=1.4,<2.0
+mkdocs-material>=9.0,<10.0
+
+# API documentation from docstrings
+mkdocstrings[python]>=0.20,<1.0
+
+# Markdown extensions
+pymdown-extensions>=10.0,<11.0

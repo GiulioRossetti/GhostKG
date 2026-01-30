@@ -1,0 +1,6 @@
+# Core dependencies required for basic GhostKG functionality
+# Knowledge graph operations
+networkx>=3.0,<4.0
+
+# FSRS spaced repetition algorithm
+fsrs>=1.0.0,<2.0

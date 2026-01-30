@@ -4,8 +4,9 @@ import os
 import sys
 import datetime
 
+# Point to your specific DB file
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-DB_PATH = os.path.join(BASE_DIR, "hourly_simulation.db")
+DB_PATH = os.path.join(BASE_DIR, "use_case_example.db")
 OUTPUT_DIR = os.path.join(BASE_DIR, "ghost_kg", "templates")
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "simulation_history.json")
 
@@ -67,41 +68,40 @@ def export_history():
 
             # --- STEP 1: Gather ALL Valid Nodes for this Time ---
             potential_nodes = {}  # id -> node_data
+            touched_node_ids = set() # Track forced keepers (like 'I')
 
             for n in all_nodes:
-                created_at = n["created_at"]
-                try:
-                    created_at = datetime.datetime.fromisoformat(created_at)
-                except:
-                    created_at = current_time
-                if created_at.tzinfo is None:
-                    created_at = created_at.replace(tzinfo=datetime.timezone.utc)
+                # Identify Self strictly
+                is_self = (n["id"].lower() == "i")
 
-                if n["owner_id"] == agent and created_at <= current_time:
-                    is_self = n["id"] == "I"
+                # Timestamp Check
+                created_at = n["created_at"]
+                try: created_at = datetime.datetime.fromisoformat(created_at)
+                except: created_at = current_time
+                if created_at.tzinfo is None: created_at = created_at.replace(tzinfo=datetime.timezone.utc)
+
+                # FIX: If it's "I", ignore the time filter (it exists eternally)
+                # Otherwise, apply standard time filter
+                if n["owner_id"] == agent and (is_self or created_at <= current_time):
 
                     # FSRS Calculation
                     stability = n["stability"]
                     last_review = n["last_review"]
-                    try:
-                        last_review = datetime.datetime.fromisoformat(last_review)
-                    except:
-                        last_review = current_time
-                    if last_review.tzinfo is None:
-                        last_review = last_review.replace(tzinfo=datetime.timezone.utc)
+                    try: last_review = datetime.datetime.fromisoformat(last_review)
+                    except: last_review = current_time
+                    if last_review.tzinfo is None: last_review = last_review.replace(tzinfo=datetime.timezone.utc)
 
                     elapsed_days = (current_time - last_review).total_seconds() / 86400
-                    if elapsed_days < 0:
-                        elapsed_days = 0
-                    retrievability = (
-                        (1 + elapsed_days / (9 * stability)) ** -1
-                        if stability > 0
-                        else 0
-                    )
+                    if elapsed_days < 0: elapsed_days = 0
 
-                    # Force "I" to be visible and active
+                    retrievability = 1.0 # Default
+                    if stability > 0:
+                        retrievability = (1 + elapsed_days / (9 * stability)) ** -1
+
+                    # Force "I" to be fully active
                     if is_self:
                         retrievability = 1.0
+                        touched_node_ids.add(n["id"]) # Auto-keep 'I' even if no edges
 
                     potential_nodes[n["id"]] = {
                         "id": n["id"],
@@ -113,39 +113,31 @@ def export_history():
 
             # --- STEP 2: Gather Edges (STRICT FILTER) ---
             valid_edges = []
-            touched_node_ids = set()
-            touched_node_ids.add("I")  # Always save the Self node
 
             for e in all_edges:
                 e_created = e["created_at"]
-                try:
-                    e_created = datetime.datetime.fromisoformat(e_created)
-                except:
-                    e_created = current_time
-                if e_created.tzinfo is None:
-                    e_created = e_created.replace(tzinfo=datetime.timezone.utc)
+                try: e_created = datetime.datetime.fromisoformat(e_created)
+                except: e_created = current_time
+                if e_created.tzinfo is None: e_created = e_created.replace(tzinfo=datetime.timezone.utc)
 
                 if e["owner_id"] == agent and e_created <= current_time:
-                    # CRITICAL: Do not include edges if the node is missing
-                    if (
-                        e["source"] in potential_nodes
-                        and e["target"] in potential_nodes
-                    ):
-                        valid_edges.append(
-                            {
-                                "source": e["source"],
-                                "target": e["target"],
-                                "label": e["relation"],
-                                "value": 1,
-                                "dashed": False,
-                            }
-                        )
+                    # CRITICAL: Edge is valid ONLY if both nodes exist in potential_nodes
+                    if (e["source"] in potential_nodes and e["target"] in potential_nodes):
+                        valid_edges.append({
+                            "source": e["source"],
+                            "target": e["target"],
+                            "label": e["relation"],
+                            "value": 1,
+                            "dashed": False,
+                        })
+                        # Mark these nodes as "connected" so they survive pruning
                         touched_node_ids.add(e["source"])
                         touched_node_ids.add(e["target"])
 
             # --- STEP 3: Final Node List (Prune Orphans) ---
             final_nodes = []
             for nid, ndata in potential_nodes.items():
+                # Keep node if it's connected OR if it is the Self node (added earlier)
                 if nid in touched_node_ids:
                     final_nodes.append(ndata)
 
