@@ -130,10 +130,17 @@
             rawData = data;
 
             const select = d3.select("#agentSelect");
+
+            // 1. Add "ALL AGENTS" Option
+            select.append("option").text("ALL AGENTS (Consolidated)").attr("value", "ALL_AGENTS");
+
             data.agents.forEach(agent => {
                 select.append("option").text(agent).attr("value", agent);
             });
+
+            // Default to first real agent
             currentAgent = data.agents[0];
+            select.property("value", currentAgent);
 
             d3.select("#timeSlider").attr("max", data.steps.length - 1);
 
@@ -179,30 +186,74 @@
 
         function updateVisualization() {
             const stepData = rawData.steps[currentStep];
-            const graphData = stepData.graphs[currentAgent];
 
             d3.select("#stepDisplay").text(currentStep);
             d3.select("#roundDisplay").text(`Round ${stepData.round}`);
             d3.select("#actionDisplay").text(stepData.action);
 
+            let rawNodes = [];
+            let rawLinks = [];
+
+            // --- DATA GATHERING STRATEGY ---
+            if (currentAgent === "ALL_AGENTS") {
+                // MERGE & FILTER MODE
+                const mergedLinksMap = new Map();
+                const connectedNodeIds = new Set();
+                const mergedNodesMap = new Map();
+
+                // 1. Collect all valid links from all agents (excluding "I")
+                Object.values(stepData.graphs).forEach(agentGraph => {
+                    agentGraph.links.forEach(link => {
+                        // FILTER: Do not show edges connected to "I"
+                        if (link.source !== "I" && link.target !== "I") {
+                            // Deduplicate based on content
+                            const key = `${link.source}-${link.target}-${link.label}`;
+                            if (!mergedLinksMap.has(key)) {
+                                mergedLinksMap.set(key, { ...link }); // Copy to allow D3 mutation
+                                connectedNodeIds.add(link.source);
+                                connectedNodeIds.add(link.target);
+                            }
+                        }
+                    });
+                });
+
+                // 2. Collect only the nodes involved in valid links
+                Object.values(stepData.graphs).forEach(agentGraph => {
+                    agentGraph.nodes.forEach(node => {
+                        // FILTER: Only keep nodes that have a valid connection
+                        if (connectedNodeIds.has(node.id)) {
+                            // Deduplicate nodes by ID
+                            if (!mergedNodesMap.has(node.id)) {
+                                mergedNodesMap.set(node.id, { ...node });
+                            }
+                        }
+                    });
+                });
+
+                rawNodes = Array.from(mergedNodesMap.values());
+                rawLinks = Array.from(mergedLinksMap.values());
+
+            } else {
+                // SINGLE AGENT MODE (Standard)
+                const graphData = stepData.graphs[currentAgent];
+                if (graphData) {
+                    rawNodes = graphData.nodes.map(d => ({ ...d }));
+                    rawLinks = graphData.links.map(d => ({ ...d }));
+                }
+            }
+
+
+            // --- POSITION PERSISTENCE ---
             const oldNodes = new Map(simulation.nodes().map(d => [d.id, d]));
 
-            const nodes = graphData.nodes.map(d => {
+            const nodes = rawNodes.map(d => {
                 const existing = oldNodes.get(d.id);
                 if (existing) {
-                    // CHANGED: We preserve X/Y/VX/VY for smoothness, but NO fx/fy
-                    // This means nodes are NOT fixed in place automatically.
-                    return {
-                        ...d,
-                        x: existing.x,
-                        y: existing.y,
-                        vx: existing.vx,
-                        vy: existing.vy
-                    };
+                    return { ...d, x: existing.x, y: existing.y, vx: existing.vx, vy: existing.vy };
                 }
                 return { ...d };
             });
-            const links = graphData.links.map(d => ({ ...d }));
+            const links = rawLinks; // D3 will mutate these
 
             // --- NODES ---
             const node = nodeGroup.selectAll("circle")
