@@ -28,7 +28,22 @@ from ghost_kg import AgentManager, Rating
 DB_PATH = "use_case_example.db"
 LLM_MODEL = "llama3.2"
 
-# Initialize ollama client
+# ============================================================================
+# CONFIGURATION: Fast Mode vs LLM Mode
+# ============================================================================
+# USE_FAST_MODE controls how triplets are extracted from text:
+#
+# - True (DEFAULT):  Uses GLiNER + TextBlob for fast, heuristic extraction
+#                    Faster, no LLM needed for extraction, good for quick processing
+#                    Requires: pip install gliner textblob
+#
+# - False:           Uses LLM (ollama) for deep semantic extraction
+#                    Slower, more accurate, extracts complex relationships
+#                    Requires: ollama running with llama3.2
+# ============================================================================
+USE_FAST_MODE = True
+
+# Initialize ollama client (needed for response generation and LLM mode)
 ollama_client = Client(host="http://localhost:11434")
 
 # Cleanup
@@ -36,7 +51,9 @@ if os.path.exists(DB_PATH):
     os.remove(DB_PATH)
 
 
-def external_llm_generate(agent_name: str, context: str, topic: str, agent_profile: str) -> str:
+def external_llm_generate(
+    agent_name: str, context: str, topic: str, agent_profile: str
+) -> str:
     """
     Use ollama with llama3.2 to generate a response based on context.
     """
@@ -153,6 +170,12 @@ def run_use_case():
     print("USE CASE: Two Agents Multi-Round Communication")
     print("=" * 70)
 
+    # Display configuration
+    mode_description = (
+        "FAST (GLiNER + TextBlob)" if USE_FAST_MODE else "LLM (Deep Semantic)"
+    )
+    print(f"\n⚙️  Configuration: Triplet Extraction Mode = {mode_description}")
+
     # Initialize the manager
     manager = AgentManager(db_path=DB_PATH)
 
@@ -227,15 +250,27 @@ def run_use_case():
         print(f"    Topic: '{content_tuple[0]}'")
         print(f"    Text: '{content_tuple[1]}'")
 
-        # Extract triplets from the content
-        triplets = extract_triplets(current_text, peer)
-        print(f"  ✓ Extracted {len(triplets)} triplets")
+        # Extract triplets from the content based on mode
+        if USE_FAST_MODE:
+            # Fast mode: Let CognitiveLoop handle extraction internally
+            # Pass triplets=None to trigger internal fast extraction
+            triplets = None
+            print(f"  ⚡ Using FAST mode (GLiNER + TextBlob)")
+        else:
+            # LLM mode: Extract triplets using external LLM
+            triplets = extract_triplets(current_text, peer)
+            print(f"  🤖 Using LLM mode - Extracted {len(triplets)} triplets")
 
         # Step B: Update KG and get context (atomic operation)
         print(f"\n🧠 {responding_agent} processes content and retrieves context...")
         context = manager.process_and_get_context(
-            responding_agent, topic, current_text, author=peer, triplets=triplets, fast_mode=True
-        ) ## Use fast_mode for efficiency
+            responding_agent,
+            topic,
+            current_text,
+            author=peer,
+            triplets=triplets,
+            fast_mode=USE_FAST_MODE,
+        )
         print(f"  ✓ KG updated")
         print(f"  ✓ Context retrieved: {context[:80]}...")
 
@@ -246,7 +281,9 @@ def run_use_case():
             agent_profile = "a democrat environmentalist"
         else:
             agent_profile = "an alt-right skeptic who values economic growth and do not believe in climate change"
-        response = external_llm_generate(responding_agent, context, topic, agent_profile)
+        response = external_llm_generate(
+            responding_agent, context, topic, agent_profile
+        )
         print(f"  ✓ Generated: '{response}'")
 
         # Step D: Update KG with the generated response
