@@ -443,82 +443,164 @@ class FastExtractor:
 
 ---
 
-### Phase 2: Dependency Management (1 day) 📋 PENDING
+### Phase 2: Dependency Management (1 day) ✅ COMPLETE
 
-#### 2.1: Restructure Dependencies
+**Status**: ✅ **COMPLETED** - All objectives achieved
 
-**Create `requirements/base.txt`**:
-```
-networkx>=3.0,<4.0
-fsrs>=1.0.0,<2.0
-```
+**Implementation Date**: January 30, 2026
 
-**Create `requirements/llm.txt`**:
-```
-ollama>=0.1.6,<1.0
-```
+**Summary**: Successfully implemented comprehensive dependency management using UV package manager with organized optional dependency groups.
 
-**Create `requirements/fast.txt`**:
-```
-gliner>=0.1.0
-textblob>=0.15.0
-```
+#### 2.1: Restructure Dependencies ✅
 
-**Create `requirements/dev.txt`**:
-```
-pytest>=7.0
-pytest-cov>=4.0
-pytest-asyncio>=0.21
-mypy>=1.0
-black>=23.0
-flake8>=6.0
-pylint>=2.17
-radon>=5.1
-```
+**Implementation**: Created `pyproject.toml` as primary dependency source with UV support, organized requirements/* files, and updated setup.py for backward compatibility.
 
-**Create `requirements/docs.txt`**:
-```
-mkdocs>=1.4
-mkdocs-material>=9.0
-mkdocstrings[python]>=0.20
+**Created Files**:
+- `pyproject.toml` - Primary dependency source with UV configuration
+- `requirements/base.txt` - Core dependencies (networkx, fsrs)
+- `requirements/llm.txt` - Ollama for LLM support
+- `requirements/fast.txt` - GLiNER + TextBlob for fast mode
+- `requirements/dev.txt` - Development tools (pytest, mypy, black, flake8, pylint, radon, pre-commit)
+- `requirements/docs.txt` - Documentation tools (mkdocs, mkdocs-material, mkdocstrings)
+- `requirements/all.txt` - All optional dependencies combined
+- `setup.py` - Updated with extras_require for backward compatibility
+
+**pyproject.toml Structure**:
+```toml
+[project]
+name = "ghost-kg"
+version = "0.2.0"
+dependencies = ["networkx>=3.0,<4.0", "fsrs>=1.0.0,<2.0"]
+
+[project.optional-dependencies]
+llm = ["ollama>=0.1.6,<1.0"]
+fast = ["gliner>=0.1.0", "textblob>=0.15.0,<1.0"]
+dev = [...]  # 10 development tools
+docs = [...]  # 4 documentation tools
+all = [...]  # All optional dependencies
 ```
 
-**Update `setup.py`**:
-```python
-setup(
-    name="ghost_kg",
-    version="0.2.0",
-    install_requires=[
-        "networkx>=3.0,<4.0",
-        "fsrs>=1.0.0,<2.0",
-    ],
-    extras_require={
-        "llm": ["ollama>=0.1.6,<1.0"],
-        "fast": ["gliner>=0.1.0", "textblob>=0.15.0"],
-        "dev": [...],
-        "docs": [...],
-        "all": [...]  # All optional dependencies
-    }
-)
-```
-
-**Installation**:
+**Installation Options**:
 ```bash
-# Base installation
-pip install ghost_kg
+# Using UV (recommended - 10-100x faster)
+uv pip install -e .              # Base
+uv pip install -e ".[llm]"       # With LLM support
+uv pip install -e ".[fast]"      # With fast mode
+uv pip install -e ".[all]"       # Everything
+uv pip install -e ".[dev]"       # Development
 
-# With LLM support
-pip install ghost_kg[llm]
-
-# With fast mode
-pip install ghost_kg[fast]
-
-# Everything
-pip install ghost_kg[all]
-
-# Development
-pip install ghost_kg[dev]
+# Using pip (traditional - backward compatible)
+pip install ghost_kg             # From PyPI (when published)
+pip install -e .                 # From source
+pip install -e ".[llm]"          # With LLM support
+pip install -e ".[fast]"         # With fast mode
+pip install -e ".[all]"          # Everything
+pip install -e ".[dev]"          # Development
 ```
+
+---
+
+#### 2.2: Add Dependency Checks ✅
+
+**Implementation**: Created comprehensive dependency checking utility with helpful error messages.
+
+**Created `ghost_kg/dependencies.py`**:
+```python
+class DependencyChecker:
+    """Check for optional dependencies."""
+    
+    @staticmethod
+    def check_llm_available() -> Tuple[bool, List[str]]:
+        """Check if LLM dependencies are available."""
+        # Returns (True/False, list of missing packages)
+    
+    @staticmethod
+    def check_fast_available() -> Tuple[bool, List[str]]:
+        """Check if fast mode dependencies are available."""
+        # Returns (True/False, list of missing packages)
+    
+    @staticmethod
+    def require_llm():
+        """Raise error if LLM dependencies missing with install instructions."""
+    
+    @staticmethod
+    def require_fast():
+        """Raise error if fast mode dependencies missing with install instructions."""
+    
+    @staticmethod
+    def get_available_extractors() -> List[str]:
+        """Get list of available extraction modes."""
+        # Returns ['fast'], ['llm'], ['fast', 'llm'], or []
+    
+    @staticmethod
+    def print_status():
+        """Print status of all optional dependencies."""
+        # Shows ✓ or ✗ for each dependency group
+
+# Convenience functions
+def has_llm_support() -> bool: ...
+def has_fast_support() -> bool: ...
+```
+
+**Usage**:
+```python
+from ghost_kg import DependencyChecker
+
+# Check what's available
+DependencyChecker.print_status()
+# Output:
+#   ✓ LLM mode: Available
+#   ✗ Fast mode: Missing: gliner, textblob
+#   
+#   ⚠ Warning: No extraction modes available!
+#   Install at least one mode:
+#     pip install ghost_kg[llm]   # For LLM-based extraction
+#     pip install ghost_kg[fast]  # For fast local extraction
+#     pip install ghost_kg[all]   # For both modes
+
+# Programmatic checks
+if DependencyChecker.check_fast_available()[0]:
+    # Use fast mode
+    pass
+else:
+    # Fall back to LLM mode
+    pass
+
+# Require specific mode (raises ImportError with instructions)
+try:
+    DependencyChecker.require_fast()
+    # Use fast mode features
+except ImportError as e:
+    print(e)  # "Fast mode dependencies are required but missing: gliner, textblob
+              #  Install them with: pip install ghost_kg[fast]"
+```
+
+**Benefits**:
+- ✅ Clear error messages with install instructions
+- ✅ Easy programmatic checks for feature availability
+- ✅ Helpful status display for debugging
+- ✅ Exported from main module for convenience
+
+---
+
+#### 2.3: Documentation ✅
+
+**Implementation**: Created comprehensive UV setup guide and updated existing documentation.
+
+**Created `docs/UV_SETUP.md`**:
+- UV installation instructions (curl script, pip, Windows)
+- Installation examples for all dependency groups
+- Development workflow with UV
+- Managing dependencies (add, update, lock)
+- Dependency group explanations
+- CI/CD integration examples (GitHub Actions, Docker)
+- Troubleshooting section
+- Why UV? (speed, lock files, better resolution)
+
+**Updated Documentation**:
+- `README.md` - Added UV installation section with examples
+- `docs/index.md` - Added UV Setup Guide to documentation index
+- Cross-referenced with Fast Mode Configuration guide
 
 ---
 
