@@ -248,7 +248,7 @@ def run_use_case():
         print(f"\n💾 {responding_agent} updates KG with own response...")
         response_triplets = extract_response_triplets(response, responding_agent)
         manager.update_with_response(
-            responding_agent, response, triplets=response_triplets
+            responding_agent, response, triplets=response_triplets, context=context
         )
         print(f"  ✓ KG updated with {len(response_triplets)} new beliefs")
 

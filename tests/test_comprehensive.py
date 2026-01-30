@@ -103,7 +103,9 @@ def test_all_requirements():
         ("think", "balanced approach", 0.5),
         ("value", "economic considerations", 0.6),
     ]
-    manager.update_with_response("Bob", bob_response, triplets=response_triplets)
+    manager.update_with_response(
+        "Bob", bob_response, triplets=response_triplets, context=context
+    )
     print(
         f"  - Updated Bob's personal KG with {len(response_triplets)} triplets from his response"
     )
@@ -132,7 +134,9 @@ def test_all_requirements():
         ("believe", "climate action urgent", 0.9),
         ("support", "urgent measures", 0.8),
     ]
-    manager.update_with_response("Alice", alice_response, triplets=response_triplets)
+    manager.update_with_response(
+        "Alice", alice_response, triplets=response_triplets, context=context
+    )
     print(f"  - Updated Alice's personal KG")
 
     # Verify all operations

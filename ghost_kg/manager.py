@@ -194,6 +194,7 @@ class AgentManager:
         agent_name: str,
         response: str,
         triplets: Optional[List[Tuple[str, str, str, float]]] = None,
+        context: Optional[str] = None,
     ) -> None:
         """
         Update agent's personal KG with the text they generated as response.
@@ -207,6 +208,8 @@ class AgentManager:
             response: The response text generated
             triplets: Optional list of (relation, target, sentiment) triplets
                      Source is assumed to be "I" (the agent)
+            context: Optional context that was used to generate the response
+                    This will be stored in the logs annotations
         """
         agent = self.get_agent(agent_name)
         if not agent:
@@ -219,12 +222,16 @@ class AgentManager:
                     "I", relation, target, rating=Rating.Easy, sentiment=sentiment
                 )
 
-            # Log the interaction
+            # Log the interaction with context
+            annotations = {"triplets_count": len(triplets), "external": True}
+            if context is not None:
+                annotations["context_used"] = context
+
             self.db.log_interaction(
                 agent_name,
                 "WRITE",
                 response,
-                {"triplets_count": len(triplets), "external": True},
+                annotations,
                 timestamp=agent.current_time,
             )
         else:
@@ -234,12 +241,16 @@ class AgentManager:
             loop = CognitiveLoop(agent)
             loop.reflect(response)
 
-            # Log the interaction
+            # Log the interaction with context
+            annotations = {"external": False}
+            if context is not None:
+                annotations["context_used"] = context
+
             self.db.log_interaction(
                 agent_name,
                 "WRITE",
                 response,
-                {"external": False},
+                annotations,
                 timestamp=agent.current_time,
             )
 

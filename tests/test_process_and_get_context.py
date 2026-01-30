@@ -133,7 +133,9 @@ def test_process_and_get_context():
         ("agree_with", "renewable importance", 0.6),
     ]
 
-    manager.update_with_response("Bob", bob_response, triplets=response_triplets)
+    manager.update_with_response(
+        "Bob", bob_response, triplets=response_triplets, context=bob_context
+    )
     print(f"✓ Bob updated KG with response")
 
     # Verify Bob's beliefs were updated

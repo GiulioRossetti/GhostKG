@@ -159,7 +159,9 @@ def run_external_program_example():
         print(f"   ✓ Extracted {len(response_triplets)} triplets from response")
 
         # Update Bob's KG with his own response
-        manager.update_with_response("Bob", bob_response, triplets=response_triplets)
+        manager.update_with_response(
+            "Bob", bob_response, triplets=response_triplets, context=context
+        )
 
         last_content = bob_response
         last_author = "Bob"
@@ -195,7 +197,7 @@ def run_external_program_example():
 
         # Update Alice's KG with her own response
         manager.update_with_response(
-            "Alice", alice_response, triplets=response_triplets
+            "Alice", alice_response, triplets=response_triplets, context=context
         )
 
         last_content = alice_response
