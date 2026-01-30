@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Ghost KG - Memory Heatmap</title>
+    <style>
+        body { background-color: #121212; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
+
+        /* UI Controls Overlay */
+        #controls {
+            position: absolute; top: 20px; right: 20px; width: 320px;
+            background: rgba(30, 30, 30, 0.95); padding: 20px;
+            border-radius: 12px; border: 1px solid #444;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100;
+        }
+
+        h2 { margin: 0 0 15px 0; font-size: 18px; color: #4CAF50; display: flex; align-items: center; justify-content: space-between; }
+
+        /* Elements */
+        label { display: block; margin-top: 10px; font-size: 12px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+        select { width: 100%; padding: 8px; background: #333; color: white; border: 1px solid #555; border-radius: 4px; margin-bottom: 5px; outline: none; }
+
+        /* Playback */
+        .playback-row { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+        button#playBtn {
+            flex: 1; padding: 10px; background: #2196F3; border: none; border-radius: 4px; color: white; font-weight: bold; cursor: pointer; transition: background 0.2s;
+        }
+        button#playBtn:hover { background: #1976D2; }
+        button#playBtn.playing { background: #F44336; }
+
+        input[type=range] { width: 100%; margin: 8px 0; cursor: pointer; accent-color: #4CAF50; }
+
+        .status-row { display: flex; justify-content: space-between; margin-top: 5px; font-size: 14px; font-weight: bold; }
+        .action-log { font-size: 12px; color: #888; font-style: italic; min-height: 18px; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        #graph { width: 100vw; height: 100vh; }
+
+        .tooltip { position: absolute; background: rgba(0,0,0,0.85); padding: 8px 12px; border: 1px solid #555; pointer-events: none; opacity: 0; font-size: 12px; border-radius: 4px; line-height: 1.4; transition: opacity 0.1s; z-index: 200; }
+
+        text { font-family: sans-serif; pointer-events: none; user-select: none; }
+
+        /* Legend Gradient */
+        .legend { margin-top: 15px; font-size: 11px; color: #bbb; }
+        .gradient-bar {
+            height: 8px; width: 100%; margin: 5px 0; border-radius: 4px;
+            background: linear-gradient(to right, #37474F 0%, #FFEB3B 50%, #00E676 100%);
+        }
+        .legend-labels { display: flex; justify-content: space-between; }
+
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+    <div id="controls">
+        <h2>🧠 Memory Heatmap</h2>
+
+        <label>Select Agent</label>
+        <select id="agentSelect"></select>
+
+        <label>Timeline (Step <span id="stepDisplay">0</span>)</label>
+        <input type="range" id="timeSlider" min="0" max="0" value="0">
+
+        <div class="status-row">
+            <span id="roundDisplay">Round 0</span>
+        </div>
+        <div class="action-log" id="actionDisplay">Initializing...</div>
+
+        <div class="playback-row">
+            <button id="playBtn">▶ PLAY</button>
+        </div>
+
+        <label>Speed</label>
+        <input type="range" id="speedSlider" min="100" max="2000" step="100" value="1000" style="direction: rtl">
+
+        <label>Memory Strength (R)</label>
+        <div class="legend">
+            <div class="gradient-bar"></div>
+            <div class="legend-labels">
+                <span>Forgotten (0.0)</span>
+                <span>Fading</span>
+                <span>Active (1.0)</span>
+            </div>
+            <div style="margin-top:5px; display:flex; align-items:center; gap:5px;">
+                <div style="width:10px; height:10px; background:#2196F3; border-radius:50%"></div> <span>Agent (Self)</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="graph"></div>
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        let rawData = null;
+        let simulation = null;
+        let currentStep = 0;
+        let currentAgent = "";
+        let isPlaying = false;
+        let playInterval = null;
+        let stepDelay = 1000;
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        const svg = d3.select("#graph").append("svg")
+            .attr("width", width).attr("height", height)
+            .call(d3.zoom().on("zoom", (e) => g.attr("transform", e.transform)))
+            .on("dblclick.zoom", null);
+
+        svg.append("defs").selectAll("marker")
+            .data(["end"]).enter().append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 -5 10 10").attr("refX", 22).attr("refY", 0)
+            .attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto")
+            .append("path").attr("d", "M0,-5L10,0L0,5").attr("fill", "#555");
+
+        const g = svg.append("g");
+        const linkGroup = g.append("g").attr("class", "links");
+        const edgeLabelGroup = g.append("g").attr("class", "edge-labels");
+        const nodeGroup = g.append("g").attr("class", "nodes");
+        const labelGroup = g.append("g").attr("class", "node-labels");
+
+        // --- COLOR SCALES ---
+        const memoryScale = d3.scaleLinear()
+            .domain([0.0, 0.2, 0.5, 1.0])
+            .range(["#37474F", "#546E7A", "#FFEB3B", "#00E676"])
+            .interpolate(d3.interpolateRgb);
+
+        d3.json("simulation_history.json").then(data => {
+            rawData = data;
+
+            const select = d3.select("#agentSelect");
+            data.agents.forEach(agent => {
+                select.append("option").text(agent).attr("value", agent);
+            });
+            currentAgent = data.agents[0];
+
+            d3.select("#timeSlider").attr("max", data.steps.length - 1);
+
+            simulation = d3.forceSimulation()
+                .force("link", d3.forceLink().id(d => d.id).distance(150))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collide", d3.forceCollide().radius(35));
+
+            updateVisualization();
+
+            select.on("change", function() { currentAgent = this.value; updateVisualization(); });
+            d3.select("#timeSlider").on("input", function() {
+                currentStep = parseInt(this.value);
+                updateVisualization();
+                if(isPlaying) stopPlay();
+            });
+            d3.select("#playBtn").on("click", togglePlay);
+            d3.select("#speedSlider").on("input", function() {
+                stepDelay = parseInt(this.value);
+                if (isPlaying) { clearInterval(playInterval); playInterval = setInterval(nextStep, stepDelay); }
+            });
+
+        }).catch(err => console.error(err));
+
+        function togglePlay() { isPlaying ? stopPlay() : startPlay(); }
+        function startPlay() {
+            isPlaying = true;
+            d3.select("#playBtn").text("❚❚ PAUSE").classed("playing", true);
+            if (currentStep >= rawData.steps.length - 1) {
+                currentStep = 0; d3.select("#timeSlider").property("value", 0); updateVisualization();
+            }
+            playInterval = setInterval(nextStep, stepDelay);
+        }
+        function stopPlay() {
+            isPlaying = false; d3.select("#playBtn").text("▶ PLAY").classed("playing", false); clearInterval(playInterval);
+        }
+        function nextStep() {
+            if (currentStep < rawData.steps.length - 1) {
+                currentStep++; d3.select("#timeSlider").property("value", currentStep); updateVisualization();
+            } else stopPlay();
+        }
+
+        function updateVisualization() {
+            const stepData = rawData.steps[currentStep];
+            const graphData = stepData.graphs[currentAgent];
+
+            d3.select("#stepDisplay").text(currentStep);
+            d3.select("#roundDisplay").text(`Round ${stepData.round}`);
+            d3.select("#actionDisplay").text(stepData.action);
+
+            const oldNodes = new Map(simulation.nodes().map(d => [d.id, d]));
+
+            const nodes = graphData.nodes.map(d => {
+                const existing = oldNodes.get(d.id);
+                if (existing) {
+                    // CHANGED: We preserve X/Y/VX/VY for smoothness, but NO fx/fy
+                    // This means nodes are NOT fixed in place automatically.
+                    return {
+                        ...d,
+                        x: existing.x,
+                        y: existing.y,
+                        vx: existing.vx,
+                        vy: existing.vy
+                    };
+                }
+                return { ...d };
+            });
+            const links = graphData.links.map(d => ({ ...d }));
+
+            // --- NODES ---
+            const node = nodeGroup.selectAll("circle")
+                .data(nodes, d => d.id)
+                .join(
+                    enter => enter.append("circle")
+                        .attr("r", 0)
+                        .attr("stroke", "#fff").attr("stroke-width", 1.5)
+                        .call(drag(simulation))
+                        .call(enter => enter.transition().duration(400).attr("r", d => d.radius)),
+                    update => update.transition().duration(400)
+                        .attr("r", d => d.radius)
+                        .attr("fill", d => d.id === "I" ? "#2196F3" : memoryScale(d.retrievability)),
+                    exit => exit.transition().duration(400).attr("r", 0).remove()
+                );
+
+            node.on("mouseover", (event, d) => {
+                d3.select("#tooltip").style("opacity", 1)
+                    .html(`<strong>${d.id}</strong><br/>Stability: ${d.stability}<br/>Retrievability: ${d.retrievability}`)
+                    .style("left", (event.pageX + 10) + "px").style("top", (event.pageY - 20) + "px");
+            }).on("mouseout", () => d3.select("#tooltip").style("opacity", 0));
+
+            node.on("dblclick", (e, d) => { d.fx = null; d.fy = null; simulation.alpha(0.3).restart(); });
+
+            // --- LINKS ---
+            const link = linkGroup.selectAll("line")
+                .data(links, d => `${d.source}-${d.target}-${d.label}`)
+                .join("line")
+                .attr("stroke", "#555").attr("stroke-width", 2).attr("marker-end", "url(#arrow)").attr("stroke-opacity", 0.6);
+
+            // --- LABELS ---
+            edgeLabelGroup.selectAll("g")
+                .data(links, d => `${d.source}-${d.target}-${d.label}`)
+                .join(
+                    enter => {
+                        const g = enter.append("g");
+                        g.append("rect").attr("rx", 3).attr("ry", 3).attr("fill", "#1a1a1a").attr("opacity", 0.8);
+                        g.append("text").text(d => d.label).attr("fill", "#ccc").attr("font-size", 9).attr("text-anchor", "middle").attr("dy", 3);
+                        return g;
+                    }, update => update, exit => exit.remove()
+                );
+
+            labelGroup.selectAll("text").data(nodes, d => d.id).join("text")
+                .text(d => d.id).attr("font-size", 11).attr("fill", "#eee").attr("dx", 15).attr("dy", 4).style("text-shadow", "0 1px 2px black");
+
+            simulation.nodes(nodes).on("tick", () => {
+                link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                node.attr("cx", d => d.x).attr("cy", d => d.y);
+                labelGroup.selectAll("text").attr("x", d => d.x).attr("y", d => d.y);
+
+                edgeLabelGroup.selectAll("g").attr("transform", d => {
+                    const sx = d.source.x, sy = d.source.y, tx = d.target.x, ty = d.target.y;
+                    if (sx === undefined || tx === undefined) return "";
+                    return `translate(${(sx + tx) / 2}, ${(sy + ty) / 2})`;
+                });
+                edgeLabelGroup.selectAll("rect").each(function() {
+                    const bbox = this.nextSibling.getBBox();
+                    d3.select(this).attr("x", bbox.x - 4).attr("y", bbox.y - 2).attr("width", bbox.width + 8).attr("height", bbox.height + 4);
+                });
+            });
+
+            simulation.force("link").links(links);
+            simulation.alpha(0.3).restart();
+        }
+
+        function drag(simulation) {
+            function dragstarted(event) { if (!event.active) simulation.alphaTarget(0.3).restart(); event.subject.fx = event.subject.x; event.subject.fy = event.subject.y; }
+            function dragged(event) { event.subject.fx = event.x; event.subject.fy = event.y; }
+            function dragended(event) { if (!event.active) simulation.alphaTarget(0); event.subject.fx = null; event.subject.fy = null; }
+            return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
+        }
+    </script>
+</body>
+</html>
