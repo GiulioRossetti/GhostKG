@@ -124,7 +124,28 @@ Topics covered:
 
 ---
 
-#### 6. [Fast Mode Configuration](FAST_MODE_CONFIG.md)
+#### 6. [UV Setup Guide](UV_SETUP.md)
+**Guide to using UV package manager with GhostKG**
+
+Topics covered:
+- Installing UV package manager
+- Installation with different feature sets (llm, fast, dev, docs, all)
+- Development workflow with UV
+- Managing dependencies
+- Dependency groups explained
+- CI/CD integration examples
+- Troubleshooting
+
+**Read this if you want to**: Use modern, fast package management with UV or understand the dependency structure.
+
+**Cross-references**:
+- [README](../README.md#installation) - Installation instructions
+- [Fast Mode Configuration](FAST_MODE_CONFIG.md) - Fast mode dependencies
+- Phase 2 of [Refactoring Plan](REFACTORING_PLAN.md) - Dependency management
+
+---
+
+#### 7. [Fast Mode Configuration](FAST_MODE_CONFIG.md)
 **Guide to fast mode vs LLM mode for triplet extraction**
 
 Topics covered:
@@ -140,17 +161,18 @@ Topics covered:
 - [Core Components](CORE_COMPONENTS.md) - CognitiveLoop fast mode
 - [Algorithms](ALGORITHMS.md) - Sentiment analysis in fast mode
 - [Examples](../examples/use_case_example.py) - Fast mode in practice
+- [UV Setup](UV_SETUP.md) - Installing fast mode dependencies
 
 ---
 
-#### 7. [Refactoring Plan](REFACTORING_PLAN.md)
+#### 8. [Refactoring Plan](REFACTORING_PLAN.md)
 **Comprehensive plan for improving maintainability and efficiency**
 
 Topics covered:
 - Current state analysis with identified issues
 - Detailed refactoring steps across 9 phases
-- Code organization improvements
-- Dependency management strategy
+- Code organization improvements (Phase 1 ✅ COMPLETE)
+- Dependency management strategy (Phase 2 🔄 IN PROGRESS)
 - Error handling enhancements
 - Testing infrastructure expansion
 - Performance optimizations
@@ -163,6 +185,7 @@ Topics covered:
 - [Architecture](ARCHITECTURE.md) - Current architecture to be refactored
 - [Core Components](CORE_COMPONENTS.md) - Components to be reorganized
 - [Database Schema](DATABASE_SCHEMA.md) - Performance optimizations planned
+- [UV Setup](UV_SETUP.md) - New dependency management with UV
 
 ---
 

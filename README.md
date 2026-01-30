@@ -19,16 +19,52 @@ GhostKG is a Python package that provides dynamic knowledge graph management for
 
 ## Installation
 
+### Using UV (Recommended)
+
+[UV](https://github.com/astral-sh/uv) is a fast Python package manager. Install it first:
+
 ```bash
-pip install ghost_kg
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh  # Unix/macOS
+# Or: pip install uv
+
+# Clone and install GhostKG
+git clone https://github.com/GiulioRossetti/GhostKG.git
+cd GhostKG
+
+# Base installation (core features)
+uv pip install -e .
+
+# With LLM support (Ollama)
+uv pip install -e ".[llm]"
+
+# With fast mode (GLiNER + TextBlob)
+uv pip install -e ".[fast]"
+
+# With all features
+uv pip install -e ".[all]"
+
+# For development
+uv pip install -e ".[dev]"
 ```
 
-Or install from source:
+See [UV Setup Guide](docs/UV_SETUP.md) for detailed instructions.
+
+### Using pip
 
 ```bash
+# From PyPI (when published)
+pip install ghost_kg
+
+# From source
 git clone https://github.com/GiulioRossetti/GhostKG.git
 cd GhostKG
 pip install -e .
+
+# With optional features
+pip install -e ".[llm]"    # LLM support
+pip install -e ".[fast]"   # Fast mode
+pip install -e ".[all]"    # All features
 ```
 
 ## Quick Start
