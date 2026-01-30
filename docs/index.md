@@ -135,6 +135,29 @@ Topics covered:
 
 ---
 
+#### 7. [Refactoring Plan](REFACTORING_PLAN.md)
+**Comprehensive plan for improving maintainability and efficiency**
+
+Topics covered:
+- Current state analysis with identified issues
+- Detailed refactoring steps across 9 phases
+- Code organization improvements
+- Dependency management strategy
+- Error handling enhancements
+- Testing infrastructure expansion
+- Performance optimizations
+- Implementation timeline and priorities
+- Success metrics and risk assessment
+
+**Read this if you want to**: Understand planned improvements, contribute to refactoring efforts, or learn about maintainability best practices.
+
+**Cross-references**:
+- [Architecture](ARCHITECTURE.md) - Current architecture to be refactored
+- [Core Components](CORE_COMPONENTS.md) - Components to be reorganized
+- [Database Schema](DATABASE_SCHEMA.md) - Performance optimizations planned
+
+---
+
 ## 🎯 Use Case Guides
 
 ### By Goal
@@ -166,12 +189,14 @@ Topics covered:
 1. Read: [Database Schema](DATABASE_SCHEMA.md#performance-considerations) - DB optimization
 2. Read: [Algorithms](ALGORITHMS.md#computational-complexity) - Complexity analysis
 3. Read: [Architecture](ARCHITECTURE.md#scalability-considerations) - Scalability
-4. Read: [Core Components](CORE_COMPONENTS.md) - Algorithm optimizations
+4. Read: [Refactoring Plan](REFACTORING_PLAN.md#phase-7-performance-optimization-2-3-days) - Planned optimizations
+5. Read: [Core Components](CORE_COMPONENTS.md) - Algorithm optimizations
 
 #### I want to understand design decisions
 1. Read: [Architecture](ARCHITECTURE.md#design-decisions) - Key decisions and rationale
 2. Read: [Architecture](ARCHITECTURE.md#design-philosophy) - Core principles
 3. Read: [Algorithms](ALGORITHMS.md#references) - Scientific foundations
+4. Read: [Refactoring Plan](REFACTORING_PLAN.md#current-state-analysis) - Issues and improvements
 
 ---
 
@@ -193,7 +218,8 @@ Topics covered:
 1. [Architecture](ARCHITECTURE.md) - System design
 2. [Core Components](CORE_COMPONENTS.md) - Component details
 3. [Database Schema](DATABASE_SCHEMA.md) - Data structures
-4. Source code in `ghost_kg/` - Implementation
+4. [Refactoring Plan](REFACTORING_PLAN.md) - Improvement roadmap
+5. Source code in `ghost_kg/` - Implementation
 
 ### For Integrators
 1. [API Documentation](API.md) - External API
@@ -213,6 +239,7 @@ Topics covered:
 | **Database Schema** | Core Components (KnowledgeDB)<br>Architecture (why SQLite)<br>Algorithms (query complexity) |
 | **API** | Core Components (AgentManager)<br>Architecture (integration patterns)<br>Examples (code) |
 | **Fast Mode Config** | Core Components (CognitiveLoop)<br>Algorithms (sentiment)<br>Examples (use_case_example.py) |
+| **Refactoring Plan** | Architecture (current design)<br>Core Components (to be refactored)<br>Database Schema (optimizations) |
 
 ---
 

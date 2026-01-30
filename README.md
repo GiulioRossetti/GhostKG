@@ -180,6 +180,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[💾 Database Schema](docs/DATABASE_SCHEMA.md)** - Complete schema and query patterns
 - **[🔌 API Reference](docs/API.md)** - External API documentation
 - **[⚡ Fast Mode Guide](docs/FAST_MODE_CONFIG.md)** - Fast vs LLM extraction modes
+- **[🔧 Refactoring Plan](docs/REFACTORING_PLAN.md)** - Maintainability improvements roadmap
 
 ### Quick Links
 - **[Getting Started](docs/index.md#for-new-users)** - New user guide
