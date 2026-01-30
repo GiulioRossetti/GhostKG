@@ -1,16 +1,21 @@
 # GhostKG - Dynamic Knowledge Graphs with Memory Decay for LLM Agents
 
+<p align="center">
+  <em>Enable your AI agents to remember, forget, and evolve their knowledge naturally</em>
+</p>
+
 GhostKG is a Python package that provides dynamic knowledge graph management for LLM agents with built-in memory decay using FSRS (Free Spaced Repetition Scheduler). It enables agents to maintain temporal, evolving knowledge bases that naturally forget information over time.
 
-## Features
+## ✨ Features
 
-- **Dynamic Knowledge Graphs**: Maintain structured knowledge as semantic triplets (subject-relation-object)
-- **Memory Decay**: FSRS-based spaced repetition models realistic memory retention and forgetting
-- **Time-Aware**: Full support for temporal simulation and time-based queries
-- **Sentiment Tracking**: Emotional associations with knowledge (-1.0 to 1.0 scale)
-- **Multi-Agent Support**: Manage multiple agents with separate knowledge bases
-- **Flexible Integration**: Use with any LLM (GPT-4, Claude, Ollama, etc.)
-- **External API**: Decouple KG management from LLM logic for maximum flexibility
+- 🧠 **Dynamic Knowledge Graphs**: Maintain structured knowledge as semantic triplets (subject-relation-object)
+- 📉 **Memory Decay**: FSRS-based spaced repetition models realistic memory retention and forgetting
+- ⏰ **Time-Aware**: Full support for temporal simulation and time-based queries
+- 💭 **Sentiment Tracking**: Emotional associations with knowledge (-1.0 to 1.0 scale)
+- 👥 **Multi-Agent Support**: Manage multiple agents with separate knowledge bases
+- 🔌 **Flexible Integration**: Use with any LLM (GPT-4, Claude, Ollama, etc.)
+- 🎯 **External API**: Decouple KG management from LLM logic for maximum flexibility
+- ⚡ **Fast Mode**: Optional GLiNER+TextBlob for quick extraction without LLM calls
 
 ## Installation
 
@@ -163,46 +168,113 @@ manager.set_agent_time("Alice", time)
        └──────────────┘
 ```
 
-## Examples
+## 📚 Documentation
 
-- **[use_case_example.py](examples/use_case_example.py)**: Two agents multi-round communication with (topic, text) tuples
-- **[external_program.py](examples/external_program.py)**: Complete example of external program integration
-- **[hourly_simulation.py](examples/hourly_simulation.py)**: Time-based agent conversation simulation
-- **[export_history.py](examples/export_history.py)**: Export knowledge graph history
+Comprehensive documentation is available in the `docs/` directory:
 
-## Documentation
+### Core Documentation
+- **[📑 Documentation Index](docs/index.md)** - Complete documentation overview with cross-references
+- **[🏗️ Architecture & Design](docs/ARCHITECTURE.md)** - System architecture and design philosophy
+- **[🔧 Core Components](docs/CORE_COMPONENTS.md)** - Detailed component specifications
+- **[📐 Algorithms & Formulas](docs/ALGORITHMS.md)** - Mathematical foundations and FSRS details
+- **[💾 Database Schema](docs/DATABASE_SCHEMA.md)** - Complete schema and query patterns
+- **[🔌 API Reference](docs/API.md)** - External API documentation
+- **[⚡ Fast Mode Guide](docs/FAST_MODE_CONFIG.md)** - Fast vs LLM extraction modes
 
-- [API Documentation](docs/API.md) - Complete API reference
-- [Examples](examples/) - Working code examples
+### Quick Links
+- **[Getting Started](docs/index.md#for-new-users)** - New user guide
+- **[Integration Patterns](docs/ARCHITECTURE.md#integration-patterns)** - How to integrate with your app
+- **[Memory Decay Math](docs/ALGORITHMS.md#memory-decay-calculations)** - Understanding FSRS
 
-## Requirements
+## 💡 Examples
+
+Working code examples in the `examples/` directory:
+
+- **[use_case_example.py](examples/use_case_example.py)** - Two agents multi-round communication with configurable extraction modes
+- **[external_program.py](examples/external_program.py)** - Complete example of external program integration
+- **[hourly_simulation.py](examples/hourly_simulation.py)** - Time-based agent conversation simulation
+- **[export_history.py](examples/export_history.py)** - Export and analyze knowledge graph history
+
+## 📋 Requirements
 
 - Python >= 3.8
 - networkx >= 3.0
 - fsrs >= 1.0.0
-- ollama >= 0.1.6 (optional, only for integrated LLM approach)
+- ollama >= 0.1.6 (optional, for integrated LLM approach)
+- gliner (optional, for fast mode)
+- textblob (optional, for fast mode sentiment analysis)
 
-## License
+## 🔬 Research & Theory
 
-MIT License
+GhostKG is built on solid theoretical foundations:
 
-## Citation
+- **FSRS v4.5**: Advanced spaced repetition algorithm based on cognitive science
+- **Forgetting Curves**: Models natural memory decay over time
+- **Semantic Triplets**: Knowledge representation following RDF principles
+- **Temporal Knowledge Graphs**: Time-aware graph databases
+
+See [Algorithms & Formulas](docs/ALGORITHMS.md) for mathematical details and references.
+
+## 📊 Performance
+
+- **Fast Mode**: Process ~100 messages/second (no LLM needed)
+- **LLM Mode**: Limited by LLM inference speed (~1-5 messages/second)
+- **Query Speed**: O(log n) lookups with proper indexing
+- **Storage**: ~150 bytes per triplet, ~100 bytes per entity
+
+See [Database Schema](docs/DATABASE_SCHEMA.md#performance-considerations) for optimization details.
+
+## 🧪 Testing
+
+Run tests with pytest:
+
+```bash
+pytest tests/
+```
+
+Test files:
+- `test_comprehensive.py` - Full workflow tests
+- `test_process_and_get_context.py` - API integration tests
+- `test_fast_mode_config.py` - Configuration validation
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details
+
+## 🎓 Citation
 
 If you use GhostKG in your research, please cite:
 
 ```bibtex
 @software{ghostkg2025,
   title={GhostKG: Dynamic Knowledge Graphs with Memory Decay for LLM Agents},
-  author={Your Name},
+  author={Rossetti, Giulio},
   year={2025},
   url={https://github.com/GiulioRossetti/GhostKG}
 }
 ```
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please:
 
-## Support
+1. Check the [Architecture](docs/ARCHITECTURE.md) to understand the design
+2. Read [Core Components](docs/CORE_COMPONENTS.md) to understand the implementation
+3. Add tests for new features
+4. Update documentation
+5. Submit a Pull Request
 
-For questions and support, please open an issue on GitHub.
+## 💬 Support
+
+- **Documentation**: [docs/index.md](docs/index.md)
+- **Issues**: [GitHub Issues](https://github.com/GiulioRossetti/GhostKG/issues)
+- **Examples**: [examples/](examples/) directory
+- **API Reference**: [docs/API.md](docs/API.md)
+
+## 🙏 Acknowledgments
+
+GhostKG builds upon:
+- **FSRS Algorithm** by Jarrett Ye and contributors
+- **Spaced Repetition Research** by cognitive scientists
+- **Knowledge Graph** and **RDF** standards
+- **SQLite** for reliable persistence
