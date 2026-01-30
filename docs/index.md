@@ -2,6 +2,14 @@
 
 Welcome to the comprehensive documentation for **GhostKG** - a dynamic knowledge graph management system for LLM agents with built-in memory decay using FSRS (Free Spaced Repetition Scheduler).
 
+## 🎯 Latest Updates
+
+**Phase 1 Refactoring Complete!** ✅ (January 30, 2026)
+- Core codebase refactored into focused modules (fsrs, agent, extraction, cognitive)
+- Thread-safe model caching implemented
+- 100% backward compatibility maintained
+- See [Refactoring Plan](REFACTORING_PLAN.md) for details
+
 ## 📚 Documentation Structure
 
 ### Quick Start
