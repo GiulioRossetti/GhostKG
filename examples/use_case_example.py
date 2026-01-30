@@ -243,9 +243,9 @@ def run_use_case():
         print(f"\n🤖 {responding_agent} generates response using external LLM...")
 
         if responding_agent == "Alice":
-            agent_profile = "environmentalist and climate activist"
+            agent_profile = "a democrat environmentalist"
         else:
-            agent_profile = "economist concerned about market impacts"
+            agent_profile = "an alt-right skeptic who values economic growth and do not believe in climate change"
         response = external_llm_generate(responding_agent, context, topic, agent_profile)
         print(f"  ✓ Generated: '{response}'")
 
