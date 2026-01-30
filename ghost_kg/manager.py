@@ -7,7 +7,8 @@ with individual agent Knowledge Graphs without handling the LLM logic.
 
 import datetime
 from typing import Optional, Dict, List, Tuple
-from .core import GhostAgent, Rating
+from .agent import GhostAgent
+from .fsrs import Rating
 from .storage import KnowledgeDB
 
 
