@@ -5,6 +5,14 @@ import re
 from ollama import Client
 from .storage import KnowledgeDB, NodeState
 
+# --- FAST MODE IMPORTS ---
+try:
+    from gliner import GLiNER
+    from textblob import TextBlob
+    GLINER_MODEL = None  # Global cache to prevent reloading
+except ImportError:
+    GLiNER = None
+    TextBlob = None
 
 # --- 1. FSRS Logic (Standard v4.5) ---
 class Rating:
@@ -17,23 +25,8 @@ class Rating:
 class FSRS:
     def __init__(self):
         self.p = [
-            0.4,
-            0.6,
-            2.4,
-            5.8,
-            4.93,
-            0.94,
-            0.86,
-            0.01,
-            1.49,
-            0.14,
-            0.94,
-            2.18,
-            0.05,
-            0.34,
-            1.26,
-            0.29,
-            2.61,
+            0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01,
+            1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61,
         ]
 
     def calculate_next(self, current_state: NodeState, rating, now):
@@ -63,29 +56,29 @@ class FSRS:
                 self.p[7] * self.p[4]
                 + (1 - self.p[7]) * (d - self.p[6] * (rating - 3)),
                 1,
-            ),
+                ),
             10,
         )
 
         if rating == Rating.Again:
             next_s = (
-                self.p[11]
-                * (next_d ** -self.p[12])
-                * ((s + 1) ** self.p[13] - 1)
-                * math.exp((1 - retrievability) * self.p[14])
+                    self.p[11]
+                    * (next_d ** -self.p[12])
+                    * ((s + 1) ** self.p[13] - 1)
+                    * math.exp((1 - retrievability) * self.p[14])
             )
             state = 1
         else:
             hard_penalty = self.p[15] if rating == Rating.Hard else 1
             easy_bonus = self.p[16] if rating == Rating.Easy else 1
             next_s = s * (
-                1
-                + math.exp(self.p[8])
-                * (11 - next_d)
-                * (s ** -self.p[9])
-                * (math.exp((1 - retrievability) * self.p[10]) - 1)
-                * hard_penalty
-                * easy_bonus
+                    1
+                    + math.exp(self.p[8])
+                    * (11 - next_d)
+                    * (s ** -self.p[9])
+                    * (math.exp((1 - retrievability) * self.p[10]) - 1)
+                    * hard_penalty
+                    * easy_bonus
             )
             state = 2
 
@@ -95,10 +88,9 @@ class FSRS:
 
 # --- 2. Ghost Agent (Time-Aware & Hardened) ---
 
-
 class GhostAgent:
     def __init__(
-        self, name, db_path="agent_memory.db", llm_host="http://localhost:11434"
+            self, name, db_path="agent_memory.db", llm_host="http://localhost:11434"
     ):
         self.name = name
         self.db = KnowledgeDB(db_path)
@@ -136,42 +128,16 @@ class GhostAgent:
         stopwords = {"it", "is", "the", "a", "an", "this", "that"}
 
         # 2. BANNED GRAMMATICAL TERMS (Semantic Gatekeeper)
-        # We reject edges if the relation describes the word type rather than meaning
         banned_relations = {
-            "noun",
-            "verb",
-            "adjective",
-            "adverb",
-            "preposition",
-            "conjunction",
-            "pronoun",
-            "phrase",
-            "clause",
-            "sentence",
-            "statement",
-            "text",
-            "topic",
-            "concept",
-            "word",
-            "term",
-            "rating",
-            "evaluation",
-            "opinion",
+            "noun", "verb", "adjective", "adverb", "preposition", "conjunction",
+            "pronoun", "phrase", "clause", "sentence", "statement", "text",
+            "topic", "concept", "word", "term", "rating", "evaluation", "opinion",
         }
 
         # 3. BANNED GENERIC NODES
         banned_nodes = {
-            "text",
-            "entity",
-            "author",
-            "none",
-            "unknown",
-            "wikipedia",
-            "general knowledge",
-            "source",
-            "target",
-            "adjective",
-            "noun",
+            "text", "entity", "author", "none", "unknown", "wikipedia",
+            "general knowledge", "source", "target", "adjective", "noun",
         }
 
         if not src or not rel or not tgt:
@@ -224,7 +190,7 @@ class GhostAgent:
         )
 
     def learn_triplet(
-        self, source, relation, target, rating=Rating.Good, sentiment=0.0
+            self, source, relation, target, rating=Rating.Good, sentiment=0.0
     ):
         n_source = self._normalize(source)
         n_target = self._normalize(target)
@@ -313,14 +279,100 @@ class GhostAgent:
 
 
 class CognitiveLoop:
-    def __init__(self, agent: GhostAgent, model="llama3.2"):
+    def __init__(self, agent: GhostAgent, model="llama3.2", fast_mode=False):
         self.agent = agent
         self.model = model
+        self.fast_mode = fast_mode
+
+        # Preload GLiNER if fast mode is enabled and available
+        if self.fast_mode and GLiNER:
+            global GLINER_MODEL
+            if GLINER_MODEL is None:
+                print("⚡ [Fast Mode] Loading GLiNER model...")
+                GLINER_MODEL = GLiNER.from_pretrained("urchade/gliner_small-v2.1")
 
     def absorb(self, text, author="User"):
+        """
+        Main entry point for learning.
+        Dispatches to fast mode (GLiNER) or semantic mode (LLM) based on config.
+        """
+        if self.fast_mode and GLiNER:
+            self._absorb_fast(text, author)
+        else:
+            self._absorb_llm(text, author)
+
+    def _absorb_fast(self, text, author):
+        """High-speed heuristic extraction using GLiNER + TextBlob."""
+        print(f"\n[{self.agent.name}] reading {author} (FAST): '{text[:40]}...'")
+
+        # 1. Extract Entities (Nodes)
+        labels = ["Topic", "Person", "Concept", "Organization"]
+        entities = GLINER_MODEL.predict_entities(text, labels)
+
+        # 2. Extract Sentiment (Edge Coloring)
+        blob = TextBlob(text)
+        sentiment = blob.sentiment.polarity # -1.0 to 1.0
+
+        # Determine Relation Verb based on Sentiment
+        relation = "discusses"
+        if sentiment > 0.3: relation = "supports"
+        elif sentiment < -0.3: relation = "opposes"
+        elif sentiment > 0.1: relation = "likes"
+        elif sentiment < -0.1: relation = "dislikes"
+
+        fact_count = 0
+
+        for entity in entities:
+            topic_text = entity["text"]
+            if len(topic_text) < 3: continue
+
+            # A. Partner Stance: Author -> Relation -> Topic
+            # e.g. "Bob" -> "supports" -> "UBI"
+            self.agent.learn_triplet(
+                source=author,
+                relation=relation,
+                target=topic_text,
+                rating=Rating.Good, # Standard retention
+                sentiment=sentiment
+            )
+
+            # B. World Fact (Simple Existence): Topic -> is -> mentioned
+            # Useful so the agent knows this concept exists in the world
+            self.agent.learn_triplet(
+                source=topic_text,
+                relation="is",
+                target="discussed",
+                rating=Rating.Good,
+                sentiment=0.0
+            )
+
+            # C. My Reaction (Passive Hearing): I -> heard -> Topic
+            # In fast mode, we don't generate deep thoughts, but we record we heard it.
+            self.agent.learn_triplet(
+                source="I",
+                relation="heard about",
+                target=topic_text,
+                rating=Rating.Good, # Good = standard retention
+                sentiment=0.0
+            )
+
+            fact_count += 1
+
+        # Log interaction for visualization
+        log_data = {
+            "mode": "FAST",
+            "sentiment": sentiment,
+            "entities": [e["text"] for e in entities]
+        }
+        self.agent.db.log_interaction(
+            self.agent.name, "READ", text, log_data, timestamp=self.agent.current_time
+        )
+        print(f"   > Fast absorbed {fact_count} entities with sentiment {sentiment:.2f}")
+
+    def _absorb_llm(self, text, author):
+        """Deep semantic extraction using LLM (Original Logic)."""
         print(f"\n[{self.agent.name}] reading {author}: '{text[:40]}...'")
 
-        # UPDATED PROMPT: Explicitly ban grammar tagging
         prompt = f"""
         You are {self.agent.name}. Analyze this text by {author}: "{text}"
 
@@ -383,9 +435,11 @@ class CognitiveLoop:
             print(f"Error absorbing: {e}")
 
     def reflect(self, text):
+        # Reflection usually requires self-awareness, so we stick to LLM here
+        # unless we want a very simple keyword extractor.
+        # For now, we use the LLM to ensure high-quality self-consistency.
         print(f"   > [Self-Reflection] Analyzing my own words...")
 
-        # UPDATED PROMPT: Enforce active verbs here too
         prompt = f"""
         You are {self.agent.name}. You just said: "{text}"
         Task: Extract the beliefs/stances YOU just expressed.
@@ -441,6 +495,7 @@ class CognitiveLoop:
                 f"   > {self.agent.name} ({self.agent.current_time.strftime('%H:%M')}): {content}"
             )
 
+            # We always reflect using LLM to ensure we lock in our own generated stance
             self.reflect(content)
             return content
         except Exception as e:

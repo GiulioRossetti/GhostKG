@@ -83,6 +83,7 @@ class AgentManager:
         content: str,
         author: str = "User",
         triplets: Optional[List[Tuple[str, str, str]]] = None,
+        fast_mode: bool = False,
     ) -> None:
         """
         Update agent's KG with content they are replying to.
@@ -97,6 +98,7 @@ class AgentManager:
             author: Author of the content
             triplets: Optional list of (source, relation, target) triplets
                      If provided, these will be learned directly
+            fast_mode: If True, use faster processing (if supported by LLM)
         """
         agent = self.get_agent(agent_name)
         if not agent:
@@ -120,7 +122,7 @@ class AgentManager:
             # This is for backward compatibility
             from .core import CognitiveLoop
 
-            loop = CognitiveLoop(agent)
+            loop = CognitiveLoop(agent, fast_mode=fast_mode)
             loop.absorb(content, author=author)
 
     def get_context(self, agent_name: str, topic: str) -> str:
@@ -152,6 +154,7 @@ class AgentManager:
         text: str,
         author: str = "User",
         triplets: Optional[List[Tuple[str, str, str]]] = None,
+            fast_mode: bool = False,
     ) -> str:
         """
         Update agent's KG with content and return context for replying (atomic operation).
@@ -184,7 +187,7 @@ class AgentManager:
             >>> # Use context with external LLM to generate response
         """
         # Update KG with the content
-        self.absorb_content(agent_name, text, author, triplets)
+        self.absorb_content(agent_name, text, author, triplets, fast_mode)
 
         # Return updated context for the topic
         return self.get_context(agent_name, topic)

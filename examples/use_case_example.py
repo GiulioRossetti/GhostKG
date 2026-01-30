@@ -234,8 +234,8 @@ def run_use_case():
         # Step B: Update KG and get context (atomic operation)
         print(f"\n🧠 {responding_agent} processes content and retrieves context...")
         context = manager.process_and_get_context(
-            responding_agent, topic, current_text, author=peer, triplets=triplets
-        )
+            responding_agent, topic, current_text, author=peer, triplets=triplets, fast_mode=True
+        ) ## Use fast_mode for efficiency
         print(f"  ✓ KG updated")
         print(f"  ✓ Context retrieved: {context[:80]}...")
 
