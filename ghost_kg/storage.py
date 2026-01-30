@@ -71,6 +71,50 @@ class KnowledgeDB:
                                                            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                        )
                        """)
+            
+            # Performance indexes for common queries
+            # Index for querying edges by owner and source (e.g., get_relations)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_edges_owner_source 
+                ON edges(owner_id, source)
+            """)
+            
+            # Index for querying edges by owner and target (e.g., reverse lookups)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_edges_owner_target 
+                ON edges(owner_id, target)
+            """)
+            
+            # Index for temporal queries on edges (most recent first)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_edges_created 
+                ON edges(owner_id, created_at DESC)
+            """)
+            
+            # Index for nodes by last review time (memory recency queries)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_nodes_last_review 
+                ON nodes(owner_id, last_review DESC)
+            """)
+            
+            # Index for nodes by owner (common filter)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_nodes_owner 
+                ON nodes(owner_id)
+            """)
+            
+            # Index for logs by agent and timestamp (query agent history)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_logs_agent_time 
+                ON logs(agent_name, timestamp DESC)
+            """)
+            
+            # Index for logs by action type (filter by action)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_logs_action 
+                ON logs(action_type, timestamp DESC)
+            """)
+            
             self.conn.commit()
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to initialize schema: {e}") from e

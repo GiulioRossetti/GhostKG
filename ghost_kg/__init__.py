@@ -31,6 +31,9 @@ from .config import (
     get_default_config,
 )
 
+# Phase 7: Performance optimization
+from .cache import AgentCache, get_global_cache, clear_global_cache
+
 # Backward compatibility: Also export from core
 # This ensures old code using "from ghost_kg.core import ..." still works
 from . import core
@@ -76,4 +79,9 @@ __all__ = [
     "FastModeConfig",
     "GhostKGConfig",
     "get_default_config",
+    
+    # Performance/Caching (Phase 7)
+    "AgentCache",
+    "get_global_cache",
+    "clear_global_cache",
 ]
