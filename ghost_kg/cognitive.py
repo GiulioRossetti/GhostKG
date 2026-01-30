@@ -220,4 +220,4 @@ class CognitiveLoop:
             
         except Exception as e:
             print(f"Error replying: {e}")
-            return None
+            return ""  # Return empty string instead of None for consistency

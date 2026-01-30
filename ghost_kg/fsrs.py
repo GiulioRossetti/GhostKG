@@ -9,6 +9,7 @@ References:
 """
 
 import datetime
+import math
 from typing import Optional
 from .storage import NodeState
 
@@ -96,42 +97,41 @@ class FSRS:
                 elapsed_days = 0
             retrievability = (1 + elapsed_days / (9 * s)) ** -1
         else:
-            retrievability = 0.9
+            # Match legacy implementation: new cards have 1.0 retrievability
+            retrievability = 1.0
 
-        # Update difficulty
-        if rating == Rating.Again:
-            d = min(max(d + 1, 1), 10)
-        elif rating == Rating.Hard:
-            d = min(max(d + 0.5, 1), 10)
-        elif rating == Rating.Easy:
-            d = max(d - 0.5, 1)
+        # Update difficulty (matches legacy core_legacy.py lines 91-98)
+        next_d = min(
+            max(
+                self.p[7] * self.p[4]
+                + (1 - self.p[7]) * (d - self.p[6] * (rating - 3)),
+                1,
+            ),
+            10,
+        )
 
-        # Update stability
+        # Update stability based on rating (matches legacy core_legacy.py lines 100-120)
         if rating == Rating.Again:
-            s_new = (
+            next_s = (
                 self.p[11]
-                * d ** (-self.p[12])
+                * (next_d ** -self.p[12])
                 * ((s + 1) ** self.p[13] - 1)
-                * math.exp(self.p[14] * (1 - retrievability))
+                * math.exp((1 - retrievability) * self.p[14])
             )
+            state = 1
         else:
-            success_factor = (
-                math.exp(self.p[8])
-                * (11 - d)
-                * s ** (-self.p[9])
-                * (math.exp(self.p[10] * (1 - retrievability)) - 1)
+            hard_penalty = self.p[15] if rating == Rating.Hard else 1
+            easy_bonus = self.p[16] if rating == Rating.Easy else 1
+            next_s = s * (
+                1
+                + math.exp(self.p[8])
+                * (11 - next_d)
+                * (s ** -self.p[9])
+                * (math.exp((1 - retrievability) * self.p[10]) - 1)
+                * hard_penalty
+                * easy_bonus
             )
-            if rating == Rating.Hard:
-                success_factor *= self.p[15]
-            elif rating == Rating.Easy:
-                success_factor *= self.p[16]
-            s_new = s * (1 + success_factor)
+            state = 2
 
-        s_new = max(s_new, 0.1)
-        new_reps = current_state.reps + 1
-
-        return NodeState(s_new, d, now, new_reps, 1)
-
-
-# Import math for FSRS calculations
-import math
+        next_s = max(next_s, 0.1)
+        return NodeState(next_s, next_d, now, current_state.reps + 1, state)

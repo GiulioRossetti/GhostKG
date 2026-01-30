@@ -9,7 +9,7 @@ The module includes thread-safe model caching to avoid reloading models.
 """
 
 import json
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional
 from abc import ABC, abstractmethod
 import threading
 

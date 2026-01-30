@@ -191,7 +191,7 @@ class GhostAgent:
             if isinstance(last_review, str):
                 try:
                     last_review = datetime.datetime.fromisoformat(last_review)
-                except:
+                except (ValueError, TypeError):
                     last_review = self.current_time
             if last_review.tzinfo is None:
                 last_review = last_review.replace(tzinfo=datetime.timezone.utc)
@@ -295,7 +295,7 @@ class GhostAgent:
             if isinstance(lr, str):
                 try:
                     lr = datetime.datetime.fromisoformat(lr)
-                except:
+                except (ValueError, TypeError):
                     lr = self.current_time
             if lr.tzinfo is None:
                 lr = lr.replace(tzinfo=datetime.timezone.utc)
