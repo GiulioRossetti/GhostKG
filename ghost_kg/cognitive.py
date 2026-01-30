@@ -10,7 +10,7 @@ operations for agents:
 
 import json
 import time
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from .agent import GhostAgent
 from .fsrs import Rating
@@ -34,14 +34,17 @@ class CognitiveLoop:
         extractor: Triplet extraction strategy (fast or LLM)
     """
     
-    def __init__(self, agent: GhostAgent, model: str = "llama3.2", fast_mode: bool = False):
+    def __init__(self, agent: GhostAgent, model: str = "llama3.2", fast_mode: bool = False) -> None:
         """
         Initialize cognitive loop for an agent.
         
         Args:
-            agent: GhostAgent instance to operate on
-            model: LLM model name (e.g., "llama3.2")
-            fast_mode: If True, use fast extraction; otherwise use LLM
+            agent (GhostAgent): GhostAgent instance to operate on
+            model (str): LLM model name (e.g., "llama3.2")
+            fast_mode (bool): If True, use fast extraction; otherwise use LLM
+            
+        Returns:
+            None
         """
         self.agent = agent
         self.model = model
@@ -74,21 +77,21 @@ class CognitiveLoop:
     def _call_llm_with_retry(
         self, 
         prompt: str, 
-        format: str = None, 
+        format: Optional[str] = None, 
         timeout: int = 30, 
         max_retries: int = 3
-    ) -> dict:
+    ) -> Dict[str, Any]:
         """
         Call LLM with timeout and retry logic.
         
         Args:
-            prompt: Prompt to send to LLM
-            format: Optional format specification (e.g., "json")
-            timeout: Timeout in seconds
-            max_retries: Maximum number of retry attempts
+            prompt (str): Prompt to send to LLM
+            format (Optional[str]): Optional format specification (e.g., "json")
+            timeout (int): Timeout in seconds
+            max_retries (int): Maximum number of retry attempts
             
         Returns:
-            dict: LLM response
+            Dict[str, Any]: LLM response
             
         Raises:
             LLMError: If all retries fail
@@ -123,8 +126,11 @@ class CognitiveLoop:
         based on configuration.
         
         Args:
-            text: Input text to learn from
-            author: Name of the text author
+            text (str): Input text to learn from
+            author (str): Name of the text author
+            
+        Returns:
+            None
         """
         # Extract triplets using configured extractor
         data = self.extractor.extract(text, author, self.agent.name)
@@ -179,7 +185,10 @@ class CognitiveLoop:
         and reinforces them with high memory ratings.
         
         Args:
-            text: Agent's own statement to reflect on
+            text (str): Agent's own statement to reflect on
+            
+        Returns:
+            None
             
         Raises:
             LLMError: If LLM call fails after retries
@@ -231,11 +240,11 @@ class CognitiveLoop:
         expressed beliefs.
         
         Args:
-            topic: Topic to reply about
-            partner_name: Name of conversation partner
+            topic (str): Topic to reply about
+            partner_name (str): Name of conversation partner
             
         Returns:
-            Generated reply text, or empty string if generation fails
+            str: Generated reply text, or empty string if generation fails
             
         Raises:
             LLMError: If LLM call fails after retries

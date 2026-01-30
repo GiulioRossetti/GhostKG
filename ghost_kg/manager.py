@@ -25,12 +25,15 @@ class AgentManager:
     - Control time for each interaction
     """
 
-    def __init__(self, db_path: str = "agent_memory.db"):
+    def __init__(self, db_path: str = "agent_memory.db") -> None:
         """
         Initialize the AgentManager.
 
         Args:
-            db_path: Path to the SQLite database file
+            db_path (str): Path to the SQLite database file
+            
+        Returns:
+            None
         """
         self.db_path = db_path
         self.agents: Dict[str, GhostAgent] = {}
@@ -43,11 +46,11 @@ class AgentManager:
         Create or retrieve an agent.
 
         Args:
-            name: Name of the agent
-            llm_host: LLM host URL (optional, for internal LLM operations)
+            name (str): Name of the agent
+            llm_host (str): LLM host URL (optional, for internal LLM operations)
 
         Returns:
-            GhostAgent instance
+            GhostAgent: GhostAgent instance
             
         Raises:
             ValidationError: If name is invalid
@@ -66,10 +69,10 @@ class AgentManager:
         Get an existing agent.
 
         Args:
-            name: Name of the agent
+            name (str): Name of the agent
 
         Returns:
-            GhostAgent instance or None if not found
+            Optional[GhostAgent]: GhostAgent instance or None if not found
         """
         return self.agents.get(name)
 
@@ -78,8 +81,11 @@ class AgentManager:
         Set the current time for an agent (for simulation/tracking purposes).
 
         Args:
-            agent_name: Name of the agent
-            time: Current time to set
+            agent_name (str): Name of the agent
+            time (datetime.datetime): Current time to set
+            
+        Returns:
+            None
             
         Raises:
             AgentNotFoundError: If agent doesn't exist
@@ -109,12 +115,15 @@ class AgentManager:
         2. Let the agent extract triplets internally (if triplets=None and LLM available)
 
         Args:
-            agent_name: Name of the agent
-            content: The content to absorb
-            author: Author of the content
-            triplets: Optional list of (source, relation, target) triplets
+            agent_name (str): Name of the agent
+            content (str): The content to absorb
+            author (str): Author of the content
+            triplets (Optional[List[Tuple[str, str, str]]]): Optional list of (source, relation, target) triplets
                      If provided, these will be learned directly
-            fast_mode: If True, use faster processing (if supported by LLM)
+            fast_mode (bool): If True, use faster processing (if supported by LLM)
+            
+        Returns:
+            None
             
         Raises:
             AgentNotFoundError: If agent doesn't exist
@@ -167,11 +176,11 @@ class AgentManager:
         - What others think about the topic
 
         Args:
-            agent_name: Name of the agent
-            topic: Topic to get context for
+            agent_name (str): Name of the agent
+            topic (str): Topic to get context for
 
         Returns:
-            Formatted context string
+            str: Formatted context string
             
         Raises:
             AgentNotFoundError: If agent doesn't exist
@@ -205,15 +214,16 @@ class AgentManager:
         3. Agent needs context to generate a response
 
         Args:
-            agent_name: Name of the agent
-            topic: The topic of the content
-            text: The text content to process
-            author: Author of the content
-            triplets: Optional list of (source, relation, target) triplets
+            agent_name (str): Name of the agent
+            topic (str): The topic of the content
+            text (str): The text content to process
+            author (str): Author of the content
+            triplets (Optional[List[Tuple[str, str, str]]]): Optional list of (source, relation, target) triplets
                      If provided, these will be learned directly
+            fast_mode (bool): If True, use faster processing
 
         Returns:
-            Formatted context string for the topic (updated with new content)
+            str: Formatted context string for the topic (updated with new content)
 
         Example:
             >>> manager = AgentManager()
@@ -246,12 +256,18 @@ class AgentManager:
         2. Let the agent reflect on their own response (if triplets=None and LLM available)
 
         Args:
-            agent_name: Name of the agent
-            response: The response text generated
-            triplets: Optional list of (relation, target, sentiment) triplets
+            agent_name (str): Name of the agent
+            response (str): The response text generated
+            triplets (Optional[List[Tuple[str, str, str, float]]]): Optional list of (relation, target, sentiment) triplets
                      Source is assumed to be "I" (the agent)
-            context: Optional context that was used to generate the response
+            context (Optional[str]): Optional context that was used to generate the response
                     This will be stored in the logs annotations
+                    
+        Returns:
+            None
+            
+        Raises:
+            ValueError: If agent not found
         """
         agent = self.get_agent(agent_name)
         if not agent:
@@ -309,12 +325,18 @@ class AgentManager:
         Directly add a triplet to an agent's KG.
 
         Args:
-            agent_name: Name of the agent
-            source: Source node
-            relation: Relation/edge label
-            target: Target node
-            rating: FSRS rating (1-4, see Rating class)
-            sentiment: Sentiment score (-1.0 to 1.0)
+            agent_name (str): Name of the agent
+            source (str): Source node
+            relation (str): Relation/edge label
+            target (str): Target node
+            rating (int): FSRS rating (1-4, see Rating class)
+            sentiment (float): Sentiment score (-1.0 to 1.0)
+            
+        Returns:
+            None
+            
+        Raises:
+            ValueError: If agent not found
         """
         agent = self.get_agent(agent_name)
         if not agent:
@@ -329,11 +351,14 @@ class AgentManager:
         Retrieve agent's knowledge graph information.
 
         Args:
-            agent_name: Name of the agent
-            topic: Optional topic to filter knowledge
+            agent_name (str): Name of the agent
+            topic (Optional[str]): Optional topic to filter knowledge
 
         Returns:
-            Dictionary with nodes and edges information
+            Dict: Dictionary with nodes and edges information
+            
+        Raises:
+            ValueError: If agent not found
         """
         agent = self.get_agent(agent_name)
         if not agent:

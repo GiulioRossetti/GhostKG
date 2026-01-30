@@ -9,7 +9,7 @@ The module includes thread-safe model caching to avoid reloading models.
 """
 
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 from abc import ABC, abstractmethod
 import threading
 
@@ -34,8 +34,13 @@ class ModelCache:
     _model = None
     
     @classmethod
-    def get_gliner_model(cls):
-        """Get or load GLiNER model (thread-safe)."""
+    def get_gliner_model(cls) -> Optional[Any]:
+        """
+        Get or load GLiNER model (thread-safe).
+        
+        Returns:
+            Optional[Any]: GLiNER model instance or None if unavailable
+        """
         if not HAS_FAST_MODE:
             return None
             
@@ -57,12 +62,12 @@ class TripletExtractor(ABC):
         Extract triplets from text.
         
         Args:
-            text: Input text to analyze
-            author: Author of the text
-            agent_name: Name of the agent doing the extraction
+            text (str): Input text to analyze
+            author (str): Author of the text
+            agent_name (str): Name of the agent doing the extraction
             
         Returns:
-            Dictionary with extraction results and metadata
+            Dict[str, Any]: Dictionary with extraction results and metadata
         """
         pass
 
@@ -79,8 +84,13 @@ class FastExtractor(TripletExtractor):
     This is faster than LLM but less semantically rich.
     """
     
-    def __init__(self):
-        """Initialize fast extractor and preload model."""
+    def __init__(self) -> None:
+        """
+        Initialize fast extractor and preload model.
+        
+        Raises:
+            ImportError: If required dependencies are not installed
+        """
         if not HAS_FAST_MODE:
             raise ImportError(
                 "Fast mode requires 'gliner' and 'textblob'. "
@@ -93,12 +103,12 @@ class FastExtractor(TripletExtractor):
         Extract triplets using fast heuristic approach.
         
         Args:
-            text: Input text
-            author: Text author
-            agent_name: Agent performing extraction
+            text (str): Input text
+            author (str): Text author
+            agent_name (str): Agent performing extraction
             
         Returns:
-            Dict with world_facts, partner_stance, my_reaction, and metadata
+            Dict[str, Any]: Dict with world_facts, partner_stance, my_reaction, and metadata
         """
         print(f"\n[{agent_name}] reading {author} (FAST): '{text[:40]}...'")
         
@@ -180,13 +190,16 @@ class LLMExtractor(TripletExtractor):
     This is slower but more semantically accurate than fast mode.
     """
     
-    def __init__(self, client, model: str = "llama3.2"):
+    def __init__(self, client: Any, model: str = "llama3.2") -> None:
         """
         Initialize LLM extractor.
         
         Args:
-            client: Ollama client instance
-            model: Model name to use for extraction
+            client (Any): Ollama client instance
+            model (str): Model name to use for extraction
+            
+        Returns:
+            None
         """
         self.client = client
         self.model = model
@@ -196,12 +209,12 @@ class LLMExtractor(TripletExtractor):
         Extract triplets using LLM semantic analysis.
         
         Args:
-            text: Input text
-            author: Text author
-            agent_name: Agent performing extraction
+            text (str): Input text
+            author (str): Text author
+            agent_name (str): Agent performing extraction
             
         Returns:
-            Dict with world_facts, partner_stance, my_reaction
+            Dict[str, Any]: Dict with world_facts, partner_stance, my_reaction
         """
         print(f"\n[{agent_name}] reading {author}: '{text[:40]}...'")
         
@@ -248,17 +261,17 @@ class LLMExtractor(TripletExtractor):
             }
 
 
-def get_extractor(fast_mode: bool, client=None, model: str = "llama3.2") -> TripletExtractor:
+def get_extractor(fast_mode: bool, client: Optional[Any] = None, model: str = "llama3.2") -> TripletExtractor:
     """
     Factory function to get appropriate extractor.
     
     Args:
-        fast_mode: If True, use fast extractor; otherwise use LLM
-        client: Ollama client (required for LLM mode)
-        model: Model name (for LLM mode)
+        fast_mode (bool): If True, use fast extractor; otherwise use LLM
+        client (Optional[Any]): Ollama client (required for LLM mode)
+        model (str): Model name (for LLM mode)
         
     Returns:
-        TripletExtractor instance
+        TripletExtractor: TripletExtractor instance
         
     Raises:
         ImportError: If fast mode requested but dependencies not available

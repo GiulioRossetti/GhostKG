@@ -44,8 +44,13 @@ class FSRS:
         calculate_next: Calculate next memory state based on current state and rating
     """
     
-    def __init__(self):
-        """Initialize FSRS with default v4.5 parameters."""
+    def __init__(self) -> None:
+        """
+        Initialize FSRS with default v4.5 parameters.
+        
+        Returns:
+            None
+        """
         self.p = [
             0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01,
             1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61,
@@ -61,9 +66,9 @@ class FSRS:
         Calculate the next memory state after a review.
         
         Args:
-            current_state: Current NodeState with stability, difficulty, etc.
-            rating: Review rating (1=Again, 2=Hard, 3=Good, 4=Easy)
-            now: Current timestamp for the review
+            current_state (NodeState): Current NodeState with stability, difficulty, etc.
+            rating (int): Review rating (1=Again, 2=Hard, 3=Good, 4=Easy)
+            now (datetime.datetime): Current timestamp for the review
             
         Returns:
             NodeState: New memory state with updated stability and difficulty

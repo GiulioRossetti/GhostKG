@@ -2,25 +2,39 @@ import sqlite3
 import json
 import datetime
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Any, Dict
 from .exceptions import DatabaseError, ValidationError
 
 
 @dataclass
 class NodeState:
+    """
+    Represents the FSRS memory state of a knowledge node.
+    
+    Attributes:
+        stability (float): Memory stability value
+        difficulty (float): Memory difficulty value
+        last_review (datetime.datetime): Timestamp of last review
+        reps (int): Number of repetitions
+        state (int): Current state (0=New, 1=Learning, 2=Review)
+    """
     stability: float
     difficulty: float
-    last_review: datetime.datetime
+    last_review: Optional[datetime.datetime]
     reps: int
     state: int
 
 
 class KnowledgeDB:
-    def __init__(self, db_path="agent_memory.db"):
-        """Initialize database connection and schema.
+    def __init__(self, db_path: str = "agent_memory.db") -> None:
+        """
+        Initialize database connection and schema.
         
         Args:
-            db_path: Path to SQLite database file
+            db_path (str): Path to SQLite database file
+            
+        Returns:
+            None
             
         Raises:
             DatabaseError: If connection or schema initialization fails
@@ -32,8 +46,12 @@ class KnowledgeDB:
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to initialize database at {db_path}: {e}") from e
 
-    def _init_schema(self):
-        """Initialize database schema.
+    def _init_schema(self) -> None:
+        """
+        Initialize database schema.
+        
+        Returns:
+            None
         
         Raises:
             DatabaseError: If schema creation fails
@@ -119,17 +137,24 @@ class KnowledgeDB:
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to initialize schema: {e}") from e
 
-    # ... [upsert_node remains the same] ...
     def upsert_node(
-        self, owner_id, node_id, fsrs_state: NodeState = None, timestamp=None
-    ):
-        """Upsert a node with optional FSRS state.
+        self, 
+        owner_id: str, 
+        node_id: str, 
+        fsrs_state: Optional[NodeState] = None, 
+        timestamp: Optional[datetime.datetime] = None
+    ) -> None:
+        """
+        Upsert a node with optional FSRS state.
         
         Args:
-            owner_id: Owner/agent identifier
-            node_id: Node identifier
-            fsrs_state: Optional FSRS state to store
-            timestamp: Optional timestamp (defaults to now)
+            owner_id (str): Owner/agent identifier
+            node_id (str): Node identifier
+            fsrs_state (Optional[NodeState]): Optional FSRS state to store
+            timestamp (Optional[datetime.datetime]): Optional timestamp (defaults to now)
+            
+        Returns:
+            None
             
         Raises:
             ValidationError: If parameters are invalid
@@ -171,19 +196,28 @@ class KnowledgeDB:
             self.conn.rollback()
             raise DatabaseError(f"Failed to upsert node {node_id} for {owner_id}: {e}") from e
 
-    # UPDATED: Add sentiment argument
     def add_relation(
-        self, owner_id, source, relation, target, sentiment=0.0, timestamp=None
-    ):
-        """Add a relation between nodes.
+        self, 
+        owner_id: str, 
+        source: str, 
+        relation: str, 
+        target: str, 
+        sentiment: float = 0.0, 
+        timestamp: Optional[datetime.datetime] = None
+    ) -> None:
+        """
+        Add a relation between nodes.
         
         Args:
-            owner_id: Owner/agent identifier
-            source: Source node identifier
-            relation: Relation type
-            target: Target node identifier
-            sentiment: Sentiment value (-1.0 to 1.0)
-            timestamp: Optional timestamp (defaults to now)
+            owner_id (str): Owner/agent identifier
+            source (str): Source node identifier
+            relation (str): Relation type
+            target (str): Target node identifier
+            sentiment (float): Sentiment value (-1.0 to 1.0)
+            timestamp (Optional[datetime.datetime]): Optional timestamp (defaults to now)
+            
+        Returns:
+            None
             
         Raises:
             ValidationError: If parameters are invalid
@@ -217,16 +251,26 @@ class KnowledgeDB:
                 f"Failed to add relation {source} -{relation}-> {target} for {owner_id}: {e}"
             ) from e
 
-    # ... [log_interaction and getters remain the same] ...
-    def log_interaction(self, agent, action, content, annotations, timestamp=None):
-        """Log an agent interaction.
+    def log_interaction(
+        self, 
+        agent: str, 
+        action: str, 
+        content: str, 
+        annotations: Dict[str, Any], 
+        timestamp: Optional[datetime.datetime] = None
+    ) -> None:
+        """
+        Log an agent interaction.
         
         Args:
-            agent: Agent name
-            action: Action type
-            content: Content of the interaction
-            annotations: Additional metadata (will be JSON-encoded)
-            timestamp: Optional timestamp (defaults to now)
+            agent (str): Agent name
+            action (str): Action type
+            content (str): Content of the interaction
+            annotations (Dict[str, Any]): Additional metadata (will be JSON-encoded)
+            timestamp (Optional[datetime.datetime]): Optional timestamp (defaults to now)
+            
+        Returns:
+            None
             
         Raises:
             ValidationError: If parameters are invalid
@@ -247,15 +291,16 @@ class KnowledgeDB:
             self.conn.rollback()
             raise DatabaseError(f"Failed to log interaction for {agent}: {e}") from e
 
-    def get_node(self, owner_id, node_id):
-        """Get a node by ID.
+    def get_node(self, owner_id: str, node_id: str) -> Optional[sqlite3.Row]:
+        """
+        Get a node by ID.
         
         Args:
-            owner_id: Owner/agent identifier
-            node_id: Node identifier
+            owner_id (str): Owner/agent identifier
+            node_id (str): Node identifier
             
         Returns:
-            sqlite3.Row or None if not found
+            Optional[sqlite3.Row]: sqlite3.Row or None if not found
             
         Raises:
             DatabaseError: If query fails
@@ -267,17 +312,22 @@ class KnowledgeDB:
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to get node {node_id} for {owner_id}: {e}") from e
 
-    def get_agent_stance(self, owner_id, topic, current_time=None):
+    def get_agent_stance(
+        self, 
+        owner_id: str, 
+        topic: str, 
+        current_time: Optional[datetime.datetime] = None
+    ) -> List[sqlite3.Row]:
         """
         Retrieves agent beliefs.
         
         Args:
-            owner_id: Owner/agent identifier
-            topic: Topic to search for
-            current_time: Optional current simulation time
+            owner_id (str): Owner/agent identifier
+            topic (str): Topic to search for
+            current_time (Optional[datetime.datetime]): Optional current simulation time
             
         Returns:
-            List of sqlite3.Row objects
+            List[sqlite3.Row]: List of sqlite3.Row objects
             
         Raises:
             DatabaseError: If query fails
@@ -308,16 +358,17 @@ class KnowledgeDB:
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to get agent stance for {owner_id} on {topic}: {e}") from e
 
-    def get_world_knowledge(self, owner_id, topic, limit=10):
-        """Get world knowledge (facts from others) about a topic.
+    def get_world_knowledge(self, owner_id: str, topic: str, limit: int = 10) -> List[sqlite3.Row]:
+        """
+        Get world knowledge (facts from others) about a topic.
         
         Args:
-            owner_id: Owner/agent identifier
-            topic: Topic to search for
-            limit: Maximum number of results
+            owner_id (str): Owner/agent identifier
+            topic (str): Topic to search for
+            limit (int): Maximum number of results
             
         Returns:
-            List of sqlite3.Row objects
+            List[sqlite3.Row]: List of sqlite3.Row objects
             
         Raises:
             DatabaseError: If query fails

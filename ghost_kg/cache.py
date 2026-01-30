@@ -39,8 +39,11 @@ class AgentCache:
         Initialize the cache.
         
         Args:
-            max_size: Maximum number of entries to cache (default: 128)
-            enabled: Whether caching is enabled (default: True)
+            max_size (int): Maximum number of entries to cache (default: 128)
+            enabled (bool): Whether caching is enabled (default: True)
+            
+        Returns:
+            None
         """
         self.max_size = max_size
         self.enabled = enabled
@@ -57,7 +60,7 @@ class AgentCache:
             *args: Arguments to hash into a key
             
         Returns:
-            Hash string for cache key
+            str: Hash string for cache key
         """
         key_str = json.dumps(args, sort_keys=True, default=str)
         return hashlib.md5(key_str.encode()).hexdigest()
@@ -67,7 +70,10 @@ class AgentCache:
         Evict least recently used entry from cache.
         
         Args:
-            cache: The cache dict to evict from
+            cache (Dict[str, Tuple[Any, int]]): The cache dict to evict from
+            
+        Returns:
+            None
         """
         if len(cache) >= self.max_size:
             # Find entry with lowest access count
@@ -79,11 +85,11 @@ class AgentCache:
         Get cached context for agent and topic.
         
         Args:
-            agent_name: Name of the agent
-            topic: Topic keyword
+            agent_name (str): Name of the agent
+            topic (str): Topic keyword
             
         Returns:
-            Cached context string or None if not found
+            Optional[str]: Cached context string or None if not found
         """
         if not self.enabled:
             return None
@@ -102,9 +108,12 @@ class AgentCache:
         Cache context for agent and topic.
         
         Args:
-            agent_name: Name of the agent
-            topic: Topic keyword
-            context: Context string to cache
+            agent_name (str): Name of the agent
+            topic (str): Topic keyword
+            context (str): Context string to cache
+            
+        Returns:
+            None
         """
         if not self.enabled:
             return
@@ -125,12 +134,12 @@ class AgentCache:
         Get cached memory view for agent.
         
         Args:
-            agent_name: Name of the agent
-            topic: Optional topic filter
-            time_filter: Optional time filter
+            agent_name (str): Name of the agent
+            topic (Optional[str]): Optional topic filter
+            time_filter (Optional[str]): Optional time filter
             
         Returns:
-            Cached memory view or None if not found
+            Optional[Any]: Cached memory view or None if not found
         """
         if not self.enabled:
             return None
@@ -155,10 +164,13 @@ class AgentCache:
         Cache memory view for agent.
         
         Args:
-            agent_name: Name of the agent
-            data: Memory view data to cache
-            topic: Optional topic filter
-            time_filter: Optional time filter
+            agent_name (str): Name of the agent
+            data (Any): Memory view data to cache
+            topic (Optional[str]): Optional topic filter
+            time_filter (Optional[str]): Optional time filter
+            
+        Returns:
+            None
         """
         if not self.enabled:
             return
@@ -177,10 +189,10 @@ class AgentCache:
         to ensure fresh data on next access.
         
         Args:
-            agent_name: Name of the agent to invalidate
+            agent_name (str): Name of the agent to invalidate
             
         Returns:
-            Number of entries invalidated
+            int: Number of entries invalidated
         """
         count = 0
         with self._lock:
@@ -202,7 +214,12 @@ class AgentCache:
         return count
     
     def clear(self) -> None:
-        """Clear all cache entries."""
+        """
+        Clear all cache entries.
+        
+        Returns:
+            None
+        """
         with self._lock:
             self._context_cache.clear()
             self._memory_cache.clear()
@@ -213,7 +230,7 @@ class AgentCache:
         Get cache statistics.
         
         Returns:
-            Dictionary with cache statistics
+            Dict[str, int]: Dictionary with cache statistics
         """
         with self._lock:
             return {
@@ -235,11 +252,11 @@ def get_global_cache(enabled: bool = True, max_size: int = 128) -> AgentCache:
     Get or create the global cache instance.
     
     Args:
-        enabled: Whether caching is enabled
-        max_size: Maximum cache size
+        enabled (bool): Whether caching is enabled
+        max_size (int): Maximum cache size
         
     Returns:
-        Global AgentCache instance
+        AgentCache: Global AgentCache instance
     """
     global _global_cache
     
@@ -252,7 +269,12 @@ def get_global_cache(enabled: bool = True, max_size: int = 128) -> AgentCache:
 
 
 def clear_global_cache() -> None:
-    """Clear the global cache."""
+    """
+    Clear the global cache.
+    
+    Returns:
+        None
+    """
     global _global_cache
     if _global_cache is not None:
         _global_cache.clear()

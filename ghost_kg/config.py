@@ -29,7 +29,11 @@ class FSRSConfig:
     ])
     
     def validate(self) -> None:
-        """Validate FSRS configuration.
+        """
+        Validate FSRS configuration.
+        
+        Returns:
+            None
         
         Raises:
             ConfigurationError: If configuration is invalid
@@ -58,7 +62,11 @@ class DatabaseConfig:
     timeout: float = 5.0
     
     def validate(self) -> None:
-        """Validate database configuration.
+        """
+        Validate database configuration.
+        
+        Returns:
+            None
         
         Raises:
             ConfigurationError: If configuration is invalid
@@ -85,7 +93,11 @@ class LLMConfig:
     max_retries: int = 3
     
     def validate(self) -> None:
-        """Validate LLM configuration.
+        """
+        Validate LLM configuration.
+        
+        Returns:
+            None
         
         Raises:
             ConfigurationError: If configuration is invalid
@@ -119,7 +131,11 @@ class FastModeConfig:
     })
     
     def validate(self) -> None:
-        """Validate fast mode configuration.
+        """
+        Validate fast mode configuration.
+        
+        Returns:
+            None
         
         Raises:
             ConfigurationError: If configuration is invalid
@@ -167,7 +183,11 @@ class GhostKGConfig:
     fast_mode: FastModeConfig = field(default_factory=FastModeConfig)
     
     def validate(self) -> None:
-        """Validate all configuration sections.
+        """
+        Validate all configuration sections.
+        
+        Returns:
+            None
         
         Raises:
             ConfigurationError: If any configuration is invalid
@@ -178,22 +198,24 @@ class GhostKGConfig:
         self.fast_mode.validate()
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert configuration to dictionary.
+        """
+        Convert configuration to dictionary.
         
         Returns:
-            Dictionary representation of configuration
+            Dict[str, Any]: Dictionary representation of configuration
         """
         return asdict(self)
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'GhostKGConfig':
-        """Load configuration from dictionary.
+        """
+        Load configuration from dictionary.
         
         Args:
-            data: Dictionary containing configuration data
+            data (Dict[str, Any]): Dictionary containing configuration data
         
         Returns:
-            GhostKGConfig instance
+            GhostKGConfig: GhostKGConfig instance
         
         Raises:
             ConfigurationError: If dictionary format is invalid
@@ -219,7 +241,8 @@ class GhostKGConfig:
     
     @classmethod
     def from_env(cls, prefix: str = "GHOSTKG") -> 'GhostKGConfig':
-        """Load configuration from environment variables.
+        """
+        Load configuration from environment variables.
         
         Environment variables should be prefixed with the given prefix and use underscores
         to separate nested keys. For example:
@@ -228,10 +251,14 @@ class GhostKGConfig:
         - GHOSTKG_DATABASE_PATH
         
         Args:
+            prefix (str): Prefix for environment variables (default: "GHOSTKG")
+        
+        Returns:
+            GhostKGConfig: GhostKGConfig instance
             prefix: Prefix for environment variables (default: "GHOSTKG")
         
         Returns:
-            GhostKGConfig instance
+            GhostKGConfig: GhostKGConfig instance
         
         Examples:
             >>> # Set environment variables:
@@ -285,7 +312,20 @@ class GhostKGConfig:
     
     @classmethod
     def from_yaml(cls, path: str) -> 'GhostKGConfig':
-        """Load configuration from YAML file.
+        """
+        Load configuration from YAML file.
+        
+        Requires PyYAML to be installed: `pip install pyyaml`
+        
+        Args:
+            path (str): Path to YAML configuration file
+        
+        Returns:
+            GhostKGConfig: GhostKGConfig instance
+        
+        Raises:
+            ConfigurationError: If file cannot be loaded or is invalid
+            ImportError: If PyYAML is not installed
         
         Requires PyYAML to be installed: `pip install pyyaml`
         
@@ -333,13 +373,14 @@ class GhostKGConfig:
     
     @classmethod
     def from_json(cls, path: str) -> 'GhostKGConfig':
-        """Load configuration from JSON file.
+        """
+        Load configuration from JSON file.
         
         Args:
-            path: Path to JSON configuration file
+            path (str): Path to JSON configuration file
         
         Returns:
-            GhostKGConfig instance
+            GhostKGConfig: GhostKGConfig instance
         
         Raises:
             ConfigurationError: If file cannot be loaded or is invalid
@@ -367,9 +408,10 @@ class GhostKGConfig:
 
 # Convenience function for getting default config
 def get_default_config() -> GhostKGConfig:
-    """Get default GhostKG configuration.
+    """
+    Get default GhostKG configuration.
     
     Returns:
-        GhostKGConfig with default values
+        GhostKGConfig: GhostKGConfig with default values
     """
     return GhostKGConfig()

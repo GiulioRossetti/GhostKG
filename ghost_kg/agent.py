@@ -13,7 +13,7 @@ Each agent maintains:
 
 import datetime
 import re
-from typing import Optional
+from typing import Optional, Any
 
 try:
     from ollama import Client
@@ -56,14 +56,17 @@ class GhostAgent:
         name: str, 
         db_path: str = "agent_memory.db", 
         llm_host: str = "http://localhost:11434"
-    ):
+    ) -> None:
         """
         Initialize a new GhostAgent.
         
         Args:
-            name: Unique identifier for the agent
-            db_path: Path to SQLite database file
-            llm_host: URL for Ollama LLM server
+            name (str): Unique identifier for the agent
+            db_path (str): Path to SQLite database file
+            llm_host (str): URL for Ollama LLM server
+            
+        Returns:
+            None
         """
         self.name = name
         self.db = KnowledgeDB(db_path)
@@ -84,7 +87,10 @@ class GhostAgent:
         Update the agent's simulation clock.
         
         Args:
-            new_time: New timestamp for the simulation clock
+            new_time (datetime.datetime): New timestamp for the simulation clock
+            
+        Returns:
+            None
         """
         if new_time.tzinfo is None:
             new_time = new_time.replace(tzinfo=datetime.timezone.utc)
@@ -101,10 +107,10 @@ class GhostAgent:
         - Pronouns (me, myself) mapping to "I"
         
         Args:
-            text: Raw text to normalize
+            text (Optional[str]): Raw text to normalize
             
         Returns:
-            Normalized text or None if invalid
+            Optional[str]: Normalized text or None if invalid
         """
         if not text:
             return None
@@ -132,12 +138,12 @@ class GhostAgent:
         - Too-short terms
         
         Args:
-            src: Source node (normalized)
-            rel: Relation (normalized)
-            tgt: Target node (normalized)
+            src (str): Source node (normalized)
+            rel (str): Relation (normalized)
+            tgt (str): Target node (normalized)
             
         Returns:
-            True if triplet is semantically meaningful
+            bool: True if triplet is semantically meaningful
         """
         # 1. Stopwords / Garbage
         stopwords = {"it", "is", "the", "a", "an", "this", "that"}
@@ -178,8 +184,11 @@ class GhostAgent:
         Update the memory strength of a concept using FSRS.
         
         Args:
-            concept_name: Name of the concept to update
-            rating: Review rating (1=Again, 2=Hard, 3=Good, 4=Easy)
+            concept_name (str): Name of the concept to update
+            rating (int): Review rating (1=Again, 2=Hard, 3=Good, 4=Easy)
+            
+        Returns:
+            None
         """
         norm_name = self._normalize(concept_name)
         if not norm_name:
@@ -216,18 +225,21 @@ class GhostAgent:
         source: str, 
         relation: str, 
         target: str, 
-        rating: int = None, 
+        rating: Optional[int] = None, 
         sentiment: float = 0.0
     ) -> None:
         """
         Add a knowledge triplet to the agent's knowledge graph.
         
         Args:
-            source: Source node (e.g., "I", "Alice", "dogs")
-            relation: Relationship (e.g., "likes", "knows", "fears")
-            target: Target node (e.g., "pizza", "Python", "cats")
-            rating: Memory rating for target concept (defaults to Good)
-            sentiment: Sentiment score for the relation (-1.0 to 1.0)
+            source (str): Source node (e.g., "I", "Alice", "dogs")
+            relation (str): Relationship (e.g., "likes", "knows", "fears")
+            target (str): Target node (e.g., "pizza", "Python", "cats")
+            rating (Optional[int]): Memory rating for target concept (defaults to Good)
+            sentiment (float): Sentiment score for the relation (-1.0 to 1.0)
+            
+        Returns:
+            None
         """
         if rating is None:
             rating = Rating.Good
@@ -257,11 +269,11 @@ class GhostAgent:
         Calculate retrievability of a memory based on FSRS formula.
         
         Args:
-            stability: Memory stability value
-            last_review: Timestamp of last review
+            stability (float): Memory stability value
+            last_review (datetime.datetime): Timestamp of last review
             
         Returns:
-            Retrievability score (0.0 to 1.0)
+            float: Retrievability score (0.0 to 1.0)
         """
         if not last_review or stability == 0:
             return 0.0
@@ -280,10 +292,10 @@ class GhostAgent:
         - What other agents think about the topic
         
         Args:
-            topic: Topic to retrieve knowledge about
+            topic (str): Topic to retrieve knowledge about
             
         Returns:
-            Formatted string with agent's knowledge view
+            str: Formatted string with agent's knowledge view
         """
         n_topic = self._normalize(topic)
         if not n_topic:
