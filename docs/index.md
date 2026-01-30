@@ -4,8 +4,17 @@ Welcome to the comprehensive documentation for **GhostKG** - a dynamic knowledge
 
 ## 🎯 Latest Updates
 
-**Phase 1 Refactoring Complete!** ✅ (January 30, 2026)
+**Phase 4 Refactoring Complete!** ✅ (January 30, 2026)
+- Comprehensive configuration management system implemented
+- Support for environment variables, YAML, JSON loading
+- Type-safe configuration with validation
+- 35 tests, 100% passing
+- See [Configuration Guide](CONFIGURATION.md) and [Phase 4 Summary](PHASE4_SUMMARY.md)
+
+**Phase 1-3 Also Complete!** ✅
 - Core codebase refactored into focused modules (fsrs, agent, extraction, cognitive)
+- Modern UV package manager support with flexible dependencies
+- Comprehensive error handling with custom exceptions
 - Thread-safe model caching implemented
 - 100% backward compatibility maintained
 - See [Refactoring Plan](REFACTORING_PLAN.md) for details
@@ -145,7 +154,29 @@ Topics covered:
 
 ---
 
-#### 7. [Fast Mode Configuration](FAST_MODE_CONFIG.md)
+#### 7. [Configuration Guide](CONFIGURATION.md)
+**Complete guide to configuring GhostKG**
+
+Topics covered:
+- Configuration structure and options
+- Default configuration and customization
+- Loading from environment variables
+- Loading from YAML/JSON files
+- Configuration validation
+- Common use cases and examples
+- Best practices and security
+- Troubleshooting
+
+**Read this if you want to**: Customize GhostKG for your specific needs or deploy to different environments.
+
+**Cross-references**:
+- [UV Setup](UV_SETUP.md) - Dependency management
+- [Core Components](CORE_COMPONENTS.md) - Components that use configuration
+- [Phase 4 Summary](PHASE4_SUMMARY.md) - Configuration system implementation
+
+---
+
+#### 8. [Fast Mode Configuration](FAST_MODE_CONFIG.md)
 **Guide to fast mode vs LLM mode for triplet extraction**
 
 Topics covered:
@@ -162,10 +193,11 @@ Topics covered:
 - [Algorithms](ALGORITHMS.md) - Sentiment analysis in fast mode
 - [Examples](../examples/use_case_example.py) - Fast mode in practice
 - [UV Setup](UV_SETUP.md) - Installing fast mode dependencies
+- [Configuration](CONFIGURATION.md) - FastModeConfig options
 
 ---
 
-#### 8. [Refactoring Plan](REFACTORING_PLAN.md)
+#### 9. [Refactoring Plan](REFACTORING_PLAN.md)
 **Comprehensive plan for improving maintainability and efficiency**
 
 Topics covered:
@@ -174,6 +206,7 @@ Topics covered:
 - Code organization improvements (Phase 1 ✅ COMPLETE)
 - Dependency management strategy (Phase 2 ✅ COMPLETE)
 - Error handling enhancements (Phase 3 ✅ COMPLETE)
+- Configuration management system (Phase 4 ✅ COMPLETE)
 - Testing infrastructure expansion
 - Performance optimizations
 - Implementation timeline and priorities
@@ -183,6 +216,7 @@ Topics covered:
 - [Phase 1 Summary](PHASE1_SUMMARY.md) - Code organization refactoring
 - [Phase 2 Summary](PHASE2_SUMMARY.md) - Dependency management with UV
 - [Phase 3 Summary](PHASE3_SUMMARY.md) - Error handling and validation
+- [Phase 4 Summary](PHASE4_SUMMARY.md) - Configuration management
 
 **Read this if you want to**: Understand the roadmap for improving GhostKG or contribute to refactoring efforts.
 
