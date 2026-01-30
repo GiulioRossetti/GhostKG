@@ -198,7 +198,7 @@ def run_use_case():
     print(f"\n💬 Alice: {alice_initial}")
 
     # Multi-round communication (3 rounds)
-    num_rounds = 3
+    num_rounds = 10
     current_speaker = "Alice"
     current_text = alice_initial
 
