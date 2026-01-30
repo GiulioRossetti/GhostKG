@@ -11,18 +11,25 @@ In the main program:
 - A passes the generated text to ghost_kg to update its KG
 
 This example shows two agents (Alice and Bob) in multi-round communication.
+Uses ollama with llama3.2 for all LLM-related tasks.
 """
 
 import sys
 import os
 import datetime
+import json
 from datetime import timedelta
+from ollama import Client
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from ghost_kg import AgentManager, Rating
 
 DB_PATH = "use_case_example.db"
+LLM_MODEL = "llama3.2"
+
+# Initialize ollama client
+ollama_client = Client(host="http://localhost:11434")
 
 # Cleanup
 if os.path.exists(DB_PATH):
@@ -31,120 +38,111 @@ if os.path.exists(DB_PATH):
 
 def external_llm_generate(agent_name: str, context: str, topic: str) -> str:
     """
-    Simulate external LLM generating a response based on context.
-    In production, this would call GPT-4, Claude, or another LLM API.
+    Use ollama with llama3.2 to generate a response based on context.
     """
-    print(f"  [External LLM] Generating response for {agent_name}...")
-    print(f"  [External LLM] Using context: {context[:100]}...")
+    print(f"  [Ollama LLM] Generating response for {agent_name}...")
+    print(f"  [Ollama LLM] Using context: {context[:100]}...")
 
-    # Simulate different responses based on agent
-    if agent_name == "Alice":
-        responses = [
-            "I think renewable energy is the key to addressing climate change.",
-            "Solar and wind power have become much more affordable recently.",
-            "We need government incentives to accelerate the transition.",
-        ]
-    else:  # Bob
-        responses = [
-            "I agree that climate action is important, but we must consider costs.",
-            "Economic stability is also crucial for sustainable development.",
-            "We should pursue balanced policies that protect both environment and economy.",
-        ]
+    prompt = f"""
+    You are {agent_name}. Talking about {topic}.
+    YOUR MEMORY: {context}
+    Task: Write a short 1-sentence reply. Prioritize YOUR STANCE.
+    """
 
-    # Simple rotation through responses
-    import hashlib
-
-    idx = hash(context) % len(responses)
-    return responses[idx]
+    try:
+        res = ollama_client.chat(
+            model=LLM_MODEL, messages=[{"role": "user", "content": prompt}]
+        )
+        response = res["message"]["content"]
+        return response
+    except Exception as e:
+        print(f"  Error generating response: {e}")
+        # Fallback to simple response
+        return f"I have thoughts about {topic}."
 
 
 def extract_triplets(text: str, author: str):
     """
-    Simulate triplet extraction from text.
-    In production, this would use NLP/LLM to extract structured knowledge.
+    Use ollama with llama3.2 to extract triplets from text.
     """
-    triplets = []
+    prompt = f"""
+    Analyze this text by {author}: "{text}"
 
-    # Always extract basic mention triplet
-    # Extract main concept from text
-    text_lower = text.lower()
+    Goal: Build a Semantic Knowledge Graph.
 
-    # Extract author's stance
-    if any(word in text_lower for word in ["urgent", "important", "crucial"]):
-        if "climate" in text_lower:
-            triplets.append((author, "emphasizes", "urgency"))
+    CRITICAL INSTRUCTIONS:
+    1. EXTRACT MEANING, NOT GRAMMAR.
+       - BAD:  "Bob" -> "noun" -> "climate"
+       - BAD:  "Text" -> "adverb" -> "strongly"
+       - GOOD: "Bob" -> "emphasizes" -> "climate action"
+       - GOOD: "climate change" -> "requires" -> "action"
 
-    if "challenge" in text_lower:
-        triplets.append((author, "discusses", "challenges"))
+    2. World Facts: Objective SVO triplets.
+    3. Partner Stance: What {author} explicitly believes or says.
 
-    # Simple keyword-based extraction (in production, use proper NLP)
-    keywords = {
-        "renewable energy": [
-            (author, "mentions", "renewable energy"),
-            ("renewable energy", "addresses", "climate change"),
-        ],
-        "solar": [
-            (author, "talks about", "solar power"),
-            ("solar", "is_type_of", "renewable energy"),
-        ],
-        "wind": [
-            (author, "talks about", "wind power"),
-            ("wind", "is_type_of", "renewable energy"),
-        ],
-        "government": [
-            (author, "mentions", "government"),
-            ("government", "can_provide", "incentives"),
-        ],
-        "costs": [
-            (author, "considers", "costs"),
-            ("costs", "relate_to", "economic stability"),
-        ],
-        "economy": [
-            (author, "values", "economy"),
-            ("economy", "important_for", "development"),
-        ],
-        "balanced": [(author, "advocates", "balanced policies")],
-        "stability": [
-            (author, "mentions", "stability"),
-            ("stability", "relates_to", "development"),
-        ],
-    }
-
-    for keyword, keyword_triplets in keywords.items():
-        if keyword in text_lower:
-            triplets.extend(keyword_triplets)
-
-    # Always have at least one triplet
-    if not triplets:
-        triplets.append((author, "says", "something"))
-
-    return triplets
-
-
-def extract_response_triplets(text: str):
+    Return JSON:
+    {{
+        "world_facts":    [{{"source": "Concept", "relation": "active_verb", "target": "Concept"}}],
+        "partner_stance": [{{"source": "{author}", "relation": "active_verb", "target": "Concept"}}]
+    }}
     """
-    Extract triplets from agent's own response.
+
+    try:
+        res = ollama_client.chat(
+            model=LLM_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            format="json",
+        )
+        data = json.loads(res["message"]["content"])
+
+        triplets = []
+
+        # Extract world facts
+        for item in data.get("world_facts", []):
+            triplets.append((item["source"], item["relation"], item["target"]))
+
+        # Extract partner stance
+        for item in data.get("partner_stance", []):
+            triplets.append((item["source"], item["relation"], item["target"]))
+
+        return triplets
+    except Exception as e:
+        print(f"  Warning: Error extracting triplets: {e}")
+        # Fallback to simple extraction
+        return [(author, "says", "something")]
+
+
+def extract_response_triplets(text: str, agent_name: str):
+    """
+    Use ollama with llama3.2 to extract triplets from agent's own response.
     Returns list of (relation, target, sentiment) tuples.
     """
-    triplets = []
+    prompt = f"""
+    You are {agent_name}. You just said: "{text}"
+    Task: Extract the beliefs/stances YOU just expressed.
+    CRITICAL: Relations must be active verbs (e.g. "support", "oppose", "fear"), NOT grammatical labels.
 
-    # Simple keyword-based extraction
-    if "renewable energy" in text.lower():
-        triplets.append(("support", "renewable energy", 0.8))
-    if "solar" in text.lower():
-        triplets.append(("interested_in", "solar power", 0.7))
-    if "wind" in text.lower():
-        triplets.append(("interested_in", "wind power", 0.7))
-    if "government" in text.lower():
-        triplets.append(("want", "government action", 0.6))
-    if "costs" in text.lower():
-        triplets.append(("concerned_about", "costs", -0.3))
-    if "economy" in text.lower():
-        triplets.append(("value", "economic stability", 0.7))
-    if "balanced" in text.lower():
-        triplets.append(("prefer", "balanced approach", 0.8))
+    Return JSON: {{ "my_expressed_stances": [ {{"relation": "verb", "target": "Entity", "sentiment": 0.5}} ] }}
+    """
 
-    return triplets
+    try:
+        res = ollama_client.chat(
+            model=LLM_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            format="json",
+        )
+        data = json.loads(res["message"]["content"])
+
+        triplets = []
+        for item in data.get("my_expressed_stances", []):
+            s_score = item.get("sentiment", 0.0)
+            triplets.append((item["relation"], item["target"], s_score))
+
+        return triplets
+    except Exception as e:
+        print(f"  Warning: Error extracting response triplets: {e}")
+        # Fallback to empty list
+        return []
 
 
 def run_use_case():
@@ -248,7 +246,7 @@ def run_use_case():
 
         # Step D: Update KG with the generated response
         print(f"\n💾 {responding_agent} updates KG with own response...")
-        response_triplets = extract_response_triplets(response)
+        response_triplets = extract_response_triplets(response, responding_agent)
         manager.update_with_response(
             responding_agent, response, triplets=response_triplets
         )
