@@ -255,10 +255,6 @@ class GhostKGConfig:
         
         Returns:
             GhostKGConfig: GhostKGConfig instance
-            prefix: Prefix for environment variables (default: "GHOSTKG")
-        
-        Returns:
-            GhostKGConfig: GhostKGConfig instance
         
         Examples:
             >>> # Set environment variables:
@@ -322,18 +318,6 @@ class GhostKGConfig:
         
         Returns:
             GhostKGConfig: GhostKGConfig instance
-        
-        Raises:
-            ConfigurationError: If file cannot be loaded or is invalid
-            ImportError: If PyYAML is not installed
-        
-        Requires PyYAML to be installed: `pip install pyyaml`
-        
-        Args:
-            path: Path to YAML configuration file
-        
-        Returns:
-            GhostKGConfig instance
         
         Raises:
             ConfigurationError: If file cannot be loaded or is invalid

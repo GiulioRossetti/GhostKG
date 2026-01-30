@@ -245,7 +245,7 @@ class AgentManager:
         self,
         agent_name: str,
         response: str,
-        triplets: Optional[List[Tuple[str, str, str, float]]] = None,
+        triplets: Optional[List[Tuple[str, str, float]]] = None,
         context: Optional[str] = None,
     ) -> None:
         """
@@ -258,7 +258,7 @@ class AgentManager:
         Args:
             agent_name (str): Name of the agent
             response (str): The response text generated
-            triplets (Optional[List[Tuple[str, str, str, float]]]): Optional list of (relation, target, sentiment) triplets
+            triplets (Optional[List[Tuple[str, str, float]]]): Optional list of (relation, target, sentiment) triplets
                      Source is assumed to be "I" (the agent)
             context (Optional[str]): Optional context that was used to generate the response
                     This will be stored in the logs annotations

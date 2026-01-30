@@ -264,13 +264,13 @@ class GhostAgent:
             timestamp=self.current_time,
         )
 
-    def _get_retrievability(self, stability: float, last_review: datetime.datetime) -> float:
+    def _get_retrievability(self, stability: float, last_review: Optional[datetime.datetime]) -> float:
         """
         Calculate retrievability of a memory based on FSRS formula.
         
         Args:
             stability (float): Memory stability value
-            last_review (datetime.datetime): Timestamp of last review
+            last_review (Optional[datetime.datetime]): Timestamp of last review
             
         Returns:
             float: Retrievability score (0.0 to 1.0)
