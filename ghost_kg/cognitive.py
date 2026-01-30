@@ -9,11 +9,13 @@ operations for agents:
 """
 
 import json
+import time
 from typing import Optional
 
 from .agent import GhostAgent
 from .fsrs import Rating
 from .extraction import get_extractor, HAS_FAST_MODE
+from .exceptions import LLMError, ExtractionError
 
 
 class CognitiveLoop:
@@ -68,6 +70,50 @@ class CognitiveLoop:
                 client=self.agent.client,
                 model=self.model
             )
+
+    def _call_llm_with_retry(
+        self, 
+        prompt: str, 
+        format: str = None, 
+        timeout: int = 30, 
+        max_retries: int = 3
+    ) -> dict:
+        """
+        Call LLM with timeout and retry logic.
+        
+        Args:
+            prompt: Prompt to send to LLM
+            format: Optional format specification (e.g., "json")
+            timeout: Timeout in seconds
+            max_retries: Maximum number of retry attempts
+            
+        Returns:
+            dict: LLM response
+            
+        Raises:
+            LLMError: If all retries fail
+        """
+        for attempt in range(max_retries):
+            try:
+                kwargs = {
+                    "model": self.model,
+                    "messages": [{"role": "user", "content": prompt}],
+                }
+                if format:
+                    kwargs["format"] = format
+                    
+                res = self.agent.client.chat(**kwargs)
+                return res
+                
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    raise LLMError(
+                        f"LLM call failed after {max_retries} attempts: {e}"
+                    ) from e
+                # Exponential backoff
+                wait_time = 2 ** attempt
+                print(f"LLM call failed (attempt {attempt + 1}/{max_retries}), retrying in {wait_time}s...")
+                time.sleep(wait_time)
 
     def absorb(self, text: str, author: str = "User") -> None:
         """
@@ -134,6 +180,10 @@ class CognitiveLoop:
         
         Args:
             text: Agent's own statement to reflect on
+            
+        Raises:
+            LLMError: If LLM call fails after retries
+            ExtractionError: If JSON parsing fails
         """
         print(f"   > [Self-Reflection] Analyzing my own words...")
         
@@ -146,12 +196,12 @@ class CognitiveLoop:
         """
         
         try:
-            res = self.agent.client.chat(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                format="json",
-            )
-            data = json.loads(res["message"]["content"])
+            res = self._call_llm_with_retry(prompt, format="json")
+            
+            try:
+                data = json.loads(res["message"]["content"])
+            except json.JSONDecodeError as e:
+                raise ExtractionError(f"Invalid JSON in reflection response: {e}") from e
             
             count = 0
             for item in data.get("my_expressed_stances", []):
@@ -166,10 +216,13 @@ class CognitiveLoop:
                 count += 1
             print(f"   > [Self-Reflection] Reinforced {count} beliefs.")
             
-        except Exception as e:
+        except (LLMError, ExtractionError) as e:
             print(f"Error reflecting: {e}")
+            raise
+        except Exception as e:
+            print(f"Unexpected error reflecting: {e}")
 
-    def reply(self, topic: str, partner_name: str) -> Optional[str]:
+    def reply(self, topic: str, partner_name: str) -> str:
         """
         Generate a reply about a topic based on agent's memory.
         
@@ -182,7 +235,10 @@ class CognitiveLoop:
             partner_name: Name of conversation partner
             
         Returns:
-            Generated reply text, or None if generation fails
+            Generated reply text, or empty string if generation fails
+            
+        Raises:
+            LLMError: If LLM call fails after retries
         """
         context = self.agent.get_memory_view(topic)
         
@@ -193,10 +249,7 @@ class CognitiveLoop:
         """
         
         try:
-            res = self.agent.client.chat(
-                model=self.model, 
-                messages=[{"role": "user", "content": prompt}]
-            )
+            res = self._call_llm_with_retry(prompt)
             content = res["message"]["content"]
             
             # Log the generated response
@@ -218,6 +271,9 @@ class CognitiveLoop:
             
             return content
             
-        except Exception as e:
+        except LLMError as e:
             print(f"Error replying: {e}")
+            raise
+        except Exception as e:
+            print(f"Unexpected error replying: {e}")
             return ""  # Return empty string instead of None for consistency

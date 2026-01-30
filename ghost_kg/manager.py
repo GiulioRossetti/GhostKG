@@ -10,6 +10,7 @@ from typing import Optional, Dict, List, Tuple
 from .agent import GhostAgent
 from .fsrs import Rating
 from .storage import KnowledgeDB
+from .exceptions import ValidationError, AgentNotFoundError
 
 
 class AgentManager:
@@ -47,7 +48,13 @@ class AgentManager:
 
         Returns:
             GhostAgent instance
+            
+        Raises:
+            ValidationError: If name is invalid
         """
+        if not name or not isinstance(name, str):
+            raise ValidationError("Agent name must be a non-empty string")
+            
         if name not in self.agents:
             self.agents[name] = GhostAgent(
                 name, db_path=self.db_path, llm_host=llm_host
@@ -73,10 +80,18 @@ class AgentManager:
         Args:
             agent_name: Name of the agent
             time: Current time to set
+            
+        Raises:
+            AgentNotFoundError: If agent doesn't exist
+            ValidationError: If time is invalid
         """
+        if not isinstance(time, datetime.datetime):
+            raise ValidationError("time must be a datetime object")
+            
         agent = self.get_agent(agent_name)
-        if agent:
-            agent.set_time(time)
+        if not agent:
+            raise AgentNotFoundError(f"Agent '{agent_name}' not found")
+        agent.set_time(time)
 
     def absorb_content(
         self,
@@ -100,12 +115,28 @@ class AgentManager:
             triplets: Optional list of (source, relation, target) triplets
                      If provided, these will be learned directly
             fast_mode: If True, use faster processing (if supported by LLM)
+            
+        Raises:
+            AgentNotFoundError: If agent doesn't exist
+            ValidationError: If parameters are invalid
         """
+        if not content or not isinstance(content, str):
+            raise ValidationError("content must be a non-empty string")
+        if not author or not isinstance(author, str):
+            raise ValidationError("author must be a non-empty string")
+            
         agent = self.get_agent(agent_name)
         if not agent:
-            raise ValueError(f"Agent '{agent_name}' not found")
+            raise AgentNotFoundError(f"Agent '{agent_name}' not found")
 
         if triplets:
+            # Validate triplets
+            if not isinstance(triplets, list):
+                raise ValidationError("triplets must be a list")
+            for triplet in triplets:
+                if not isinstance(triplet, (tuple, list)) or len(triplet) != 3:
+                    raise ValidationError("Each triplet must be a 3-tuple (source, relation, target)")
+                    
             # External program provides triplets
             for source, relation, target in triplets:
                 agent.learn_triplet(source, relation, target, rating=Rating.Good)
@@ -141,10 +172,17 @@ class AgentManager:
 
         Returns:
             Formatted context string
+            
+        Raises:
+            AgentNotFoundError: If agent doesn't exist
+            ValidationError: If topic is invalid
         """
+        if not topic or not isinstance(topic, str):
+            raise ValidationError("topic must be a non-empty string")
+            
         agent = self.get_agent(agent_name)
         if not agent:
-            raise ValueError(f"Agent '{agent_name}' not found")
+            raise AgentNotFoundError(f"Agent '{agent_name}' not found")
 
         return agent.get_memory_view(topic)
 

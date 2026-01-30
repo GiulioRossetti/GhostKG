@@ -9,6 +9,18 @@ from .storage import KnowledgeDB, NodeState
 # Phase 2: Dependency management
 from .dependencies import DependencyChecker, has_llm_support, has_fast_support
 
+# Phase 3: Error handling
+from .exceptions import (
+    GhostKGError,
+    DatabaseError,
+    LLMError,
+    ExtractionError,
+    ConfigurationError,
+    AgentNotFoundError,
+    ValidationError,
+    DependencyError,
+)
+
 # Backward compatibility: Also export from core
 # This ensures old code using "from ghost_kg.core import ..." still works
 from . import core
@@ -36,4 +48,14 @@ __all__ = [
     "DependencyChecker",
     "has_llm_support",
     "has_fast_support",
+    
+    # Exceptions (Phase 3)
+    "GhostKGError",
+    "DatabaseError",
+    "LLMError",
+    "ExtractionError",
+    "ConfigurationError",
+    "AgentNotFoundError",
+    "ValidationError",
+    "DependencyError",
 ]
