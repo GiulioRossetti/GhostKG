@@ -56,13 +56,13 @@ class CognitiveLoop:
                 self.extractor = get_extractor(
                     fast_mode=True,
                     client=None,
-                    model=None
+                    model=None  # type: ignore[arg-type]
                 )
             else:
                 self.extractor = get_extractor(
                     fast_mode=False,
                     client=self.agent.client,
-                    model=self.model
+                    model=self.model or "llama3.2"  # type: ignore[arg-type]
                 )
         except ImportError as e:
             print(f"Warning: {e}")
@@ -71,7 +71,7 @@ class CognitiveLoop:
             self.extractor = get_extractor(
                 fast_mode=False,
                 client=self.agent.client,
-                model=self.model
+                model=self.model  # type: ignore[arg-type]
             )
 
     def _call_llm_with_retry(
@@ -106,7 +106,7 @@ class CognitiveLoop:
                     kwargs["format"] = format
                     
                 res = self.agent.client.chat(**kwargs)
-                return res
+                return res  # type: ignore[no-any-return]
                 
             except Exception as e:
                 if attempt == max_retries - 1:
@@ -117,6 +117,9 @@ class CognitiveLoop:
                 wait_time = 2 ** attempt
                 print(f"LLM call failed (attempt {attempt + 1}/{max_retries}), retrying in {wait_time}s...")
                 time.sleep(wait_time)
+        
+        # Should never reach here due to raise in loop
+        raise LLMError("All retries exhausted")
 
     def absorb(self, text: str, author: str = "User") -> None:
         """
@@ -278,7 +281,7 @@ class CognitiveLoop:
             # Reflect on own statement to reinforce beliefs
             self.reflect(content)
             
-            return content
+            return content  # type: ignore[no-any-return]
             
         except LLMError as e:
             print(f"Error replying: {e}")

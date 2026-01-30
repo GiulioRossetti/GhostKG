@@ -248,18 +248,18 @@ class GhostAgent:
         n_target = self._normalize(target)
         n_relation = self._normalize(relation)
 
-        if not self._is_valid_triple(n_source, n_relation, n_target):
+        if not self._is_valid_triple(n_source, n_relation, n_target):  # type: ignore[arg-type]
             return  # Silent rejection of garbage
 
-        self.update_memory(n_target, rating)
+        self.update_memory(n_target, rating)  # type: ignore[arg-type]
         if n_source != "I":
-            self.update_memory(n_source, Rating.Good)
+            self.update_memory(n_source, Rating.Good)  # type: ignore[arg-type]
 
         self.db.add_relation(
             self.name,
-            n_source,
-            n_relation,
-            n_target,
+            n_source,  # type: ignore[arg-type]
+            n_relation,  # type: ignore[arg-type]
+            n_target,  # type: ignore[arg-type]
             sentiment=sentiment,
             timestamp=self.current_time,
         )

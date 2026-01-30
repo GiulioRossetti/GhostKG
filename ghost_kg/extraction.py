@@ -114,7 +114,7 @@ class FastExtractor(TripletExtractor):
         
         # 1. Extract Entities (Nodes)
         labels = ["Topic", "Person", "Concept", "Organization"]
-        entities = self.model.predict_entities(text, labels)
+        entities = self.model.predict_entities(text, labels)  # type: ignore[union-attr]
         
         # 2. Extract Sentiment (Edge Coloring)
         blob = TextBlob(text)
@@ -250,7 +250,7 @@ class LLMExtractor(TripletExtractor):
             )
             data = json.loads(res["message"]["content"])
             print(f"   > LLM extracted triplets successfully")
-            return data
+            return data  # type: ignore[no-any-return]
             
         except Exception as e:
             print(f"   ! LLM extraction failed: {e}")

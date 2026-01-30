@@ -283,7 +283,7 @@ class AgentManager:
             # Log the interaction with context
             annotations = {"triplets_count": len(triplets), "external": True}
             if context is not None:
-                annotations["context_used"] = context
+                annotations["context_used"] = context  # type: ignore[assignment]
 
             self.db.log_interaction(
                 agent_name,
@@ -302,7 +302,7 @@ class AgentManager:
             # Log the interaction with context
             annotations = {"external": False}
             if context is not None:
-                annotations["context_used"] = context
+                annotations["context_used"] = context  # type: ignore[assignment]
 
             self.db.log_interaction(
                 agent_name,
@@ -367,9 +367,9 @@ class AgentManager:
         if topic:
             n_topic = agent._normalize(topic)
             my_rows = self.db.get_agent_stance(
-                agent_name, n_topic, current_time=agent.current_time
+                agent_name, n_topic, current_time=agent.current_time  # type: ignore[arg-type]
             )
-            world_rows = self.db.get_world_knowledge(agent_name, n_topic, limit=20)
+            world_rows = self.db.get_world_knowledge(agent_name, n_topic, limit=20)  # type: ignore[arg-type]
         else:
             # Get all knowledge
             my_rows = self.db.conn.execute(

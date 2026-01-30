@@ -306,9 +306,10 @@ class KnowledgeDB:
             DatabaseError: If query fails
         """
         try:
-            return self.conn.execute(
+            result = self.conn.execute(
                 "SELECT * FROM nodes WHERE owner_id = ? AND id = ?", (owner_id, node_id)
             ).fetchone()
+            return result  # type: ignore[no-any-return]
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to get node {node_id} for {owner_id}: {e}") from e
 
