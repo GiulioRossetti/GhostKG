@@ -165,6 +165,7 @@ manager.set_agent_time("Alice", time)
 
 ## Examples
 
+- **[use_case_example.py](examples/use_case_example.py)**: Two agents multi-round communication with (topic, text) tuples
 - **[external_program.py](examples/external_program.py)**: Complete example of external program integration
 - **[hourly_simulation.py](examples/hourly_simulation.py)**: Time-based agent conversation simulation
 - **[export_history.py](examples/export_history.py)**: Export knowledge graph history

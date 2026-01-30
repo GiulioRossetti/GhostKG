@@ -145,6 +145,50 @@ class AgentManager:
 
         return agent.get_memory_view(topic)
 
+    def process_and_get_context(
+        self,
+        agent_name: str,
+        topic: str,
+        text: str,
+        author: str = "User",
+        triplets: Optional[List[Tuple[str, str, str]]] = None,
+    ) -> str:
+        """
+        Update agent's KG with content and return context for replying (atomic operation).
+
+        This is a convenience method that combines absorb_content() and get_context()
+        into a single operation, which is useful for the common workflow:
+        1. Agent receives content (topic, text) from a peer
+        2. Agent updates its KG with this information
+        3. Agent needs context to generate a response
+
+        Args:
+            agent_name: Name of the agent
+            topic: The topic of the content
+            text: The text content to process
+            author: Author of the content
+            triplets: Optional list of (source, relation, target) triplets
+                     If provided, these will be learned directly
+
+        Returns:
+            Formatted context string for the topic (updated with new content)
+
+        Example:
+            >>> manager = AgentManager()
+            >>> manager.create_agent("Alice")
+            >>> manager.set_agent_time("Alice", datetime.datetime.now())
+            >>> context = manager.process_and_get_context(
+            ...     "Alice", "climate", "Bob says climate change is urgent",
+            ...     author="Bob", triplets=[("Bob", "says", "climate urgent")]
+            ... )
+            >>> # Use context with external LLM to generate response
+        """
+        # Update KG with the content
+        self.absorb_content(agent_name, text, author, triplets)
+
+        # Return updated context for the topic
+        return self.get_context(agent_name, topic)
+
     def update_with_response(
         self,
         agent_name: str,

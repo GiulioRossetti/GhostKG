@@ -92,6 +92,37 @@ context = manager.get_context("Alice", topic="UBI")
 response = your_llm_api.generate(context, topic)
 ```
 
+### 4b. Process Content and Get Context (Combined Operation)
+
+**New in this update**: Atomic operation that updates KG and returns context:
+
+```python
+# Agent receives a (topic, text) tuple from a peer
+topic = "climate change"
+text = "Climate change requires urgent action"
+author = "Bob"
+
+# Extract triplets (external program responsibility)
+triplets = [("Bob", "emphasizes", "urgency"), ("climate change", "requires", "action")]
+
+# Update KG and get context in one call
+context = manager.process_and_get_context(
+    agent_name="Alice",
+    topic=topic,
+    text=text,
+    author=author,
+    triplets=triplets
+)
+
+# Use context with external LLM to generate response
+response = your_llm_api.generate(context, topic)
+```
+
+This method is perfect for the common workflow where you:
+1. Receive content from a peer
+2. Update your KG with that content
+3. Immediately need context to generate a response
+
 ### 5. Update with Response
 
 After generating a response, update the agent's KG with what they said:
@@ -150,6 +181,71 @@ knowledge = manager.get_agent_knowledge("Alice", topic="UBI")
 print(knowledge["agent_beliefs"])    # What Alice believes
 print(knowledge["world_knowledge"])  # What Alice knows about the world
 ```
+
+## Complete Example: Specific Use Case
+
+The following example demonstrates the complete workflow as specified in the use case:
+
+```python
+from ghost_kg import AgentManager, Rating
+import datetime
+from datetime import timedelta
+
+# Initialize
+manager = AgentManager(db_path="conversation.db")
+
+# Create agents
+alice = manager.create_agent("Alice")
+bob = manager.create_agent("Bob")
+
+# Set initial time (Day 1, Hour 9)
+current_time = datetime.datetime(2025, 1, 1, 9, 0, 0, tzinfo=datetime.timezone.utc)
+manager.set_agent_time("Alice", current_time)
+manager.set_agent_time("Bob", current_time)
+
+# Initialize beliefs
+manager.learn_triplet("Alice", "I", "care_about", "climate", rating=Rating.Easy, sentiment=0.9)
+manager.learn_triplet("Bob", "I", "care_about", "economy", rating=Rating.Easy, sentiment=0.8)
+
+# Multi-round conversation
+topic = "climate change"
+alice_says = "Climate change is urgent"
+
+for round in range(3):
+    # Advance time by 1 hour
+    current_time += timedelta(hours=1)
+    manager.set_agent_time("Bob", current_time)
+    
+    # Bob receives tuple (topic, text) from Alice
+    content_tuple = (topic, alice_says)
+    
+    # Bob processes content and gets context (atomic operation)
+    triplets = [("Alice", "emphasizes", "urgency")]  # External triplet extraction
+    context = manager.process_and_get_context(
+        "Bob", topic, alice_says, author="Alice", triplets=triplets
+    )
+    
+    # Bob uses external LLM to generate response
+    bob_response = your_llm.generate(context, topic)
+    
+    # Bob updates his KG with his response
+    response_triplets = [("concerned_about", "costs", -0.3)]
+    manager.update_with_response("Bob", bob_response, triplets=response_triplets)
+    
+    # Alice's turn (similar process)
+    current_time += timedelta(hours=1)
+    manager.set_agent_time("Alice", current_time)
+    
+    context = manager.process_and_get_context(
+        "Alice", topic, bob_response, author="Bob", triplets=[("Bob", "mentions", "costs")]
+    )
+    alice_response = your_llm.generate(context, topic)
+    manager.update_with_response("Alice", alice_response, triplets=[("support", "action", 0.8)])
+    
+    alice_says = alice_response  # Set for next round
+```
+
+See `examples/use_case_example.py` for a complete working implementation.
 
 ## Complete Example: External Program Integration
 
