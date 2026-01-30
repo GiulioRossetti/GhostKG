@@ -21,6 +21,16 @@ from .exceptions import (
     DependencyError,
 )
 
+# Phase 4: Configuration management
+from .config import (
+    FSRSConfig,
+    DatabaseConfig,
+    LLMConfig,
+    FastModeConfig,
+    GhostKGConfig,
+    get_default_config,
+)
+
 # Backward compatibility: Also export from core
 # This ensures old code using "from ghost_kg.core import ..." still works
 from . import core
@@ -58,4 +68,12 @@ __all__ = [
     "AgentNotFoundError",
     "ValidationError",
     "DependencyError",
+    
+    # Configuration (Phase 4)
+    "FSRSConfig",
+    "DatabaseConfig",
+    "LLMConfig",
+    "FastModeConfig",
+    "GhostKGConfig",
+    "get_default_config",
 ]
