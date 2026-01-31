@@ -3,7 +3,7 @@ name = "ghost-kg"
 version = "0.2.0"
 description = "Dynamic Knowledge Graph with FSRS-6 Forgetting for LLM Agents"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
     {name = "Giulio Rossetti", email = "giulio.rossetti@gmail.com"}
@@ -81,8 +81,8 @@ Issues = "https://github.com/GiulioRossetti/GhostKG/issues"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=7.0,<8.0",
     "pytest-cov>=4.0,<5.0",
     "black>=23.0,<27.0",
