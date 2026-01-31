@@ -231,15 +231,35 @@ class GhostAgent:
         """
         Add a knowledge triplet to the agent's knowledge graph.
         
+        The triplet represents a semantic relationship: subject-relation-object.
+        Memory strength is tracked using FSRS algorithm, and sentiment captures
+        emotional valence.
+        
         Args:
-            source (str): Source node (e.g., "I", "Alice", "dogs")
-            relation (str): Relationship (e.g., "likes", "knows", "fears")
-            target (str): Target node (e.g., "pizza", "Python", "cats")
-            rating (Optional[int]): Memory rating for target concept (defaults to Good)
-            sentiment (float): Sentiment score for the relation (-1.0 to 1.0)
+            source (str): Subject entity (e.g., "I", "Bob", "climate")
+            relation (str): Relationship verb (e.g., "supports", "opposes", "mentions")
+            target (str): Object entity (e.g., "UBI", "economy", "action")
+            rating (Optional[int]): Memory strength rating (1-4). Use Rating.Again/Hard/Good/Easy
+            sentiment (float): Emotional valence from -1.0 (negative) to 1.0 (positive)
             
         Returns:
             None
+            
+        Example:
+            >>> agent = GhostAgent("Alice")
+            >>> # Positive belief
+            >>> agent.learn_triplet("I", "support", "climate_action", 
+            ...                     rating=Rating.Good, sentiment=0.8)
+            >>> # Negative opinion
+            >>> agent.learn_triplet("I", "oppose", "fossil_fuels",
+            ...                     rating=Rating.Easy, sentiment=-0.7)
+            >>> # Neutral fact
+            >>> agent.learn_triplet("Bob", "mentioned", "economics",
+            ...                     rating=Rating.Good, sentiment=0.0)
+                                    
+        See Also:
+            - update_memory(): Update memory strength of existing concept
+            - get_memory_view(): Retrieve agent's knowledge about a topic
         """
         if rating is None:
             rating = Rating.Good

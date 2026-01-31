@@ -128,6 +128,25 @@ class AgentManager:
         Raises:
             AgentNotFoundError: If agent doesn't exist
             ValidationError: If parameters are invalid
+            
+        Example:
+            >>> manager = AgentManager()
+            >>> alice = manager.create_agent("Alice")
+            >>> manager.set_agent_time("Alice", datetime.datetime.now(datetime.timezone.utc))
+            >>> # With pre-extracted triplets
+            >>> manager.absorb_content(
+            ...     "Alice",
+            ...     "Bob says climate action is urgent",
+            ...     author="Bob",
+            ...     triplets=[("Bob", "says", "climate_urgent")]
+            ... )
+            >>> # Without triplets (requires LLM)
+            >>> manager.absorb_content("Alice", "The economy is recovering", author="News")
+            
+        See Also:
+            - get_context(): Retrieve context for generating responses
+            - process_and_get_context(): Atomic absorb + get_context operation
+            - update_with_response(): Update KG with agent's response
         """
         if not content or not isinstance(content, str):
             raise ValidationError("content must be a non-empty string")
@@ -178,6 +197,26 @@ class AgentManager:
         Args:
             agent_name (str): Name of the agent
             topic (str): Topic to get context for
+            
+        Returns:
+            str: Formatted context string containing agent's knowledge
+            
+        Raises:
+            AgentNotFoundError: If agent doesn't exist
+            
+        Example:
+            >>> manager = AgentManager()
+            >>> alice = manager.create_agent("Alice")
+            >>> manager.learn_triplet("Alice", "I", "support", "UBI", sentiment=0.8)
+            >>> context = manager.get_context("Alice", "UBI")
+            >>> print(context)
+            MY CURRENT STANCE:
+            - I support UBI (strength: 0.85, positive sentiment)
+            
+        See Also:
+            - absorb_content(): Update knowledge graph with new content
+            - process_and_get_context(): Combined absorb + context operation
+        """
 
         Returns:
             str: Formatted context string
@@ -234,6 +273,11 @@ class AgentManager:
             ...     author="Bob", triplets=[("Bob", "says", "climate urgent")]
             ... )
             >>> # Use context with external LLM to generate response
+            
+        See Also:
+            - absorb_content(): Just absorb content without getting context
+            - get_context(): Just get context without absorbing new content
+            - update_with_response(): Update KG with agent's generated response
         """
         # Update KG with the content
         self.absorb_content(agent_name, text, author, triplets, fast_mode)
