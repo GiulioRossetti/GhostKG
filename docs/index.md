@@ -172,7 +172,6 @@ Topics covered:
 **Cross-references**:
 - [Core Components](CORE_COMPONENTS.md) - CognitiveLoop fast mode
 - [Algorithms](ALGORITHMS.md) - Sentiment analysis in fast mode
-- [Examples](../examples/use_case_example.py) - Fast mode in practice
 - [UV Setup](UV_SETUP.md) - Installing fast mode dependencies
 - [Configuration](CONFIGURATION.md) - FastModeConfig options
 
@@ -258,26 +257,6 @@ Topics covered:
 | **Fast Mode Config** | Core Components (CognitiveLoop)<br>Algorithms (sentiment)<br>Examples (use_case_example.py) |
 | **Refactoring Plan** | Architecture (current design)<br>Core Components (to be refactored)<br>Database Schema (optimizations) |
 
----
-
-## 📁 Code Examples
-
-All code examples are located in the [`examples/`](../examples/) directory:
-
-- **[external_program.py](../examples/external_program.py)** - Complete external program integration
-- **[use_case_example.py](../examples/use_case_example.py)** - Multi-round agent conversation with fast mode
-- **[hourly_simulation.py](../examples/hourly_simulation.py)** - Time-based simulation with CognitiveLoop
-- **[export_history.py](../examples/export_history.py)** - Export and analyze knowledge graphs
-
----
-
-## 🧪 Testing
-
-Tests are located in the [`tests/`](../tests/) directory:
-
-- **[test_comprehensive.py](../tests/test_comprehensive.py)** - Full workflow tests
-- **[test_process_and_get_context.py](../tests/test_process_and_get_context.py)** - API integration tests
-- **[test_fast_mode_config.py](../tests/test_fast_mode_config.py)** - Configuration validation
 
 ---
 
@@ -331,14 +310,6 @@ A: See [Database Schema](DATABASE_SCHEMA.md#query-patterns)
 **Q: Can I use a different database?**  
 A: Not currently, but see [Architecture](ARCHITECTURE.md#why-sqlite) for why SQLite was chosen
 
-### For More Information
-
-- **Issues**: [GitHub Issues](https://github.com/GiulioRossetti/GhostKG/issues)
-- **Examples**: [`examples/`](../examples/) directory
-- **Tests**: [`tests/`](../tests/) directory
-- **Source Code**: [`ghost_kg/`](../ghost_kg/) directory
-
----
 
 ## 📝 Contributing
 
