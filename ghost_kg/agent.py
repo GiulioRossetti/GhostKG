@@ -13,10 +13,11 @@ Each agent maintains:
 
 import datetime
 import re
-from typing import Optional, Any
+from typing import Any, Optional
 
 try:
     from ollama import Client
+
     HAS_OLLAMA = True
 except ImportError:
     Client = None
@@ -29,49 +30,46 @@ from .storage import KnowledgeDB, NodeState
 class GhostAgent:
     """
     Autonomous knowledge agent with memory and learning capabilities.
-    
+
     Each agent has:
     - Unique name/identity
     - Personal knowledge graph (stored in database)
     - Memory system (FSRS-based strength tracking)
     - Temporal awareness (simulation clock)
     - LLM client for text generation
-    
+
     Attributes:
         name (str): Agent's unique identifier
         db (KnowledgeDB): Database connection for knowledge storage
         fsrs (FSRS): Memory scheduler for tracking concept strength
         client (Client): Ollama LLM client for generation
         current_time (datetime): Simulation clock for temporal tracking
-        
+
     Methods:
         set_time: Update simulation clock
         learn_triplet: Add new knowledge triplet to graph
         update_memory: Update memory strength of a concept
         get_memory_view: Retrieve agent's knowledge about a topic
     """
-    
+
     def __init__(
-        self, 
-        name: str, 
-        db_path: str = "agent_memory.db", 
-        llm_host: str = "http://localhost:11434"
+        self, name: str, db_path: str = "agent_memory.db", llm_host: str = "http://localhost:11434"
     ) -> None:
         """
         Initialize a new GhostAgent.
-        
+
         Args:
             name (str): Unique identifier for the agent
             db_path (str): Path to SQLite database file
             llm_host (str): URL for Ollama LLM server
-            
+
         Returns:
             None
         """
         self.name = name
         self.db = KnowledgeDB(db_path)
         self.fsrs = FSRS()
-        
+
         # Initialize ollama client if available
         if HAS_OLLAMA:
             self.client = Client(host=llm_host)
@@ -85,10 +83,10 @@ class GhostAgent:
     def set_time(self, new_time: datetime.datetime) -> None:
         """
         Update the agent's simulation clock.
-        
+
         Args:
             new_time (datetime.datetime): New timestamp for the simulation clock
-            
+
         Returns:
             None
         """
@@ -99,16 +97,16 @@ class GhostAgent:
     def _normalize(self, text: Optional[str]) -> Optional[str]:
         """
         Normalize text for consistent knowledge graph representation.
-        
+
         Handles:
         - Lowercasing and whitespace trimming
         - Special case for "I" (self-reference)
         - Agent name mapping to "I"
         - Pronouns (me, myself) mapping to "I"
-        
+
         Args:
             text (Optional[str]): Raw text to normalize
-            
+
         Returns:
             Optional[str]: Normalized text or None if invalid
         """
@@ -130,18 +128,18 @@ class GhostAgent:
     def _is_valid_triple(self, src: str, rel: str, tgt: str) -> bool:
         """
         Validate a knowledge triplet before adding to graph.
-        
+
         Filters out:
         - Stopwords and garbage
         - Grammatical/meta terms (noun, verb, adjective, etc.)
         - Generic/meaningless nodes
         - Too-short terms
-        
+
         Args:
             src (str): Source node (normalized)
             rel (str): Relation (normalized)
             tgt (str): Target node (normalized)
-            
+
         Returns:
             bool: True if triplet is semantically meaningful
         """
@@ -150,15 +148,40 @@ class GhostAgent:
 
         # 2. BANNED GRAMMATICAL TERMS (Semantic Gatekeeper)
         banned_relations = {
-            "noun", "verb", "adjective", "adverb", "preposition", "conjunction",
-            "pronoun", "phrase", "clause", "sentence", "statement", "text",
-            "topic", "concept", "word", "term", "rating", "evaluation", "opinion",
+            "noun",
+            "verb",
+            "adjective",
+            "adverb",
+            "preposition",
+            "conjunction",
+            "pronoun",
+            "phrase",
+            "clause",
+            "sentence",
+            "statement",
+            "text",
+            "topic",
+            "concept",
+            "word",
+            "term",
+            "rating",
+            "evaluation",
+            "opinion",
         }
 
         # 3. BANNED GENERIC NODES
         banned_nodes = {
-            "text", "entity", "author", "none", "unknown", "wikipedia",
-            "general knowledge", "source", "target", "adjective", "noun",
+            "text",
+            "entity",
+            "author",
+            "none",
+            "unknown",
+            "wikipedia",
+            "general knowledge",
+            "source",
+            "target",
+            "adjective",
+            "noun",
         }
 
         if not src or not rel or not tgt:
@@ -182,11 +205,11 @@ class GhostAgent:
     def update_memory(self, concept_name: str, rating: int) -> None:
         """
         Update the memory strength of a concept using FSRS.
-        
+
         Args:
             concept_name (str): Name of the concept to update
             rating (int): Review rating (1=Again, 2=Hard, 3=Good, 4=Easy)
-            
+
         Returns:
             None
         """
@@ -216,39 +239,37 @@ class GhostAgent:
 
         # Use Simulation Time
         new_state = self.fsrs.calculate_next(current, rating, self.current_time)
-        self.db.upsert_node(
-            self.name, norm_name, new_state, timestamp=self.current_time
-        )
+        self.db.upsert_node(self.name, norm_name, new_state, timestamp=self.current_time)
 
     def learn_triplet(
-        self, 
-        source: str, 
-        relation: str, 
-        target: str, 
-        rating: Optional[int] = None, 
-        sentiment: float = 0.0
+        self,
+        source: str,
+        relation: str,
+        target: str,
+        rating: Optional[int] = None,
+        sentiment: float = 0.0,
     ) -> None:
         """
         Add a knowledge triplet to the agent's knowledge graph.
-        
+
         The triplet represents a semantic relationship: subject-relation-object.
         Memory strength is tracked using FSRS algorithm, and sentiment captures
         emotional valence.
-        
+
         Args:
             source (str): Subject entity (e.g., "I", "Bob", "climate")
             relation (str): Relationship verb (e.g., "supports", "opposes", "mentions")
             target (str): Object entity (e.g., "UBI", "economy", "action")
             rating (Optional[int]): Memory strength rating (1-4). Use Rating.Again/Hard/Good/Easy
             sentiment (float): Emotional valence from -1.0 (negative) to 1.0 (positive)
-            
+
         Returns:
             None
-            
+
         Example:
             >>> agent = GhostAgent("Alice")
             >>> # Positive belief
-            >>> agent.learn_triplet("I", "support", "climate_action", 
+            >>> agent.learn_triplet("I", "support", "climate_action",
             ...                     rating=Rating.Good, sentiment=0.8)
             >>> # Negative opinion
             >>> agent.learn_triplet("I", "oppose", "fossil_fuels",
@@ -256,14 +277,14 @@ class GhostAgent:
             >>> # Neutral fact
             >>> agent.learn_triplet("Bob", "mentioned", "economics",
             ...                     rating=Rating.Good, sentiment=0.0)
-                                    
+
         See Also:
             - update_memory(): Update memory strength of existing concept
             - get_memory_view(): Retrieve agent's knowledge about a topic
         """
         if rating is None:
             rating = Rating.Good
-            
+
         n_source = self._normalize(source)
         n_target = self._normalize(target)
         n_relation = self._normalize(relation)
@@ -284,14 +305,16 @@ class GhostAgent:
             timestamp=self.current_time,
         )
 
-    def _get_retrievability(self, stability: float, last_review: Optional[datetime.datetime]) -> float:
+    def _get_retrievability(
+        self, stability: float, last_review: Optional[datetime.datetime]
+    ) -> float:
         """
         Calculate retrievability of a memory based on FSRS formula.
-        
+
         Args:
             stability (float): Memory stability value
             last_review (Optional[datetime.datetime]): Timestamp of last review
-            
+
         Returns:
             float: Retrievability score (0.0 to 1.0)
         """
@@ -305,15 +328,15 @@ class GhostAgent:
     def get_memory_view(self, topic: str) -> str:
         """
         Retrieve agent's knowledge and beliefs about a topic.
-        
+
         Returns a structured view including:
         - Agent's personal stance/beliefs
         - Known facts from world knowledge
         - What other agents think about the topic
-        
+
         Args:
             topic (str): Topic to retrieve knowledge about
-            
+
         Returns:
             str: Formatted string with agent's knowledge view
         """
@@ -337,9 +360,7 @@ class GhostAgent:
                 return f"(I have forgotten the details about {topic})"
 
         # Pass self.current_time to DB for retrieval
-        my_rows = self.db.get_agent_stance(
-            self.name, n_topic, current_time=self.current_time
-        )
+        my_rows = self.db.get_agent_stance(self.name, n_topic, current_time=self.current_time)
         world_rows = self.db.get_world_knowledge(self.name, n_topic, limit=8)
 
         my_beliefs = set()

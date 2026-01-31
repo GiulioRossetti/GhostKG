@@ -6,11 +6,12 @@ with individual agent Knowledge Graphs without handling the LLM logic.
 """
 
 import datetime
-from typing import Optional, Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
+
 from .agent import GhostAgent
+from .exceptions import AgentNotFoundError, ValidationError
 from .fsrs import Rating
 from .storage import KnowledgeDB
-from .exceptions import ValidationError, AgentNotFoundError
 
 
 class AgentManager:
@@ -31,7 +32,7 @@ class AgentManager:
 
         Args:
             db_path (str): Path to the SQLite database file
-            
+
         Returns:
             None
         """
@@ -39,9 +40,7 @@ class AgentManager:
         self.agents: Dict[str, GhostAgent] = {}
         self.db = KnowledgeDB(db_path)
 
-    def create_agent(
-        self, name: str, llm_host: str = "http://localhost:11434"
-    ) -> GhostAgent:
+    def create_agent(self, name: str, llm_host: str = "http://localhost:11434") -> GhostAgent:
         """
         Create or retrieve an agent.
 
@@ -51,17 +50,15 @@ class AgentManager:
 
         Returns:
             GhostAgent: GhostAgent instance
-            
+
         Raises:
             ValidationError: If name is invalid
         """
         if not name or not isinstance(name, str):
             raise ValidationError("Agent name must be a non-empty string")
-            
+
         if name not in self.agents:
-            self.agents[name] = GhostAgent(
-                name, db_path=self.db_path, llm_host=llm_host
-            )
+            self.agents[name] = GhostAgent(name, db_path=self.db_path, llm_host=llm_host)
         return self.agents[name]
 
     def get_agent(self, name: str) -> Optional[GhostAgent]:
@@ -83,17 +80,17 @@ class AgentManager:
         Args:
             agent_name (str): Name of the agent
             time (datetime.datetime): Current time to set
-            
+
         Returns:
             None
-            
+
         Raises:
             AgentNotFoundError: If agent doesn't exist
             ValidationError: If time is invalid
         """
         if not isinstance(time, datetime.datetime):
             raise ValidationError("time must be a datetime object")
-            
+
         agent = self.get_agent(agent_name)
         if not agent:
             raise AgentNotFoundError(f"Agent '{agent_name}' not found")
@@ -121,14 +118,14 @@ class AgentManager:
             triplets (Optional[List[Tuple[str, str, str]]]): Optional list of (source, relation, target) triplets
                      If provided, these will be learned directly
             fast_mode (bool): If True, use faster processing (if supported by LLM)
-            
+
         Returns:
             None
-            
+
         Raises:
             AgentNotFoundError: If agent doesn't exist
             ValidationError: If parameters are invalid
-            
+
         Example:
             >>> manager = AgentManager()
             >>> alice = manager.create_agent("Alice")
@@ -142,7 +139,7 @@ class AgentManager:
             ... )
             >>> # Without triplets (requires LLM)
             >>> manager.absorb_content("Alice", "The economy is recovering", author="News")
-            
+
         See Also:
             - get_context(): Retrieve context for generating responses
             - process_and_get_context(): Atomic absorb + get_context operation
@@ -152,7 +149,7 @@ class AgentManager:
             raise ValidationError("content must be a non-empty string")
         if not author or not isinstance(author, str):
             raise ValidationError("author must be a non-empty string")
-            
+
         agent = self.get_agent(agent_name)
         if not agent:
             raise AgentNotFoundError(f"Agent '{agent_name}' not found")
@@ -163,8 +160,10 @@ class AgentManager:
                 raise ValidationError("triplets must be a list")
             for triplet in triplets:
                 if not isinstance(triplet, (tuple, list)) or len(triplet) != 3:
-                    raise ValidationError("Each triplet must be a 3-tuple (source, relation, target)")
-                    
+                    raise ValidationError(
+                        "Each triplet must be a 3-tuple (source, relation, target)"
+                    )
+
             # External program provides triplets
             for source, relation, target in triplets:
                 agent.learn_triplet(source, relation, target, rating=Rating.Good)
@@ -197,14 +196,14 @@ class AgentManager:
         Args:
             agent_name (str): Name of the agent
             topic (str): Topic to get context for
-            
+
         Returns:
             str: Formatted context string containing agent's knowledge
-            
+
         Raises:
             AgentNotFoundError: If agent doesn't exist
             ValidationError: If topic is invalid
-            
+
         Example:
             >>> manager = AgentManager()
             >>> alice = manager.create_agent("Alice")
@@ -213,14 +212,14 @@ class AgentManager:
             >>> print(context)
             MY CURRENT STANCE:
             - I support UBI (strength: 0.85, positive sentiment)
-            
+
         See Also:
             - absorb_content(): Update knowledge graph with new content
             - process_and_get_context(): Combined absorb + context operation
         """
         if not topic or not isinstance(topic, str):
             raise ValidationError("topic must be a non-empty string")
-            
+
         agent = self.get_agent(agent_name)
         if not agent:
             raise AgentNotFoundError(f"Agent '{agent_name}' not found")
@@ -234,7 +233,7 @@ class AgentManager:
         text: str,
         author: str = "User",
         triplets: Optional[List[Tuple[str, str, str]]] = None,
-            fast_mode: bool = False,
+        fast_mode: bool = False,
     ) -> str:
         """
         Update agent's KG with content and return context for replying (atomic operation).
@@ -266,7 +265,7 @@ class AgentManager:
             ...     author="Bob", triplets=[("Bob", "says", "climate urgent")]
             ... )
             >>> # Use context with external LLM to generate response
-            
+
         See Also:
             - absorb_content(): Just absorb content without getting context
             - get_context(): Just get context without absorbing new content
@@ -299,10 +298,10 @@ class AgentManager:
                      Source is assumed to be "I" (the agent)
             context (Optional[str]): Optional context that was used to generate the response
                     This will be stored in the logs annotations
-                    
+
         Returns:
             None
-            
+
         Raises:
             ValueError: If agent not found
         """
@@ -313,9 +312,7 @@ class AgentManager:
         if triplets:
             # External program provides triplets with sentiment
             for relation, target, sentiment in triplets:
-                agent.learn_triplet(
-                    "I", relation, target, rating=Rating.Easy, sentiment=sentiment
-                )
+                agent.learn_triplet("I", relation, target, rating=Rating.Easy, sentiment=sentiment)
 
             # Log the interaction with context
             annotations = {"triplets_count": len(triplets), "external": True}
@@ -368,10 +365,10 @@ class AgentManager:
             target (str): Target node
             rating (int): FSRS rating (1-4, see Rating class)
             sentiment (float): Sentiment score (-1.0 to 1.0)
-            
+
         Returns:
             None
-            
+
         Raises:
             ValueError: If agent not found
         """
@@ -379,9 +376,7 @@ class AgentManager:
         if not agent:
             raise ValueError(f"Agent '{agent_name}' not found")
 
-        agent.learn_triplet(
-            source, relation, target, rating=rating, sentiment=sentiment
-        )
+        agent.learn_triplet(source, relation, target, rating=rating, sentiment=sentiment)
 
     def get_agent_knowledge(self, agent_name: str, topic: Optional[str] = None) -> Dict:
         """
@@ -393,7 +388,7 @@ class AgentManager:
 
         Returns:
             Dict: Dictionary with nodes and edges information
-            
+
         Raises:
             ValueError: If agent not found
         """

@@ -1,0 +1,21 @@
+[MASTER]
+ignore=tests,examples,site
+ignore-patterns=core_original_backup.py
+
+[MESSAGES CONTROL]
+disable=
+    C0111,  # missing-docstring (handled by flake8)
+    R0903,  # too-few-public-methods
+    R0913,  # too-many-arguments
+    C0103,  # invalid-name
+    W0212,  # protected-access
+    R0801,  # duplicate-code
+
+[FORMAT]
+max-line-length=100
+
+[DESIGN]
+max-args=7
+max-locals=15
+max-attributes=10
+max-public-methods=20

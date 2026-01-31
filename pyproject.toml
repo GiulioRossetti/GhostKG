@@ -49,6 +49,7 @@ dev = [
     "pytest-asyncio>=0.21,<1.0",
     "mypy>=1.0,<2.0",
     "black>=23.0,<27.0",
+    "isort>=5.12,<6.0",
     "flake8>=6.0,<7.0",
     "pylint>=2.17,<4.0",
     "radon>=5.1,<7.0",
@@ -88,7 +89,7 @@ dev-dependencies = [
 ]
 
 [tool.black]
-line-length = 88
+line-length = 100
 target-version = ["py38", "py39", "py310", "py311", "py312"]
 include = '\.pyi?$'
 exclude = '''
@@ -100,6 +101,12 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_gitignore = true
+
 
 [tool.mypy]
 python_version = "3.9"

@@ -63,15 +63,19 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e ".[dev]"
     
-    - name: Run Black
+    - name: Run Black (code formatting check)
       run: |
-        black --check ghost_kg/ tests/
+        black --check --diff ghost_kg/ tests/
     
-    - name: Run Flake8
+    - name: Run isort (import sorting check)
       run: |
-        flake8 ghost_kg/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 ghost_kg/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        isort --check-only --diff ghost_kg/ tests/
     
-    - name: Run mypy
+    - name: Run Flake8 (linting)
+      run: |
+        flake8 ghost_kg/ tests/
+    
+    - name: Run mypy (type checking)
       run: |
         mypy ghost_kg/
+
