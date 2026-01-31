@@ -5,7 +5,7 @@ Welcome to the comprehensive documentation for **GhostKG** - a dynamic knowledge
 ## 📚 Documentation Structure
 
 ### Quick Start
-- [README](../README.md) - Overview, installation, and quick start guide
+- [README on GitHub](https://github.com/GiulioRossetti/GhostKG#readme) - Overview, installation, and quick start guide
 
 ### Core Documentation
 
@@ -131,7 +131,7 @@ Topics covered:
 **Read this if you want to**: Use modern, fast package management with UV or understand the dependency structure.
 
 **Cross-references**:
-- [README](../README.md#installation) - Installation instructions
+- [README on GitHub](https://github.com/GiulioRossetti/GhostKG#installation) - Installation instructions
 - [Fast Mode Configuration](FAST_MODE_CONFIG.md) - Fast mode dependencies
 
 ---
@@ -221,7 +221,7 @@ Topics covered:
 ## 📖 Reading Paths
 
 ### For New Users
-1. [README](../README.md) - Start here
+1. [README on GitHub](https://github.com/GiulioRossetti/GhostKG#readme) - Start here
 2. [Architecture](ARCHITECTURE.md#system-overview) - Understand the big picture
 3. [API Documentation](API.md) - Learn the API
 4. [Examples](../examples/) - See it in action
@@ -354,7 +354,7 @@ When contributing documentation:
 
 ## 📄 License
 
-GhostKG is released under the MIT License. See [LICENSE](../LICENSE) for details.
+GhostKG is released under the [MIT License](https://github.com/GiulioRossetti/GhostKG/blob/main/LICENSE).
 
 ---
 
