@@ -112,7 +112,7 @@ class TestCognitiveLoop:
         # Skip for now as reply is tested in integration tests
         pass
     
-    def test_absorb_handles_missing_fields(self, mock_agent):
+    def test_absorb_handles_missing_fields(self, mock_agent, capsys):
         """Test absorb handles missing fields in extracted triplets gracefully."""
         with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
             mock_extractor = Mock()
@@ -122,17 +122,23 @@ class TestCognitiveLoop:
                     {"source": "Bob", "relation": "says"},  # Missing 'target'
                     {"relation": "believes", "target": "climate"},  # Missing 'source'
                     {},  # All fields missing
+                    {"source": "Alice", "relation": "supports", "target": "UBI"},  # Valid
                 ],
                 "partner_stance": [
                     {"source": "Alice", "target": "UBI"},  # Missing 'relation'
                     {"source": "Alice", "relation": "supports"},  # Missing 'target'
+                    {"source": "Bob", "relation": "opposes", "target": "taxes"},  # Valid
                 ],
                 "my_reaction": [
                     {"relation": "worried_about"},  # Missing 'target'
                     {"target": "economy"},  # Missing 'relation'
+                    {"relation": "care_about", "target": "climate"},  # Valid
                 ]
             }
             mock_get_extractor.return_value = mock_extractor
+            
+            # Mock learn_triplet to track calls
+            mock_agent.learn_triplet = Mock()
             
             loop = CognitiveLoop(mock_agent)
             
@@ -141,16 +147,27 @@ class TestCognitiveLoop:
                 loop.absorb("Test content with missing fields", author="TestAuthor")
             except KeyError as e:
                 pytest.fail(f"absorb raised KeyError with missing fields: {e}")
+            
+            # Verify that malformed triplets were skipped (logged warnings)
+            captured = capsys.readouterr()
+            assert "Skipping malformed" in captured.out
+            
+            # Verify that valid triplets were processed (learn_triplet called)
+            # Should be called 3 times for the 3 valid triplets
+            assert mock_agent.learn_triplet.call_count == 3
     
-    def test_reflect_handles_missing_fields(self, mock_agent):
+    def test_reflect_handles_missing_fields(self, mock_agent, capsys):
         """Test reflect handles missing fields in reflection data gracefully."""
         with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
             mock_get_extractor.return_value = Mock()
             loop = CognitiveLoop(mock_agent)
             
+            # Mock learn_triplet to track calls
+            mock_agent.learn_triplet = Mock()
+            
             # Mock LLM response with missing fields
             mock_agent.client.chat.return_value = {
-                'message': {'content': '{"my_expressed_stances": [{"relation": "support"}, {"target": "UBI"}, {}]}'}
+                'message': {'content': '{"my_expressed_stances": [{"relation": "support"}, {"target": "UBI"}, {}, {"relation": "oppose", "target": "taxes"}]}'}
             }
             
             # This should NOT raise KeyError even with missing fields
@@ -158,3 +175,10 @@ class TestCognitiveLoop:
                 loop.reflect("I support UBI")
             except KeyError as e:
                 pytest.fail(f"reflect raised KeyError with missing fields: {e}")
+            
+            # Verify that malformed triplets were skipped (logged warnings)
+            captured = capsys.readouterr()
+            assert "Skipping malformed" in captured.out
+            
+            # Verify that valid triplet was processed (learn_triplet called once for valid entry)
+            assert mock_agent.learn_triplet.call_count == 1

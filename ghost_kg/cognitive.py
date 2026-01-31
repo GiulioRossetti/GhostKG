@@ -134,28 +134,45 @@ class CognitiveLoop:
 
         # Process extracted triplets
         for item in data.get("world_facts", []):
-            self.agent.learn_triplet(
-                item.get("source", ""),
-                item.get("relation", ""),
-                item.get("target", "")
-            )
+            source = item.get("source", "")
+            relation = item.get("relation", "")
+            target = item.get("target", "")
+            
+            # Skip malformed triplets missing required fields
+            if not source or not relation or not target:
+                print(f"   ! Skipping malformed world_fact triplet: {item}")
+                continue
+                
+            self.agent.learn_triplet(source, relation, target)
 
         for item in data.get("partner_stance", []):
+            source = item.get("source", "")
+            relation = item.get("relation", "")
+            target = item.get("target", "")
             sentiment = item.get("sentiment", 0.0)
-            self.agent.learn_triplet(
-                item.get("source", ""),
-                item.get("relation", ""),
-                item.get("target", ""),
-                sentiment=sentiment
-            )
+            
+            # Skip malformed triplets missing required fields
+            if not source or not relation or not target:
+                print(f"   ! Skipping malformed partner_stance triplet: {item}")
+                continue
+                
+            self.agent.learn_triplet(source, relation, target, sentiment=sentiment)
 
         for item in data.get("my_reaction", []):
+            relation = item.get("relation", "")
+            target = item.get("target", "")
             s_score = item.get("sentiment", 0.0)
             rating = item.get("rating", Rating.Good)
+            
+            # Skip malformed triplets missing required fields
+            if not relation or not target:
+                print(f"   ! Skipping malformed my_reaction triplet: {item}")
+                continue
+                
             self.agent.learn_triplet(
                 "I",
-                item.get("relation", ""),
-                item.get("target", ""),
+                relation,
+                target,
                 rating=rating,
                 sentiment=s_score,
             )
@@ -209,11 +226,19 @@ class CognitiveLoop:
 
             count = 0
             for item in data.get("my_expressed_stances", []):
+                relation = item.get("relation", "")
+                target = item.get("target", "")
                 s_score = item.get("sentiment", 0.0)
+                
+                # Skip malformed triplets missing required fields
+                if not relation or not target:
+                    print(f"   ! Skipping malformed stance triplet: {item}")
+                    continue
+                    
                 self.agent.learn_triplet(
                     "I",
-                    item.get("relation", ""),
-                    item.get("target", ""),
+                    relation,
+                    target,
                     rating=Rating.Easy,  # High rating for self-expressed beliefs
                     sentiment=s_score,
                 )
