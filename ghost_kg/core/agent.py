@@ -53,9 +53,9 @@ class GhostAgent:
     """
 
     def __init__(
-        self, 
-        name: str, 
-        db_path: str = "agent_memory.db", 
+        self,
+        name: str,
+        db_path: str = "agent_memory.db",
         llm_host: str = "http://localhost:11434",
         store_log_content: bool = False
     ) -> None:
@@ -66,7 +66,7 @@ class GhostAgent:
             name (str): Unique identifier for the agent
             db_path (str): Path to SQLite database file
             llm_host (str): URL for Ollama LLM server
-            store_log_content (bool): If True, stores full content in log table. 
+            store_log_content (bool): If True, stores full content in log table.
                                      If False (default), stores UUID instead of content.
 
         Returns:

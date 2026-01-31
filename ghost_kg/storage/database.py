@@ -29,13 +29,15 @@ class NodeState:
 
 
 class KnowledgeDB:
-    def __init__(self, db_path: str = "agent_memory.db", store_log_content: bool = False) -> None:
+    def __init__(
+        self, db_path: str = "agent_memory.db", store_log_content: bool = False
+    ) -> None:
         """
         Initialize database connection and schema.
 
         Args:
             db_path (str): Path to SQLite database file
-            store_log_content (bool): If True, stores full content in log table. 
+            store_log_content (bool): If True, stores full content in log table.
                                      If False (default), stores UUID instead of content.
 
         Returns:
@@ -90,10 +92,10 @@ class KnowledgeDB:
 
             cursor.execute("""
                        CREATE TABLE IF NOT EXISTS logs (
-                                                           id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                           agent_name TEXT, action_type TEXT, content TEXT, 
-                                                           content_uuid TEXT, annotations JSON,
-                                                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                           id INTEGER PRIMARY KEY AUTOINCREMENT,
+                           agent_name TEXT, action_type TEXT, content TEXT,
+                           content_uuid TEXT, annotations JSON,
+                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                        )
                        """)
 
@@ -280,9 +282,9 @@ class KnowledgeDB:
             content (str): Content of the interaction
             annotations (Dict[str, Any]): Additional metadata (will be JSON-encoded)
             timestamp (Optional[datetime.datetime]): Optional timestamp (defaults to now)
-            store_content (Optional[bool]): If True, stores content in the log table. 
+            store_content (Optional[bool]): If True, stores content in the log table.
                                            If False, generates and stores a UUID instead.
-                                           If None (default), uses the database instance setting.
+                                           If None (default), uses database instance setting.
 
         Returns:
             Optional[str]: The content UUID if store_content is False, None otherwise
@@ -295,20 +297,23 @@ class KnowledgeDB:
             raise ValidationError("agent and action are required")
 
         ts = timestamp or datetime.datetime.now(datetime.timezone.utc)
-        
+
         # Use instance default if not specified
-        should_store = store_content if store_content is not None else self.store_log_content
-        
+        should_store = (
+            store_content if store_content is not None else self.store_log_content
+        )
+
         # Generate UUID if not storing content
         content_uuid = None
         stored_content = content if should_store else None
-        
+
         if not should_store:
             content_uuid = str(uuid.uuid4())
 
         try:
             self.conn.execute(
-                "INSERT INTO logs (agent_name, action_type, content, content_uuid, annotations, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+                """INSERT INTO logs (agent_name, action_type, content, content_uuid,
+                   annotations, timestamp) VALUES (?, ?, ?, ?, ?, ?)""",
                 (agent, action, stored_content, content_uuid, json.dumps(annotations), ts),
             )
             self.conn.commit()
