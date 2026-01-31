@@ -1,6 +1,6 @@
 # GhostKG Configuration Guide
 
-This guide explains how to configure GhostKG using the configuration system introduced in Phase 4 of the refactoring.
+This guide explains how to configure GhostKG using the configuration system.
 
 ## Overview
 
@@ -469,4 +469,3 @@ loop = CognitiveLoop(name="agent1", db_path="/data/agents.db")
 - [Architecture Documentation](ARCHITECTURE.md) - System design
 - [Core Components](CORE_COMPONENTS.md) - Component details
 - [API Reference](API.md) - API documentation
-- [Refactoring Plan](REFACTORING_PLAN.md) - Phase 4 details
