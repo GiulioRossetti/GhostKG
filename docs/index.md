@@ -112,7 +112,7 @@ Topics covered:
 **Cross-references**:
 - [Core Components](CORE_COMPONENTS.md) - AgentManager details
 - [Architecture](ARCHITECTURE.md) - Integration patterns
-- [Examples](../examples/) - Working code examples
+- [Examples](examples/index.md) - Working code examples
 
 ---
 
@@ -184,7 +184,7 @@ Topics covered:
 #### I want to integrate GhostKG with my application
 1. Read: [Architecture](ARCHITECTURE.md#integration-patterns) - Integration patterns
 2. Read: [API Documentation](API.md) - Complete API reference
-3. See: [external_program.py](../examples/external_program.py) - Example integration
+3. See: [External Program Example](examples/external_program.md) - Example integration
 4. Read: [Core Components](CORE_COMPONENTS.md#agentmanager) - AgentManager details
 
 #### I want to understand how memory decay works
@@ -195,14 +195,14 @@ Topics covered:
 
 #### I want to build a multi-agent simulation
 1. Read: [API Documentation](API.md) - AgentManager usage
-2. See: [use_case_example.py](../examples/use_case_example.py) - Multi-round conversation
-3. See: [hourly_simulation.py](../examples/hourly_simulation.py) - Time-based simulation
+2. See: [Multi-Agent Conversation Example](examples/use_case_example.md) - Multi-round conversation
+3. See: [Temporal Simulation Example](examples/hourly_simulation.md) - Time-based simulation
 4. Read: [Core Components](CORE_COMPONENTS.md#time-management) - Time handling
 
 #### I want to query the knowledge graph directly
 1. Read: [Database Schema](DATABASE_SCHEMA.md#query-patterns) - Query examples
 2. Read: [Core Components](CORE_COMPONENTS.md#knowledgedb) - KnowledgeDB methods
-3. See: [export_history.py](../examples/export_history.py) - Exporting data
+3. See: [Export and Visualization Example](examples/export_history.md) - Exporting data
 
 #### I want to optimize performance
 1. Read: [Database Schema](DATABASE_SCHEMA.md#performance-considerations) - DB optimization
@@ -223,7 +223,7 @@ Topics covered:
 1. [README on GitHub](https://github.com/GiulioRossetti/GhostKG#readme) - Start here
 2. [Architecture](ARCHITECTURE.md#system-overview) - Understand the big picture
 3. [API Documentation](API.md) - Learn the API
-4. [Examples](../examples/) - See it in action
+4. [Examples](examples/index.md) - See it in action
 
 ### For Researchers
 1. [Algorithms](ALGORITHMS.md) - Mathematical foundations
@@ -241,7 +241,7 @@ Topics covered:
 1. [API Documentation](API.md) - External API
 2. [Architecture](ARCHITECTURE.md#integration-patterns) - Integration patterns
 3. [Fast Mode Config](FAST_MODE_CONFIG.md) - Extraction modes
-4. [Examples](../examples/external_program.py) - Integration example
+4. [External Program Example](examples/external_program.md) - Integration example
 
 ---
 
@@ -296,7 +296,7 @@ Topics covered:
 ### Common Questions
 
 **Q: How do I integrate GhostKG with my LLM?**  
-A: See [API Documentation](API.md) and [external_program.py](../examples/external_program.py)
+A: See [API Documentation](API.md) and [External Program Example](examples/external_program.md)
 
 **Q: What's the difference between fast mode and LLM mode?**  
 A: See [Fast Mode Configuration](FAST_MODE_CONFIG.md)
