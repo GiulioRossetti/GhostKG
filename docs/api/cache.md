@@ -2,6 +2,19 @@
 
 The cache module provides LRU caching for agent contexts and memory views to improve query performance.
 
+## Module Location
+
+```python
+# Recommended: Import from top-level package
+from ghost_kg import AgentCache, get_global_cache, clear_global_cache
+
+# Also supported: Import from subpackage
+from ghost_kg.memory import AgentCache, get_global_cache, clear_global_cache
+
+# Backward compatible: Old flat import
+from ghost_kg.cache import AgentCache, get_global_cache, clear_global_cache
+```
+
 ## Overview
 
 The caching system includes:
