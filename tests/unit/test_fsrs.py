@@ -1,8 +1,7 @@
 """Unit tests for FSRS algorithm."""
 import pytest
 from datetime import datetime, timezone, timedelta
-from ghost_kg.fsrs import FSRS, Rating
-from ghost_kg.storage import NodeState
+from ghost_kg import FSRS, Rating, NodeState
 
 
 class TestRating:

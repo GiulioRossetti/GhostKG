@@ -24,8 +24,7 @@ from ghost_kg import (
     ValidationError,
     DependencyError,
 )
-from ghost_kg.storage import KnowledgeDB, NodeState
-from ghost_kg.manager import AgentManager
+from ghost_kg import KnowledgeDB, NodeState, AgentManager
 
 
 class TestCustomExceptions:
@@ -197,7 +196,7 @@ class TestManagerValidation:
 class TestLLMErrorHandling:
     """Test LLM error handling with retries."""
     
-    @patch('ghost_kg.cognitive.CognitiveLoop._call_llm_with_retry')
+    @patch('ghost_kg.core.cognitive.CognitiveLoop._call_llm_with_retry')
     def test_llm_retry_logic(self, mock_call):
         """Test that LLM calls are retried on failure."""
         # This is a unit test for the retry logic

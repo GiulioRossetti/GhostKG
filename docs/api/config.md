@@ -10,9 +10,6 @@ from ghost_kg import GhostKGConfig, FSRSConfig, DatabaseConfig, LLMConfig, FastM
 
 # Also supported: Import from subpackage
 from ghost_kg.utils import GhostKGConfig, FSRSConfig, DatabaseConfig, LLMConfig, FastModeConfig
-
-# Backward compatible: Old flat import
-from ghost_kg.config import GhostKGConfig, FSRSConfig, DatabaseConfig, LLMConfig, FastModeConfig
 ```
 
 ## Overview

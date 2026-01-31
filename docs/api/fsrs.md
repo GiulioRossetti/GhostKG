@@ -10,9 +10,6 @@ from ghost_kg import FSRS, Rating
 
 # Also supported: Import from subpackage
 from ghost_kg.memory import FSRS, Rating
-
-# Backward compatible: Old flat import
-from ghost_kg.fsrs import FSRS, Rating
 ```
 
 ## Overview

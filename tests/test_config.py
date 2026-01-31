@@ -6,15 +6,15 @@ import tempfile
 import pytest
 from pathlib import Path
 
-from ghost_kg.config import (
+from ghost_kg import (
     FSRSConfig,
     DatabaseConfig,
     LLMConfig,
     FastModeConfig,
     GhostKGConfig,
     get_default_config,
+    ConfigurationError,
 )
-from ghost_kg.exceptions import ConfigurationError
 
 
 class TestFSRSConfig:

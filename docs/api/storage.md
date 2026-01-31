@@ -10,9 +10,6 @@ from ghost_kg import KnowledgeDB, NodeState
 
 # Also supported: Import from subpackage
 from ghost_kg.storage import KnowledgeDB, NodeState
-
-# Backward compatible: Old flat import
-from ghost_kg.storage import KnowledgeDB, NodeState  # (same as subpackage)
 ```
 
 ## Overview

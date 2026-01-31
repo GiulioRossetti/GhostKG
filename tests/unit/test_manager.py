@@ -1,7 +1,6 @@
 """Unit tests for AgentManager."""
 import pytest
-from ghost_kg.manager import AgentManager
-from ghost_kg.exceptions import AgentNotFoundError, ValidationError
+from ghost_kg import AgentManager, AgentNotFoundError, ValidationError
 from datetime import datetime, timezone
 import tempfile
 import os

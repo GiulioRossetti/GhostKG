@@ -10,9 +10,6 @@ from ghost_kg import AgentCache, get_global_cache, clear_global_cache
 
 # Also supported: Import from subpackage
 from ghost_kg.memory import AgentCache, get_global_cache, clear_global_cache
-
-# Backward compatible: Old flat import
-from ghost_kg.cache import AgentCache, get_global_cache, clear_global_cache
 ```
 
 ## Overview

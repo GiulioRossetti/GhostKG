@@ -3,8 +3,7 @@ import pytest
 import datetime
 import tempfile
 from pathlib import Path
-from ghost_kg import AgentManager, GhostAgent
-from ghost_kg.storage import KnowledgeDB
+from ghost_kg import AgentManager, GhostAgent, KnowledgeDB
 
 
 @pytest.fixture

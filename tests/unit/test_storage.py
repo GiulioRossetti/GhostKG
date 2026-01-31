@@ -1,8 +1,7 @@
 """Unit tests for KnowledgeDB storage layer."""
 import pytest
 from datetime import datetime, timezone, timedelta
-from ghost_kg.storage import KnowledgeDB, NodeState
-from ghost_kg.exceptions import DatabaseError, ValidationError
+from ghost_kg import KnowledgeDB, NodeState, DatabaseError, ValidationError
 import tempfile
 import os
 

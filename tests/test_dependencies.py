@@ -1,7 +1,7 @@
 """Tests for dependency checking utilities."""
 
 import pytest
-from ghost_kg.dependencies import (
+from ghost_kg import (
     DependencyChecker,
     has_llm_support,
     has_fast_support,
