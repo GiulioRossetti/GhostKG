@@ -92,10 +92,10 @@ class KnowledgeDB:
 
             cursor.execute("""
                        CREATE TABLE IF NOT EXISTS logs (
-                           id INTEGER PRIMARY KEY AUTOINCREMENT,
-                           agent_name TEXT, action_type TEXT, content TEXT,
-                           content_uuid TEXT, annotations JSON,
-                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                                                           id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                           agent_name TEXT, action_type TEXT, content TEXT,
+                                                           content_uuid TEXT, annotations JSON,
+                                                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                        )
                        """)
 
@@ -311,9 +311,13 @@ class KnowledgeDB:
             content_uuid = str(uuid.uuid4())
 
         try:
+            query = """
+                INSERT INTO logs (agent_name, action_type, content, content_uuid,
+                                 annotations, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """
             self.conn.execute(
-                """INSERT INTO logs (agent_name, action_type, content, content_uuid,
-                   annotations, timestamp) VALUES (?, ?, ?, ?, ?, ?)""",
+                query,
                 (agent, action, stored_content, content_uuid, json.dumps(annotations), ts),
             )
             self.conn.commit()

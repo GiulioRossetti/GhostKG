@@ -224,6 +224,7 @@ class TestKnowledgeDB:
     
     def test_log_interaction_with_store_content_false(self, db):
         """Test logging interaction without storing content (default behavior)."""
+        import uuid as uuid_module
         now = datetime.now(timezone.utc)
         content_uuid = db.log_interaction(
             agent="agent1",
@@ -232,15 +233,19 @@ class TestKnowledgeDB:
             annotations={"key": "value"},
             timestamp=now
         )
-        
+
         # Should return a UUID
         assert content_uuid is not None
-        assert len(content_uuid) == 36  # UUID format
-        
+        # Validate it's a proper UUID format
+        try:
+            uuid_module.UUID(content_uuid)
+        except ValueError:
+            pytest.fail(f"content_uuid is not a valid UUID: {content_uuid}")
+
         # Verify content is NOT stored but UUID is
         cursor = db.conn.cursor()
         cursor.execute("""
-            SELECT content, content_uuid FROM logs 
+            SELECT content, content_uuid FROM logs
             WHERE agent_name = ? AND action_type = ?
         """, ("agent1", "READ"))
         result = cursor.fetchone()
