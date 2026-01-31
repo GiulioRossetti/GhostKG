@@ -21,7 +21,7 @@ class TestFSRS:
     def test_initialization(self):
         """Test FSRS initializes with default parameters."""
         fsrs = FSRS()
-        assert len(fsrs.p) == 17
+        assert len(fsrs.p) == 21
         assert all(isinstance(p, (int, float)) for p in fsrs.p)
     
     def test_new_card_again(self):
@@ -32,8 +32,8 @@ class TestFSRS:
         initial = NodeState(0, 0, None, 0, 0)
         result = fsrs.calculate_next(initial, Rating.Again, now)
         
-        # New card with Again should have low stability
-        assert result.stability == pytest.approx(0.4, rel=0.01)
+        # New card with Again should have low stability (FSRS-6: w[0] = 0.212)
+        assert result.stability == pytest.approx(0.212, rel=0.01)
         assert result.state == 1  # Learning state
         assert result.reps == 1
         assert result.last_review == now
@@ -46,8 +46,8 @@ class TestFSRS:
         initial = NodeState(0, 0, None, 0, 0)
         result = fsrs.calculate_next(initial, Rating.Good, now)
         
-        # Good should have decent stability
-        assert result.stability == pytest.approx(2.4, rel=0.01)
+        # Good should have decent stability (FSRS-6: w[2] = 2.3065)
+        assert result.stability == pytest.approx(2.3065, rel=0.01)
         assert result.state == 1
         assert result.reps == 1
     

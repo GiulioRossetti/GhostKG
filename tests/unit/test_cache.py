@@ -201,7 +201,9 @@ class TestCacheThreadSafety:
     
     def test_concurrent_put_and_get(self):
         """Test concurrent cache operations are thread-safe."""
-        cache = AgentCache(max_size=100)
+        # Use cache size larger than total keys to avoid eviction during test
+        # 5 threads * 50 operations = 250 unique keys
+        cache = AgentCache(max_size=300)
         errors = []
         
         def worker(thread_id):

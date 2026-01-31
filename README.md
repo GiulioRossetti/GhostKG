@@ -148,7 +148,7 @@ Knowledge is stored as semantic triplets:
 
 ### Memory Decay (FSRS)
 
-GhostKG uses FSRS v4.5 for realistic memory modeling:
+GhostKG uses FSRS v6 for realistic memory modeling:
 - **Stability**: How well information is retained
 - **Difficulty**: How hard it is to recall
 - **Retrievability**: Current probability of recall based on elapsed time
@@ -245,7 +245,7 @@ Working code examples in the `examples/` directory:
 
 GhostKG is built on solid theoretical foundations:
 
-- **FSRS v4.5**: Advanced spaced repetition algorithm based on cognitive science
+- **FSRS v6**: Advanced spaced repetition algorithm based on cognitive science
 - **Forgetting Curves**: Models natural memory decay over time
 - **Semantic Triplets**: Knowledge representation following RDF principles
 - **Temporal Knowledge Graphs**: Time-aware graph databases

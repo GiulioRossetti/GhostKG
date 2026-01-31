@@ -23,24 +23,24 @@ class TestFSRSConfig:
     def test_default_config(self):
         """Test default FSRS configuration."""
         config = FSRSConfig()
-        assert len(config.parameters) == 17
+        assert len(config.parameters) == 21
         assert all(isinstance(p, (int, float)) for p in config.parameters)
     
     def test_custom_parameters(self):
         """Test custom FSRS parameters."""
-        params = [1.0] * 17
+        params = [1.0] * 21
         config = FSRSConfig(parameters=params)
         assert config.parameters == params
     
     def test_validation_wrong_count(self):
         """Test validation fails with wrong parameter count."""
         config = FSRSConfig(parameters=[1.0] * 10)
-        with pytest.raises(ConfigurationError, match="exactly 17 values"):
+        with pytest.raises(ConfigurationError, match="exactly 21 values"):
             config.validate()
     
     def test_validation_non_numeric(self):
         """Test validation fails with non-numeric parameters."""
-        config = FSRSConfig(parameters=[1.0] * 16 + ["invalid"])
+        config = FSRSConfig(parameters=[1.0] * 20 + ["invalid"])
         with pytest.raises(ConfigurationError, match="must be numeric"):
             config.validate()
     
@@ -212,18 +212,18 @@ class TestGhostKGConfig:
         assert config.llm.model == "llama2"
         assert config.database.path == "/custom/path.db"
         # Other configs should have defaults
-        assert len(config.fsrs.parameters) == 17
+        assert len(config.fsrs.parameters) == 21
     
     def test_from_dict_full(self):
         """Test loading from full dictionary."""
         data = {
-            "fsrs": {"parameters": [1.0] * 17},
+            "fsrs": {"parameters": [1.0] * 21},
             "database": {"path": "/test.db", "timeout": 10.0},
             "llm": {"host": "http://test:11434", "model": "llama2", "timeout": 60},
             "fast_mode": {"gliner_model": "custom", "entity_labels": ["Custom"]}
         }
         config = GhostKGConfig.from_dict(data)
-        assert config.fsrs.parameters == [1.0] * 17
+        assert config.fsrs.parameters == [1.0] * 21
         assert config.database.path == "/test.db"
         assert config.llm.model == "llama2"
         assert config.fast_mode.gliner_model == "custom"

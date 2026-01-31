@@ -17,7 +17,7 @@ This document provides detailed information about each core component in the Gho
 
 ### Overview
 
-FSRS (Free Spaced Repetition Scheduler) v4.5 is the memory modeling algorithm at the heart of GhostKG. It determines how well agents remember information over time.
+FSRS (Free Spaced Repetition Scheduler) v6 is the memory modeling algorithm at the heart of GhostKG. It determines how well agents remember information over time.
 
 ### Class: `FSRS`
 
@@ -27,27 +27,31 @@ FSRS (Free Spaced Repetition Scheduler) v4.5 is the memory modeling algorithm at
 
 ### Parameters
 
-The FSRS algorithm uses 17 parameters (p[0] through p[16]):
+The FSRS-6 algorithm uses 21 parameters (p[0] through p[20]):
 
 ```python
 self.p = [
-    0.4,    # p[0] - Initial stability for Rating.Again
-    0.6,    # p[1] - Initial stability for Rating.Hard
-    2.4,    # p[2] - Initial stability for Rating.Good
-    5.8,    # p[3] - Initial stability for Rating.Easy
-    4.93,   # p[4] - Initial difficulty
-    0.94,   # p[5] - Difficulty step for ratings
-    0.86,   # p[6] - Difficulty modifier weight
-    0.01,   # p[7] - Difficulty smoothing
-    1.49,   # p[8] - Stability growth factor
-    0.14,   # p[9] - Stability decay exponent
-    0.94,   # p[10] - Retrievability impact
-    2.18,   # p[11] - Again stability multiplier
-    0.05,   # p[12] - Again difficulty exponent
-    0.34,   # p[13] - Again state exponent
-    1.26,   # p[14] - Again retrievability factor
-    0.29,   # p[15] - Hard penalty
-    2.61,   # p[16] - Easy bonus
+    0.212,   # p[0] - Initial stability for Rating.Again
+    1.2931,  # p[1] - Initial stability for Rating.Hard
+    2.3065,  # p[2] - Initial stability for Rating.Good
+    8.2956,  # p[3] - Initial stability for Rating.Easy
+    6.4133,  # p[4] - Initial difficulty baseline
+    0.8334,  # p[5] - Difficulty exponential factor
+    3.0194,  # p[6] - Difficulty linear damping factor
+    0.001,   # p[7] - Mean reversion weight to D_0(4)
+    1.8722,  # p[8] - Stability growth factor
+    0.1666,  # p[9] - Stability decay exponent
+    0.796,   # p[10] - Retrievability impact
+    1.4835,  # p[11] - Again stability multiplier
+    0.0614,  # p[12] - Again difficulty exponent
+    0.2629,  # p[13] - Again state exponent
+    1.6483,  # p[14] - Again retrievability factor
+    0.6014,  # p[15] - Hard penalty
+    1.8729,  # p[16] - Easy bonus
+    0.5425,  # p[17] - Same-day review growth rate
+    0.0912,  # p[18] - Same-day review rating adjustment
+    0.0658,  # p[19] - Same-day review stability damping
+    0.1542,  # p[20] - Trainable decay parameter
 ]
 ```
 

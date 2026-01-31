@@ -120,7 +120,9 @@ class AgentCache:
 
         key = self._make_key("context", agent_name, topic)
         with self._lock:
-            self._evict_lru(self._context_cache)
+            # Only evict if adding a NEW entry would exceed max_size
+            if key not in self._context_cache and len(self._context_cache) >= self.max_size:
+                self._evict_lru(self._context_cache)
             self._access_counter += 1
             self._context_cache[key] = (context, self._access_counter)
 
@@ -174,7 +176,9 @@ class AgentCache:
 
         key = self._make_key("memory", agent_name, topic, time_filter)
         with self._lock:
-            self._evict_lru(self._memory_cache)
+            # Only evict if adding a NEW entry would exceed max_size
+            if key not in self._memory_cache and len(self._memory_cache) >= self.max_size:
+                self._evict_lru(self._memory_cache)
             self._access_counter += 1
             self._memory_cache[key] = (data, self._access_counter)
 

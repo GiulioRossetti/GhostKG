@@ -21,28 +21,32 @@ class FSRSConfig:
     The default parameters are optimized for general use cases.
 
     Attributes:
-        parameters: List of 17 FSRS algorithm parameters
+        parameters: List of 21 FSRS-6 algorithm parameters
     """
 
     parameters: List[float] = field(
         default_factory=lambda: [
-            0.4,
-            0.6,
-            2.4,
-            5.8,
-            4.93,
-            0.94,
-            0.86,
-            0.01,
-            1.49,
-            0.14,
-            0.94,
-            2.18,
-            0.05,
-            0.34,
-            1.26,
-            0.29,
-            2.61,
+            0.212,
+            1.2931,
+            2.3065,
+            8.2956,
+            6.4133,
+            0.8334,
+            3.0194,
+            0.001,
+            1.8722,
+            0.1666,
+            0.796,
+            1.4835,
+            0.0614,
+            0.2629,
+            1.6483,
+            0.6014,
+            1.8729,
+            0.5425,
+            0.0912,
+            0.0658,
+            0.1542,
         ]
     )
 
@@ -58,9 +62,9 @@ class FSRSConfig:
         """
         if not isinstance(self.parameters, list):
             raise ConfigurationError("FSRS parameters must be a list")
-        if len(self.parameters) != 17:
+        if len(self.parameters) != 21:
             raise ConfigurationError(
-                f"FSRS parameters must have exactly 17 values, got {len(self.parameters)}"
+                f"FSRS parameters must have exactly 21 values, got {len(self.parameters)}"
             )
         if not all(isinstance(p, (int, float)) for p in self.parameters):
             raise ConfigurationError("All FSRS parameters must be numeric")

@@ -1,6 +1,6 @@
 # FSRS API
 
-The `FSRS` (Free Spaced Repetition Scheduler) class implements the FSRS v4.5 algorithm for memory modeling and spaced repetition.
+The `FSRS` (Free Spaced Repetition Scheduler) class implements the FSRS v6 algorithm for memory modeling and spaced repetition.
 
 ## Module Location
 
@@ -80,16 +80,18 @@ print(f"Retrievability: {next_state.retrievability:.2f}")
 
 ## Forgetting Curve
 
-The retrievability (probability of recall) decays exponentially over time:
+The retrievability (probability of recall) decays exponentially over time with trainable decay:
 
 ```
-R(t) = 0.9 ^ (t / S)
+R(t) = (1 + factor × t / S)^(-w_20)
 ```
 
 Where:
 - R(t) = retrievability at time t
 - t = time elapsed since last review
-- S = stability (half-life of memory)
+- S = stability (time until 90% retrievability)
+- w_20 = trainable decay parameter (default: 0.1542)
+- factor = 0.9^(-1/w_20) - 1 (ensures R(S,S) = 90%)
 
 ## API Reference
 
