@@ -146,14 +146,20 @@ class DependencyChecker:
         fast_available, fast_missing = DependencyChecker.check_fast_available()
 
         print("GhostKG Dependency Status:")
+
+        llm_missing = ", ".join(llm_missing)
+
         print(
             f"  {'✓' if llm_available else '✗'} LLM mode: "
-            f"{'Available' if llm_available else f'Missing: {', '.join(llm_missing)}'}"
+            f"{'Available' if llm_available else f'Missing: {llm_missing}'}"
         )
+        missing_str = ", ".join(fast_missing)
+
         print(
             f"  {'✓' if fast_available else '✗'} Fast mode: "
-            f"{'Available' if fast_available else f'Missing: {', '.join(fast_missing)}'}"
+            f"{'Available' if fast_available else f'Missing: {missing_str}'}"
         )
+
 
         if not llm_available and not fast_available:
             print("\n⚠ Warning: No extraction modes available!")
