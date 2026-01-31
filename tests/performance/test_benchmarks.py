@@ -14,8 +14,7 @@ import pytest
 import time
 import os
 import tempfile
-from ghost_kg import AgentManager, AgentCache
-from ghost_kg.storage import KnowledgeDB
+from ghost_kg import AgentManager, AgentCache, KnowledgeDB
 
 
 class TestDatabasePerformance:

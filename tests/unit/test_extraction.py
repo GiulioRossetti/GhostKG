@@ -1,7 +1,7 @@
 """Unit tests for extraction module."""
 import pytest
-from ghost_kg.extraction import ModelCache, FastExtractor, LLMExtractor, get_extractor
-from ghost_kg.dependencies import DependencyChecker
+from ghost_kg import FastExtractor, LLMExtractor, get_extractor, DependencyChecker
+from ghost_kg.extraction import ModelCache
 
 
 class TestModelCache:

@@ -12,7 +12,7 @@ Tests cover:
 import pytest
 import threading
 import time
-from ghost_kg.cache import AgentCache, get_global_cache, clear_global_cache
+from ghost_kg import AgentCache, get_global_cache, clear_global_cache
 
 
 class TestAgentCache:

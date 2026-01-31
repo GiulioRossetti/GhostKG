@@ -1,10 +1,7 @@
 """Additional tests to improve code coverage."""
 import pytest
 from datetime import datetime, timezone, timedelta
-from ghost_kg.agent import GhostAgent
-from ghost_kg.manager import AgentManager
-from ghost_kg.storage import KnowledgeDB, NodeState
-from ghost_kg.fsrs import Rating
+from ghost_kg import GhostAgent, AgentManager, KnowledgeDB, NodeState, Rating
 import tempfile
 import os
 
@@ -61,7 +58,7 @@ class TestAdditionalCoverage:
     def test_storage_database_error_handling(self, temp_db):
         """Test database error handling paths."""
         # Test with invalid database path
-        from ghost_kg.exceptions import DatabaseError
+        from ghost_kg import DatabaseError
         
         # This is already tested in test_error_handling.py
         # Just verify the exception is raised
@@ -162,7 +159,7 @@ class TestAdditionalCoverage:
         """Test storage validation error messages."""
         db = KnowledgeDB(temp_db)
         
-        from ghost_kg.exceptions import ValidationError
+        from ghost_kg import ValidationError
         
         # Test empty owner_id
         with pytest.raises(ValidationError, match="owner_id"):

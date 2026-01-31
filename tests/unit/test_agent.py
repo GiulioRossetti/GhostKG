@@ -1,9 +1,7 @@
 """Unit tests for GhostAgent."""
 import pytest
 from datetime import datetime, timezone, timedelta
-from ghost_kg.agent import GhostAgent
-from ghost_kg.storage import KnowledgeDB
-from ghost_kg.fsrs import Rating
+from ghost_kg import GhostAgent, KnowledgeDB, Rating
 import tempfile
 import os
 

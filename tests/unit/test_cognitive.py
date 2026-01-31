@@ -1,9 +1,7 @@
 """Unit tests for CognitiveLoop class."""
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from ghost_kg.cognitive import CognitiveLoop
-from ghost_kg.agent import GhostAgent
-from ghost_kg.exceptions import LLMError, ExtractionError
+from ghost_kg import CognitiveLoop, GhostAgent, LLMError, ExtractionError
 
 
 @pytest.fixture
@@ -21,7 +19,7 @@ class TestCognitiveLoop:
     
     def test_initialization_default(self, mock_agent):
         """Test CognitiveLoop initialization with defaults."""
-        with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
+        with patch('ghost_kg.core.cognitive.get_extractor') as mock_get_extractor:
             mock_get_extractor.return_value = Mock()
             loop = CognitiveLoop(mock_agent)
             
@@ -32,7 +30,7 @@ class TestCognitiveLoop:
     
     def test_initialization_fast_mode(self, mock_agent):
         """Test CognitiveLoop initialization with fast mode."""
-        with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
+        with patch('ghost_kg.core.cognitive.get_extractor') as mock_get_extractor:
             mock_get_extractor.return_value = Mock()
             loop = CognitiveLoop(mock_agent, fast_mode=True)
             
@@ -41,7 +39,7 @@ class TestCognitiveLoop:
     
     def test_initialization_custom_model(self, mock_agent):
         """Test CognitiveLoop initialization with custom model."""
-        with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
+        with patch('ghost_kg.core.cognitive.get_extractor') as mock_get_extractor:
             mock_get_extractor.return_value = Mock()
             loop = CognitiveLoop(mock_agent, model="custom-model")
             
@@ -49,7 +47,7 @@ class TestCognitiveLoop:
     
     def test_call_llm_with_retry_success(self, mock_agent):
         """Test successful LLM call."""
-        with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
+        with patch('ghost_kg.core.cognitive.get_extractor') as mock_get_extractor:
             mock_get_extractor.return_value = Mock()
             loop = CognitiveLoop(mock_agent)
             
@@ -65,7 +63,7 @@ class TestCognitiveLoop:
     
     def test_call_llm_with_retry_failure(self, mock_agent):
         """Test LLM call with retries on failure."""
-        with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
+        with patch('ghost_kg.core.cognitive.get_extractor') as mock_get_extractor:
             mock_get_extractor.return_value = Mock()
             loop = CognitiveLoop(mock_agent)
             
@@ -84,7 +82,7 @@ class TestCognitiveLoop:
     
     def test_absorb_with_extraction_error(self, mock_agent):
         """Test absorb handles extraction errors gracefully."""
-        with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
+        with patch('ghost_kg.core.cognitive.get_extractor') as mock_get_extractor:
             mock_extractor = Mock()
             mock_extractor.extract_triplets.side_effect = Exception("Extraction failed")
             mock_get_extractor.return_value = mock_extractor
@@ -114,7 +112,7 @@ class TestCognitiveLoop:
     
     def test_absorb_handles_missing_fields(self, mock_agent, capsys):
         """Test absorb handles missing fields in extracted triplets gracefully."""
-        with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
+        with patch('ghost_kg.core.cognitive.get_extractor') as mock_get_extractor:
             mock_extractor = Mock()
             # Return data with missing fields to simulate LLM extraction issues
             mock_extractor.extract.return_value = {
@@ -158,7 +156,7 @@ class TestCognitiveLoop:
     
     def test_reflect_handles_missing_fields(self, mock_agent, capsys):
         """Test reflect handles missing fields in reflection data gracefully."""
-        with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
+        with patch('ghost_kg.core.cognitive.get_extractor') as mock_get_extractor:
             mock_get_extractor.return_value = Mock()
             loop = CognitiveLoop(mock_agent)
             
