@@ -1,11 +1,11 @@
 """
 FSRS (Free Spaced Repetition Scheduler) Implementation
 
-This module implements the FSRS v4.5 algorithm for spaced repetition learning.
+This module implements the FSRS v6 algorithm for spaced repetition learning.
 FSRS is used to track memory stability and difficulty of concepts over time.
 
 References:
-- FSRS Algorithm: https://github.com/open-spaced-repetition/fsrs4anki
+- FSRS Algorithm: https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm
 """
 
 import datetime
@@ -34,13 +34,13 @@ class Rating:
 
 class FSRS:
     """
-    Free Spaced Repetition Scheduler v4.5
+    Free Spaced Repetition Scheduler v6
 
-    Implements the FSRS algorithm for calculating memory stability and difficulty.
-    Uses 17 parameters optimized for knowledge retention modeling.
+    Implements the FSRS-6 algorithm for calculating memory stability and difficulty.
+    Uses 21 parameters optimized for knowledge retention modeling.
 
     Attributes:
-        p (list): 17 FSRS parameters for stability and difficulty calculations
+        p (list): 21 FSRS-6 parameters for stability and difficulty calculations
 
     Methods:
         calculate_next: Calculate next memory state based on current state and rating
@@ -48,36 +48,40 @@ class FSRS:
 
     def __init__(self) -> None:
         """
-        Initialize FSRS with default v4.5 parameters.
+        Initialize FSRS with default v6 parameters.
 
         Returns:
             None
         """
         self.p = [
-            0.4,
-            0.6,
-            2.4,
-            5.8,
-            4.93,
-            0.94,
-            0.86,
-            0.01,
-            1.49,
-            0.14,
-            0.94,
-            2.18,
-            0.05,
-            0.34,
-            1.26,
-            0.29,
-            2.61,
+            0.212,
+            1.2931,
+            2.3065,
+            8.2956,
+            6.4133,
+            0.8334,
+            3.0194,
+            0.001,
+            1.8722,
+            0.1666,
+            0.796,
+            1.4835,
+            0.0614,
+            0.2629,
+            1.6483,
+            0.6014,
+            1.8729,
+            0.5425,
+            0.0912,
+            0.0658,
+            0.1542,
         ]
 
     def calculate_next(
         self, current_state: NodeState, rating: int, now: datetime.datetime
     ) -> NodeState:
         """
-        Calculate the next memory state after a review.
+        Calculate the next memory state after a review using FSRS-6.
 
         Args:
             current_state (NodeState): Current NodeState with stability, difficulty, etc.
@@ -87,26 +91,31 @@ class FSRS:
         Returns:
             NodeState: New memory state with updated stability and difficulty
 
-        Algorithm:
+        Algorithm (FSRS-6):
             For new cards (state=0):
-                - Initial stability based on rating
-                - Initial difficulty based on rating
+                - Initial stability based on rating: S_0(G) = w[G-1]
+                - Initial difficulty: D_0(G) = w_4 - e^(w_5 * (G - 1)) + 1
 
             For existing cards:
-                - Calculate retrievability based on time elapsed
+                - Calculate retrievability with trainable decay: 
+                  R(t,S) = (1 + factor * t/S)^(-w_20)
+                - Update difficulty with linear damping and mean reversion to D_0(4)
                 - Update stability based on rating and retrievability
-                - Update difficulty based on rating and current difficulty
+                - For same-day reviews: S'(S,G) = S * e^(w_17 * (G - 3 + w_18)) * S^(-w_19)
         """
         # 1. New Cards
         if current_state.state == 0:
+            # Initial stability: S_0(G) = w[G-1]
             s = self.p[rating - 1]
-            d = min(max(self.p[4] - (rating - 3) * self.p[5], 1), 10)
+            # Initial difficulty (FSRS-5+): D_0(G) = w_4 - e^(w_5 * (G - 1)) + 1
+            d = min(max(self.p[4] - math.exp(self.p[5] * (rating - 1)) + 1, 1), 10)
             return NodeState(s, d, now, 1, 1)
 
         # 2. Existing Cards
         s = current_state.stability
         d = current_state.difficulty
 
+        # Calculate retrievability with trainable decay (FSRS-6)
         if current_state.last_review:
             last_review = current_state.last_review
             if last_review.tzinfo is None:
@@ -114,22 +123,32 @@ class FSRS:
             elapsed_days = (now - last_review).total_seconds() / 86400
             if elapsed_days < 0:
                 elapsed_days = 0
-            retrievability = (1 + elapsed_days / (9 * s)) ** -1
+            
+            # R(t,S) = (1 + factor * t/S)^(-w_20)
+            # where factor = 0.9^(-1/w_20) - 1 to ensure R(S,S) = 90%
+            factor = 0.9 ** (-1 / self.p[20]) - 1
+            retrievability = (1 + factor * elapsed_days / s) ** -self.p[20]
         else:
             # Match legacy implementation: new cards have 1.0 retrievability
             retrievability = 1.0
 
-        # Update difficulty (matches legacy core_legacy.py lines 91-98)
-        next_d = min(
-            max(
-                self.p[7] * self.p[4] + (1 - self.p[7]) * (d - self.p[6] * (rating - 3)),
-                1,
-            ),
-            10,
-        )
+        # Calculate D_0(4) for mean reversion (FSRS-5+)
+        d_0_4 = min(max(self.p[4] - math.exp(self.p[5] * 3) + 1, 1), 10)
 
-        # Update stability based on rating (matches legacy core_legacy.py lines 100-120)
+        # Update difficulty with linear damping (FSRS-5+)
+        # ΔD(G) = -w_6 * (G - 3)
+        delta_d = -self.p[6] * (rating - 3)
+        # D' = D + ΔD * (10 - D) / 9 (linear damping)
+        d_prime = d + delta_d * (10 - d) / 9
+        # Mean reversion to D_0(4)
+        next_d = min(max(self.p[7] * d_0_4 + (1 - self.p[7]) * d_prime, 1), 10)
+
+        # Check if same-day review (elapsed_days == 0 or very small)
+        is_same_day = current_state.last_review is None or elapsed_days < 1
+
+        # Update stability based on rating
         if rating == Rating.Again:
+            # Post-lapse stability (same as FSRS-4.5)
             next_s = (
                 self.p[11]
                 * (next_d ** -self.p[12])
@@ -138,17 +157,23 @@ class FSRS:
             )
             state = 1
         else:
-            hard_penalty = self.p[15] if rating == Rating.Hard else 1
-            easy_bonus = self.p[16] if rating == Rating.Easy else 1
-            next_s = s * (
-                1
-                + math.exp(self.p[8])
-                * (11 - next_d)
-                * (s ** -self.p[9])
-                * (math.exp((1 - retrievability) * self.p[10]) - 1)
-                * hard_penalty
-                * easy_bonus
-            )
+            if is_same_day:
+                # Same-day review stability (FSRS-6)
+                # S'(S,G) = S * e^(w_17 * (G - 3 + w_18)) * S^(-w_19)
+                next_s = s * math.exp(self.p[17] * (rating - 3 + self.p[18])) * (s ** -self.p[19])
+            else:
+                # Regular review stability with hard penalty and easy bonus
+                hard_penalty = self.p[15] if rating == Rating.Hard else 1
+                easy_bonus = self.p[16] if rating == Rating.Easy else 1
+                next_s = s * (
+                    1
+                    + math.exp(self.p[8])
+                    * (11 - next_d)
+                    * (s ** -self.p[9])
+                    * (math.exp((1 - retrievability) * self.p[10]) - 1)
+                    * hard_penalty
+                    * easy_bonus
+                )
             state = 2
 
         next_s = max(next_s, 0.1)

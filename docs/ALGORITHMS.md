@@ -18,7 +18,7 @@ This document provides detailed mathematical and algorithmic descriptions of the
 
 ### Overview
 
-FSRS (Free Spaced Repetition Scheduler) v4.5 is based on the principles of spaced repetition and the spacing effect in cognitive psychology. It models how memories strengthen with successful recall and decay over time.
+FSRS (Free Spaced Repetition Scheduler) v6 is based on the principles of spaced repetition and the spacing effect in cognitive psychology. It models how memories strengthen with successful recall and decay over time.
 
 ### Key Variables
 
@@ -33,27 +33,31 @@ FSRS (Free Spaced Repetition Scheduler) v4.5 is based on the principles of space
 
 ### Algorithm Parameters
 
-FSRS uses 17 parameters (p[0] through p[16]) that define the learning curves:
+FSRS-6 uses 21 parameters (p[0] through p[20]) that define the learning curves:
 
 ```python
 p = [
-    0.4,    # p[0]  - Initial stability for "Again" rating
-    0.6,    # p[1]  - Initial stability for "Hard" rating
-    2.4,    # p[2]  - Initial stability for "Good" rating
-    5.8,    # p[3]  - Initial stability for "Easy" rating
-    4.93,   # p[4]  - Initial difficulty baseline
-    0.94,   # p[5]  - Difficulty adjustment step
-    0.86,   # p[6]  - Difficulty weight factor
-    0.01,   # p[7]  - Difficulty smoothing factor
-    1.49,   # p[8]  - Stability growth rate
-    0.14,   # p[9]  - Stability decay exponent
-    0.94,   # p[10] - Retrievability impact factor
-    2.18,   # p[11] - "Again" stability multiplier
-    0.05,   # p[12] - "Again" difficulty exponent
-    0.34,   # p[13] - "Again" state exponent
-    1.26,   # p[14] - "Again" retrievability impact
-    0.29,   # p[15] - "Hard" rating penalty
-    2.61,   # p[16] - "Easy" rating bonus
+    0.212,   # p[0]  - Initial stability for "Again" rating
+    1.2931,  # p[1]  - Initial stability for "Hard" rating
+    2.3065,  # p[2]  - Initial stability for "Good" rating
+    8.2956,  # p[3]  - Initial stability for "Easy" rating
+    6.4133,  # p[4]  - Initial difficulty baseline (D_0(1))
+    0.8334,  # p[5]  - Difficulty exponential factor
+    3.0194,  # p[6]  - Difficulty linear damping factor
+    0.001,   # p[7]  - Mean reversion weight to D_0(4)
+    1.8722,  # p[8]  - Stability growth rate
+    0.1666,  # p[9]  - Stability decay exponent
+    0.796,   # p[10] - Retrievability impact factor
+    1.4835,  # p[11] - "Again" stability multiplier
+    0.0614,  # p[12] - "Again" difficulty exponent
+    0.2629,  # p[13] - "Again" state exponent
+    1.6483,  # p[14] - "Again" retrievability impact
+    0.6014,  # p[15] - "Hard" rating penalty
+    1.8729,  # p[16] - "Easy" rating bonus
+    0.5425,  # p[17] - Same-day review growth rate
+    0.0912,  # p[18] - Same-day review rating adjustment
+    0.0658,  # p[19] - Same-day review stability damping
+    0.1542,  # p[20] - Trainable decay parameter
 ]
 ```
 
@@ -67,43 +71,46 @@ These parameters are optimized based on research into human memory and spaced re
 
 The retrievability R represents the probability that the agent can recall a piece of knowledge at time t.
 
-**Formula:**
+**Formula (FSRS-6):**
 ```
-R(t) = (1 + Δt / (9 × S))^(-1)
+R(t) = (1 + factor × Δt / S)^(-w_20)
 ```
 
 Where:
 - `R(t)` = Retrievability at time t
 - `Δt` = Elapsed time since last review (in days)
 - `S` = Current stability (in days)
-- `9` = Constant from FSRS algorithm
+- `w_20` = Trainable decay parameter (default: 0.1542)
+- `factor` = 0.9^(-1/w_20) - 1 (ensures R(S,S) = 90%)
 
 **Interpretation:**
 - At Δt = 0 (just reviewed): R = 1.0 (perfect recall)
-- At Δt = 9×S: R ≈ 0.5 (50% chance of recall)
+- At Δt = S: R = 0.9 (90% chance of recall)
 - As Δt → ∞: R → 0 (forgotten)
 
 **Example:**
 
 ```python
-# Stability = 10 days
+# Stability = 10 days, w_20 = 0.1542
 S = 10
+w_20 = 0.1542
+factor = 0.9 ** (-1 / w_20) - 1  # ≈ 0.2339
 
 # Just reviewed
 Δt = 0
-R = (1 + 0 / (9 * 10))^(-1) = 1.0
+R = (1 + 0.2339 * 0 / 10)^(-0.1542) = 1.0
 
 # After 5 days
 Δt = 5
-R = (1 + 5 / 90)^(-1) ≈ 0.947
+R = (1 + 0.2339 * 5 / 10)^(-0.1542) ≈ 0.948
+
+# After 10 days (S)
+Δt = 10
+R = (1 + 0.2339 * 10 / 10)^(-0.1542) = 0.9
 
 # After 30 days
 Δt = 30
-R = (1 + 30 / 90)^(-1) ≈ 0.750
-
-# After 90 days (9 * S)
-Δt = 90
-R = (1 + 90 / 90)^(-1) = 0.5
+R = (1 + 0.2339 * 30 / 10)^(-0.1542) ≈ 0.752
 ```
 
 ### Decay Curve Visualization
@@ -127,7 +134,7 @@ R (Retrievability)
 (For S = 10 days)
 ```
 
-The curve shows exponential decay, with faster initial forgetting that gradually slows down.
+The curve shows exponential decay with trainable parameters, allowing for more flexible modeling of forgetting curves.
 
 ---
 
@@ -142,11 +149,11 @@ When encountering knowledge for the first time:
 S_new = p[rating - 1]
 ```
 
-**Values:**
-- Rating = 1 (Again): S = 0.4 days
-- Rating = 2 (Hard): S = 0.6 days
-- Rating = 3 (Good): S = 2.4 days
-- Rating = 4 (Easy): S = 5.8 days
+**Values (FSRS-6):**
+- Rating = 1 (Again): S = 0.212 days
+- Rating = 2 (Hard): S = 1.2931 days
+- Rating = 3 (Good): S = 2.3065 days
+- Rating = 4 (Easy): S = 8.2956 days
 
 The initial stability depends on how easily the knowledge was learned.
 
@@ -249,6 +256,47 @@ S_next = 2.18 × (5.0^(-0.05)) × ((10 + 1)^0.34 - 1) × exp((1 - 0.6) × 1.26)
 
 The stability drops from 10 days to ~3.5 days, requiring more frequent review.
 
+#### Same-Day Review (FSRS-6)
+
+When reviewing multiple times on the same day:
+
+**Formula:**
+```
+S_next = S × exp(p[17] × (rating - 3 + p[18])) × S^(-p[19])
+```
+
+**Components:**
+
+1. **Growth Rate**: `exp(p[17] × (rating - 3 + p[18]))` where p[17] = 0.5425, p[18] = 0.0912
+   - Controls how much stability increases with each same-day review
+   - Adjusted by rating: Easy increases more than Good
+
+2. **Stability Damping**: `S^(-p[19])` where p[19] = 0.0658
+   - Higher stability items increase slower
+   - Prevents unbounded growth from repeated reviews
+
+**Example:**
+
+```python
+# Same-day review
+S = 2.0 days
+rating = 3 (Good)
+
+S_next = 2.0 × exp(0.5425 × (3 - 3 + 0.0912)) × (2.0^(-0.0658))
+       = 2.0 × exp(0.0495) × 0.911
+       = 2.0 × 1.051 × 0.911
+       ≈ 1.91 days
+
+# For Easy rating:
+rating = 4 (Easy)
+S_next = 2.0 × exp(0.5425 × (4 - 3 + 0.0912)) × (2.0^(-0.0658))
+       = 2.0 × exp(0.592) × 0.911
+       = 2.0 × 1.807 × 0.911
+       ≈ 3.29 days
+```
+
+This ensures same-day reviews provide incremental benefit without overly inflating stability.
+
 ---
 
 ## Difficulty Updates
@@ -257,46 +305,57 @@ Difficulty represents the inherent complexity of recalling a piece of knowledge.
 
 ### Initial Difficulty
 
-For new cards:
+For new cards (FSRS-6):
 
 **Formula:**
 ```
-D_initial = min(max(p[4] - (rating - 3) × p[5], 1), 10)
+D_initial = min(max(p[4] - exp(p[5] × (rating - 1)) + 1, 1), 10)
 ```
 
-**Values:**
-- Rating = 1 (Again): D = 4.93 + 2×0.94 = 6.81
-- Rating = 2 (Hard): D = 4.93 + 1×0.94 = 5.87
-- Rating = 3 (Good): D = 4.93
-- Rating = 4 (Easy): D = 4.93 - 1×0.94 = 3.99
+**Values (FSRS-6):**
+- Rating = 1 (Again): D = 6.4133 - exp(0.8334 × 0) + 1 ≈ 6.41
+- Rating = 2 (Hard): D = 6.4133 - exp(0.8334 × 1) + 1 ≈ 5.11
+- Rating = 3 (Good): D = 6.4133 - exp(0.8334 × 2) + 1 ≈ 2.19
+- Rating = 4 (Easy): D = 6.4133 - exp(0.8334 × 3) + 1 ≈ -3.35 → clamped to 1.0
 
 Clamped to [1, 10] range.
 
 ### Difficulty Updates (Existing Cards)
 
+FSRS-6 uses linear damping and mean reversion:
+
 **Formula:**
 ```
-D_next = min(max(
-    p[7] × p[4] + (1 - p[7]) × (D_current - p[6] × (rating - 3)),
-    1
-), 10)
+# Step 1: Calculate D_0(4) for mean reversion target
+D_0_4 = min(max(p[4] - exp(p[5] × 3) + 1, 1), 10)
+
+# Step 2: Linear damping adjustment
+ΔD = -p[6] × (rating - 3)
+D_prime = D_current + ΔD × (10 - D_current) / 9
+
+# Step 3: Mean reversion to D_0(4)
+D_next = min(max(p[7] × D_0_4 + (1 - p[7]) × D_prime, 1), 10)
 ```
 
 **Components:**
 
-1. **Baseline**: `p[7] × p[4]` where p[7] = 0.01, p[4] = 4.93
-   - Small constant baseline: ~0.05
-   - Prevents difficulty from dropping to zero
+1. **Mean Reversion Target**: `D_0(4)` (difficulty for "Easy" first rating)
+   - In FSRS-6, mean reversion is to D_0(4) instead of D_0(3)
+   - With default parameters: D_0(4) ≈ 1.0
 
-2. **Current Difficulty**: `(1 - p[7]) × D_current`
-   - Weight = 0.99 (keeps most of current value)
-   - Difficulty changes slowly
+2. **Linear Damping**: `ΔD × (10 - D_current) / 9`
+   - Provides a linear damping effect
+   - Changes are proportional to how far D is from the maximum (10)
 
-3. **Rating Adjustment**: `p[6] × (rating - 3)` where p[6] = 0.86
-   - rating = 1 (Again): +1.72 (increases difficulty)
-   - rating = 2 (Hard): +0.86
-   - rating = 3 (Good): 0 (no change)
-   - rating = 4 (Easy): -0.86 (decreases difficulty)
+3. **Rating Adjustment**: `ΔD = -p[6] × (rating - 3)` where p[6] = 3.0194
+   - rating = 1 (Again): ΔD = +6.04 (increases difficulty)
+   - rating = 2 (Hard): ΔD = +3.02
+   - rating = 3 (Good): ΔD = 0 (no change)
+   - rating = 4 (Easy): ΔD = -3.02 (decreases difficulty)
+
+4. **Mean Reversion**: `p[7] × D_0_4 + (1 - p[7]) × D_prime`
+   - p[7] = 0.001 (very weak mean reversion in FSRS-6)
+   - Primarily uses D_prime with minimal pull toward D_0(4)
 
 **Example:**
 
@@ -304,18 +363,27 @@ D_next = min(max(
 # Current state
 D = 5.0
 rating = 4 (Easy)
+D_0_4 = 1.0
 
-# Calculate next difficulty
-D_next = 0.01 × 4.93 + 0.99 × (5.0 - 0.86 × (4 - 3))
-       = 0.05 + 0.99 × (5.0 - 0.86)
-       = 0.05 + 0.99 × 4.14
-       = 4.15
+# Step 1: Calculate ΔD
+ΔD = -3.0194 × (4 - 3) = -3.0194
+
+# Step 2: Apply linear damping
+D_prime = 5.0 + (-3.0194) × (10 - 5.0) / 9
+        = 5.0 - 3.0194 × 0.556
+        = 5.0 - 1.68
+        = 3.32
+
+# Step 3: Mean reversion
+D_next = 0.001 × 1.0 + 0.999 × 3.32
+       = 0.001 + 3.32
+       = 3.32
 
 # Clamped to [1, 10]
-D_next = 4.15
+D_next = 3.32
 ```
 
-Difficulty decreases slightly when rated Easy, making future recalls easier.
+Difficulty decreases when rated Easy, with linear damping providing more natural progression.
 
 ---
 
@@ -552,7 +620,7 @@ Where:
 
 ### FSRS Algorithm
 
-- [FSRS v4.5 Specification](https://github.com/open-spaced-repetition/fsrs4anki/wiki)
+- [FSRS-6 Specification](https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm)
 - Ye, L., et al. (2024). "A Stochastic Shortest Path Algorithm for Optimizing Spaced Repetition Scheduling"
 
 ### Cognitive Psychology
@@ -572,9 +640,9 @@ Where:
 
 The algorithms in GhostKG combine:
 
-1. **FSRS**: Sophisticated spaced repetition for realistic memory modeling
-2. **Retrievability**: Continuous decay functions for forgetting
-3. **Stability/Difficulty**: Dynamic properties that evolve with use
+1. **FSRS-6**: Sophisticated spaced repetition for realistic memory modeling with 21 trainable parameters
+2. **Retrievability**: Continuous decay functions with trainable decay parameter for flexible forgetting curves
+3. **Stability/Difficulty**: Dynamic properties that evolve with use, including same-day review handling
 4. **Sentiment**: Emotional associations with knowledge
 5. **Efficient Queries**: Optimized database access for fast retrieval
 
