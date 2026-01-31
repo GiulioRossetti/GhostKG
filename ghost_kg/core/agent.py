@@ -284,6 +284,10 @@ class GhostAgent:
         """
         if rating is None:
             rating = Rating.Good
+        
+        # Handle None sentiment by using default value
+        if sentiment is None:
+            sentiment = 0.0
 
         n_source = self._normalize(source)
         n_target = self._normalize(target)

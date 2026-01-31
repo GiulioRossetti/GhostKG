@@ -42,6 +42,16 @@ class TestGhostAgent:
         assert memory_view is not None
         assert len(memory_view) > 0
     
+    def test_learn_triplet_none_sentiment(self, agent):
+        """Test that None sentiment is handled gracefully."""
+        # Should not raise an error, should use default 0.0
+        agent.learn_triplet("Python", "is", "great", Rating.Good, sentiment=None)
+        
+        # Verify it was stored
+        memory_view = agent.get_memory_view("Python")
+        assert memory_view is not None
+        assert len(memory_view) > 0
+    
     def test_query_memories_by_topic(self, agent):
         """Test querying memories by topic."""
         # Add some memories

@@ -228,6 +228,10 @@ class KnowledgeDB:
         if not owner_id or not source or not relation or not target:
             raise ValidationError("owner_id, source, relation, and target are required")
 
+        # Handle None sentiment by using default value
+        if sentiment is None:
+            sentiment = 0.0
+        
         if not -1.0 <= sentiment <= 1.0:
             raise ValidationError(f"sentiment must be between -1.0 and 1.0, got {sentiment}")
 
