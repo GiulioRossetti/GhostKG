@@ -56,7 +56,7 @@ context = manager.get_context("Alice", topic="UBI")
 
 ## API Reference
 
-::: ghost_kg.manager.AgentManager
+::: ghost_kg.core.manager.AgentManager
     options:
       show_root_heading: true
       show_source: true
