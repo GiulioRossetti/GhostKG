@@ -1,41 +1,70 @@
-# New modular imports (Phase 1 refactoring)
-# Backward compatibility: Also export from core
-# This ensures old code using "from ghost_kg.core import ..." still works
-from . import core
-from .agent import GhostAgent
+"""GhostKG - Dynamic Knowledge Graphs with Memory Decay for LLM Agents
 
-# Phase 7: Performance optimization
-from .cache import AgentCache, clear_global_cache, get_global_cache
-from .cognitive import CognitiveLoop
+This package provides dynamic knowledge graph management for LLM agents with built-in
+memory decay using FSRS (Free Spaced Repetition Scheduler).
 
-# Phase 4: Configuration management
-from .config import (
-    DatabaseConfig,
-    FastModeConfig,
-    FSRSConfig,
-    GhostKGConfig,
-    LLMConfig,
-    get_default_config,
-)
+Main API:
+---------
+Core functionality:
+  - AgentManager: High-level API for managing agents
+  - GhostAgent: Individual agent with knowledge graph
+  - CognitiveLoop: Agent cognitive operations
 
-# Phase 2: Dependency management
-from .dependencies import DependencyChecker, has_fast_support, has_llm_support
+Memory system:
+  - FSRS: Spaced repetition algorithm
+  - Rating: Memory rating enum
+  - AgentCache: Performance caching
 
-# Phase 3: Error handling
-from .exceptions import (
+Storage:
+  - KnowledgeDB: Database management
+  - NodeState: Memory state tracking
+
+Extraction:
+  - FastExtractor: Fast GLiNER-based extraction
+  - LLMExtractor: LLM-based extraction
+  - get_extractor: Factory function
+
+Utilities:
+  - Configuration classes (FSRSConfig, DatabaseConfig, etc.)
+  - Exception classes (GhostKGError, DatabaseError, etc.)
+  - Dependency checking (has_fast_support, has_llm_support)
+
+Package Structure:
+------------------
+- ghost_kg.core: Core agent and manager functionality
+- ghost_kg.memory: Memory management (FSRS, caching)
+- ghost_kg.storage: Database and persistence
+- ghost_kg.extraction: Triplet extraction strategies
+- ghost_kg.utils: Configuration, exceptions, dependencies
+"""
+
+# Import from subpackages
+from .core import AgentManager, CognitiveLoop, GhostAgent
+from .extraction import FastExtractor, LLMExtractor, get_extractor
+from .memory import FSRS, AgentCache, Rating, clear_global_cache, get_global_cache
+from .storage import KnowledgeDB, NodeState
+from .utils import (
     AgentNotFoundError,
     ConfigurationError,
+    DatabaseConfig,
     DatabaseError,
+    DependencyChecker,
     DependencyError,
     ExtractionError,
+    FSRSConfig,
+    FastModeConfig,
+    GhostKGConfig,
     GhostKGError,
+    LLMConfig,
     LLMError,
     ValidationError,
+    get_default_config,
+    has_fast_support,
+    has_llm_support,
 )
-from .extraction import FastExtractor, LLMExtractor, get_extractor
-from .fsrs import FSRS, Rating
-from .manager import AgentManager
-from .storage import KnowledgeDB, NodeState
+
+# Backward compatibility: Also export core module for old imports
+from . import core
 
 __all__ = [
     # Core classes
@@ -52,11 +81,11 @@ __all__ = [
     "FastExtractor",
     "LLMExtractor",
     "get_extractor",
-    # Dependency checking (Phase 2)
+    # Dependency checking
     "DependencyChecker",
     "has_llm_support",
     "has_fast_support",
-    # Exceptions (Phase 3)
+    # Exceptions
     "GhostKGError",
     "DatabaseError",
     "LLMError",
@@ -65,15 +94,19 @@ __all__ = [
     "AgentNotFoundError",
     "ValidationError",
     "DependencyError",
-    # Configuration (Phase 4)
+    # Configuration
     "FSRSConfig",
     "DatabaseConfig",
     "LLMConfig",
     "FastModeConfig",
     "GhostKGConfig",
     "get_default_config",
-    # Performance/Caching (Phase 7)
+    # Performance/Caching
     "AgentCache",
     "get_global_cache",
     "clear_global_cache",
+    # Backward compatibility
+    "core",
 ]
+
+__version__ = "0.2.0"
