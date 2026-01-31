@@ -24,7 +24,7 @@ In real conversations:
 
 GhostKG's FSRS system models this realistically:
 - Recent memories are strong (high retrievability)
-- Old, unreviewedmemories fade (low retrievability)
+- Old, unreviewed memories fade (low retrievability)
 - Time gaps affect what agents remember
 
 ## Step-by-Step Walkthrough
