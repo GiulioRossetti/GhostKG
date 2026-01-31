@@ -179,7 +179,7 @@ class AgentManager:
         else:
             # Let agent extract triplets internally (requires LLM)
             # This is for backward compatibility
-            from .core import CognitiveLoop
+            from .cognitive import CognitiveLoop
 
             loop = CognitiveLoop(agent, fast_mode=fast_mode)
             loop.absorb(content, author=author)
@@ -328,7 +328,7 @@ class AgentManager:
             )
         else:
             # Let agent reflect internally (requires LLM)
-            from .core import CognitiveLoop
+            from .cognitive import CognitiveLoop
 
             loop = CognitiveLoop(agent)
             loop.reflect(response)
