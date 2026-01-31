@@ -203,6 +203,7 @@ class AgentManager:
             
         Raises:
             AgentNotFoundError: If agent doesn't exist
+            ValidationError: If topic is invalid
             
         Example:
             >>> manager = AgentManager()
@@ -216,14 +217,6 @@ class AgentManager:
         See Also:
             - absorb_content(): Update knowledge graph with new content
             - process_and_get_context(): Combined absorb + context operation
-        """
-
-        Returns:
-            str: Formatted context string
-            
-        Raises:
-            AgentNotFoundError: If agent doesn't exist
-            ValidationError: If topic is invalid
         """
         if not topic or not isinstance(topic, str):
             raise ValidationError("topic must be a non-empty string")
