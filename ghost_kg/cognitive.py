@@ -134,12 +134,19 @@ class CognitiveLoop:
 
         # Process extracted triplets
         for item in data.get("world_facts", []):
-            self.agent.learn_triplet(item["source"], item["relation"], item["target"])
+            self.agent.learn_triplet(
+                item.get("source", ""),
+                item.get("relation", ""),
+                item.get("target", "")
+            )
 
         for item in data.get("partner_stance", []):
             sentiment = item.get("sentiment", 0.0)
             self.agent.learn_triplet(
-                item["source"], item["relation"], item["target"], sentiment=sentiment
+                item.get("source", ""),
+                item.get("relation", ""),
+                item.get("target", ""),
+                sentiment=sentiment
             )
 
         for item in data.get("my_reaction", []):
@@ -147,8 +154,8 @@ class CognitiveLoop:
             rating = item.get("rating", Rating.Good)
             self.agent.learn_triplet(
                 "I",
-                item["relation"],
-                item["target"],
+                item.get("relation", ""),
+                item.get("target", ""),
                 rating=rating,
                 sentiment=s_score,
             )
@@ -205,8 +212,8 @@ class CognitiveLoop:
                 s_score = item.get("sentiment", 0.0)
                 self.agent.learn_triplet(
                     "I",
-                    item["relation"],
-                    item["target"],
+                    item.get("relation", ""),
+                    item.get("target", ""),
                     rating=Rating.Easy,  # High rating for self-expressed beliefs
                     sentiment=s_score,
                 )

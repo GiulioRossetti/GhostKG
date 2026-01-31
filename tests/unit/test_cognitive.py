@@ -111,3 +111,50 @@ class TestCognitiveLoop:
         # This test requires mocking complex nested response structures
         # Skip for now as reply is tested in integration tests
         pass
+    
+    def test_absorb_handles_missing_fields(self, mock_agent):
+        """Test absorb handles missing fields in extracted triplets gracefully."""
+        with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
+            mock_extractor = Mock()
+            # Return data with missing fields to simulate LLM extraction issues
+            mock_extractor.extract.return_value = {
+                "world_facts": [
+                    {"source": "Bob", "relation": "says"},  # Missing 'target'
+                    {"relation": "believes", "target": "climate"},  # Missing 'source'
+                    {},  # All fields missing
+                ],
+                "partner_stance": [
+                    {"source": "Alice", "target": "UBI"},  # Missing 'relation'
+                    {"source": "Alice", "relation": "supports"},  # Missing 'target'
+                ],
+                "my_reaction": [
+                    {"relation": "worried_about"},  # Missing 'target'
+                    {"target": "economy"},  # Missing 'relation'
+                ]
+            }
+            mock_get_extractor.return_value = mock_extractor
+            
+            loop = CognitiveLoop(mock_agent)
+            
+            # This should NOT raise KeyError even with missing fields
+            try:
+                loop.absorb("Test content with missing fields", author="TestAuthor")
+            except KeyError as e:
+                pytest.fail(f"absorb raised KeyError with missing fields: {e}")
+    
+    def test_reflect_handles_missing_fields(self, mock_agent):
+        """Test reflect handles missing fields in reflection data gracefully."""
+        with patch('ghost_kg.cognitive.get_extractor') as mock_get_extractor:
+            mock_get_extractor.return_value = Mock()
+            loop = CognitiveLoop(mock_agent)
+            
+            # Mock LLM response with missing fields
+            mock_agent.client.chat.return_value = {
+                'message': {'content': '{"my_expressed_stances": [{"relation": "support"}, {"target": "UBI"}, {}]}'}
+            }
+            
+            # This should NOT raise KeyError even with missing fields
+            try:
+                loop.reflect("I support UBI")
+            except KeyError as e:
+                pytest.fail(f"reflect raised KeyError with missing fields: {e}")
