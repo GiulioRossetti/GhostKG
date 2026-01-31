@@ -206,3 +206,18 @@ class TestKnowledgeDB:
         
         with pytest.raises(ValidationError):
             db.add_relation("agent1", "a", "b", "c", sentiment=-2.0)  # <-1.0
+    
+    def test_add_relation_none_sentiment(self, db):
+        """Test that None sentiment is handled gracefully by using default value."""
+        # Should not raise an error, should use default 0.0
+        db.add_relation("agent1", "a", "relation", "b", sentiment=None)
+        
+        # Verify relation was added
+        cursor = db.conn.cursor()
+        cursor.execute("""
+            SELECT sentiment FROM edges 
+            WHERE owner_id = ? AND source = ? AND target = ?
+        """, ("agent1", "a", "b"))
+        result = cursor.fetchone()
+        assert result is not None
+        assert result[0] == 0.0  # Default sentiment

@@ -153,6 +153,9 @@ def extract_response_triplets(text: str, agent_name: str):
         triplets = []
         for item in data.get("my_expressed_stances", []):
             s_score = item.get("sentiment", 0.0)
+            # Handle None sentiment (LLM might return null in JSON)
+            if s_score is None:
+                s_score = 0.0
             triplets.append((item["relation"], item["target"], s_score))
 
         return triplets
