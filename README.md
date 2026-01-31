@@ -129,6 +129,28 @@ loop.absorb("I think UBI is necessary.", author="Bob")
 response = loop.reply("UBI", partner_name="Bob")
 ```
 
+## Privacy & Storage Control
+
+GhostKG provides fine-grained control over what data is stored in logs:
+
+```python
+# Privacy-friendly: Store UUID instead of content (default)
+manager = AgentManager(db_path="agents.db", store_log_content=False)
+
+# Or: Store full content in logs
+manager = AgentManager(db_path="agents.db", store_log_content=True)
+```
+
+**Default behavior (store_log_content=False)**:
+- Content text is NOT stored in the database
+- A UUID is generated and stored instead
+- More privacy-friendly and reduces storage requirements
+
+**When to use store_log_content=True**:
+- When you need full audit trails of all interactions
+- For debugging and analysis purposes
+- When privacy is not a concern
+
 ## Use Cases
 
 1. **Multi-Agent Simulations**: Model conversations between agents with evolving beliefs
