@@ -1,6 +1,7 @@
 import datetime
 import json
 import sqlite3
+import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -28,12 +29,14 @@ class NodeState:
 
 
 class KnowledgeDB:
-    def __init__(self, db_path: str = "agent_memory.db") -> None:
+    def __init__(self, db_path: str = "agent_memory.db", store_log_content: bool = False) -> None:
         """
         Initialize database connection and schema.
 
         Args:
             db_path (str): Path to SQLite database file
+            store_log_content (bool): If True, stores full content in log table. 
+                                     If False (default), stores UUID instead of content.
 
         Returns:
             None
@@ -41,6 +44,7 @@ class KnowledgeDB:
         Raises:
             DatabaseError: If connection or schema initialization fails
         """
+        self.store_log_content = store_log_content
         try:
             self.conn = sqlite3.connect(db_path, check_same_thread=False)
             self.conn.row_factory = sqlite3.Row
@@ -87,7 +91,8 @@ class KnowledgeDB:
             cursor.execute("""
                        CREATE TABLE IF NOT EXISTS logs (
                                                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                           agent_name TEXT, action_type TEXT, content TEXT, annotations JSON,
+                                                           agent_name TEXT, action_type TEXT, content TEXT, 
+                                                           content_uuid TEXT, annotations JSON,
                                                            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                        )
                        """)
@@ -264,7 +269,8 @@ class KnowledgeDB:
         content: str,
         annotations: Dict[str, Any],
         timestamp: Optional[datetime.datetime] = None,
-    ) -> None:
+        store_content: Optional[bool] = None,
+    ) -> Optional[str]:
         """
         Log an agent interaction.
 
@@ -274,9 +280,12 @@ class KnowledgeDB:
             content (str): Content of the interaction
             annotations (Dict[str, Any]): Additional metadata (will be JSON-encoded)
             timestamp (Optional[datetime.datetime]): Optional timestamp (defaults to now)
+            store_content (Optional[bool]): If True, stores content in the log table. 
+                                           If False, generates and stores a UUID instead.
+                                           If None (default), uses the database instance setting.
 
         Returns:
-            None
+            Optional[str]: The content UUID if store_content is False, None otherwise
 
         Raises:
             ValidationError: If parameters are invalid
@@ -286,13 +295,24 @@ class KnowledgeDB:
             raise ValidationError("agent and action are required")
 
         ts = timestamp or datetime.datetime.now(datetime.timezone.utc)
+        
+        # Use instance default if not specified
+        should_store = store_content if store_content is not None else self.store_log_content
+        
+        # Generate UUID if not storing content
+        content_uuid = None
+        stored_content = content if should_store else None
+        
+        if not should_store:
+            content_uuid = str(uuid.uuid4())
 
         try:
             self.conn.execute(
-                "INSERT INTO logs (agent_name, action_type, content, annotations, timestamp) VALUES (?, ?, ?, ?, ?)",
-                (agent, action, content, json.dumps(annotations), ts),
+                "INSERT INTO logs (agent_name, action_type, content, content_uuid, annotations, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+                (agent, action, stored_content, content_uuid, json.dumps(annotations), ts),
             )
             self.conn.commit()
+            return content_uuid
         except (sqlite3.Error, TypeError) as e:
             self.conn.rollback()
             raise DatabaseError(f"Failed to log interaction for {agent}: {e}") from e

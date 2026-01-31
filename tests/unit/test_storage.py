@@ -221,3 +221,98 @@ class TestKnowledgeDB:
         result = cursor.fetchone()
         assert result is not None
         assert result[0] == 0.0  # Default sentiment
+    
+    def test_log_interaction_with_store_content_false(self, db):
+        """Test logging interaction without storing content (default behavior)."""
+        now = datetime.now(timezone.utc)
+        content_uuid = db.log_interaction(
+            agent="agent1",
+            action="READ",
+            content="sensitive content",
+            annotations={"key": "value"},
+            timestamp=now
+        )
+        
+        # Should return a UUID
+        assert content_uuid is not None
+        assert len(content_uuid) == 36  # UUID format
+        
+        # Verify content is NOT stored but UUID is
+        cursor = db.conn.cursor()
+        cursor.execute("""
+            SELECT content, content_uuid FROM logs 
+            WHERE agent_name = ? AND action_type = ?
+        """, ("agent1", "READ"))
+        result = cursor.fetchone()
+        assert result is not None
+        assert result["content"] is None
+        assert result["content_uuid"] == content_uuid
+    
+    def test_log_interaction_with_store_content_true(self, db):
+        """Test logging interaction with content storage enabled."""
+        now = datetime.now(timezone.utc)
+        content_uuid = db.log_interaction(
+            agent="agent1",
+            action="WRITE",
+            content="important content",
+            annotations={"key": "value"},
+            timestamp=now,
+            store_content=True
+        )
+        
+        # Should not return a UUID
+        assert content_uuid is None
+        
+        # Verify content IS stored and UUID is NULL
+        cursor = db.conn.cursor()
+        cursor.execute("""
+            SELECT content, content_uuid FROM logs 
+            WHERE agent_name = ? AND action_type = ?
+        """, ("agent1", "WRITE"))
+        result = cursor.fetchone()
+        assert result is not None
+        assert result["content"] == "important content"
+        assert result["content_uuid"] is None
+    
+    def test_database_store_log_content_flag(self, temp_db):
+        """Test database initialization with store_log_content flag."""
+        # Test with store_log_content=True
+        db_with_storage = KnowledgeDB(temp_db, store_log_content=True)
+        assert db_with_storage.store_log_content is True
+        
+        content_uuid = db_with_storage.log_interaction(
+            agent="agent1",
+            action="READ",
+            content="test content",
+            annotations={}
+        )
+        
+        # Should not return UUID when store_log_content is True
+        assert content_uuid is None
+        
+        cursor = db_with_storage.conn.cursor()
+        cursor.execute("SELECT content, content_uuid FROM logs WHERE agent_name = ?", ("agent1",))
+        result = cursor.fetchone()
+        assert result["content"] == "test content"
+        assert result["content_uuid"] is None
+    
+    def test_log_interaction_override_database_default(self, temp_db):
+        """Test that per-call override works correctly."""
+        # Database defaults to NOT storing content
+        db = KnowledgeDB(temp_db, store_log_content=False)
+        
+        # But we override to store this one
+        content_uuid = db.log_interaction(
+            agent="agent1",
+            action="READ",
+            content="override content",
+            annotations={},
+            store_content=True
+        )
+        
+        assert content_uuid is None
+        
+        cursor = db.conn.cursor()
+        cursor.execute("SELECT content FROM logs WHERE agent_name = ?", ("agent1",))
+        result = cursor.fetchone()
+        assert result["content"] == "override content"

@@ -26,19 +26,22 @@ class AgentManager:
     - Control time for each interaction
     """
 
-    def __init__(self, db_path: str = "agent_memory.db") -> None:
+    def __init__(self, db_path: str = "agent_memory.db", store_log_content: bool = False) -> None:
         """
         Initialize the AgentManager.
 
         Args:
             db_path (str): Path to the SQLite database file
+            store_log_content (bool): If True, stores full content in log table. 
+                                     If False (default), stores UUID instead of content.
 
         Returns:
             None
         """
         self.db_path = db_path
+        self.store_log_content = store_log_content
         self.agents: Dict[str, GhostAgent] = {}
-        self.db = KnowledgeDB(db_path)
+        self.db = KnowledgeDB(db_path, store_log_content=store_log_content)
 
     def create_agent(self, name: str, llm_host: str = "http://localhost:11434") -> GhostAgent:
         """
@@ -58,7 +61,12 @@ class AgentManager:
             raise ValidationError("Agent name must be a non-empty string")
 
         if name not in self.agents:
-            self.agents[name] = GhostAgent(name, db_path=self.db_path, llm_host=llm_host)
+            self.agents[name] = GhostAgent(
+                name, 
+                db_path=self.db_path, 
+                llm_host=llm_host,
+                store_log_content=self.store_log_content
+            )
         return self.agents[name]
 
     def get_agent(self, name: str) -> Optional[GhostAgent]:
