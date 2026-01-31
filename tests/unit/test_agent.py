@@ -39,9 +39,10 @@ class TestGhostAgent:
         """Test learning a triplet."""
         agent.learn_triplet("Python", "is", "awesome", Rating.Good, 0.8)
         
-        # Query to verify it was stored
-        memories = agent.query_memories("Python", limit=10)
-        assert len(memories) > 0
+        # Verify it was stored by getting memory view
+        memory_view = agent.get_memory_view("Python")
+        assert memory_view is not None
+        assert len(memory_view) > 0
     
     def test_query_memories_by_topic(self, agent):
         """Test querying memories by topic."""
@@ -50,23 +51,30 @@ class TestGhostAgent:
         agent.learn_triplet("Java", "is", "language", Rating.Good, 0.0)
         agent.learn_triplet("Python", "has", "simplicity", Rating.Good, 0.5)
         
-        # Query for Python
-        results = agent.query_memories("Python", limit=10)
-        assert len(results) > 0
-        # Should contain Python-related memories
-        python_found = any("Python" in str(r) for r in results)
-        assert python_found
+        # Get memory view for Python
+        memory_view = agent.get_memory_view("Python")
+        assert memory_view is not None
+        assert len(memory_view) > 0
+        # Memory view should be a string
+        assert isinstance(memory_view, str)
     
     def test_query_recent_memories(self, agent):
-        """Test querying recent memories."""
+        """Test querying recent memories via SQL."""
         now = datetime.now(timezone.utc)
         agent.set_time(now)
         
         # Add a memory
         agent.learn_triplet("topic", "is", "current", Rating.Good, 0.0)
         
-        # Query recent
-        recent = agent.get_recent_memories(days=1, limit=10)
+        # Query recent using SQL directly (no get_recent_memories in API)
+        cursor = agent.db.conn.cursor()
+        since = now - timedelta(days=1)
+        cursor.execute("""
+            SELECT * FROM edges 
+            WHERE owner_id = ? AND created_at >= ?
+            ORDER BY created_at DESC
+        """, (agent.name, since))
+        recent = cursor.fetchall()
         assert len(recent) > 0
     
     def test_set_time(self, agent):
@@ -81,16 +89,25 @@ class TestGhostAgent:
         assert agent.current_time == future
     
     def test_query_by_sentiment(self, agent):
-        """Test querying by sentiment."""
+        """Test querying by sentiment via SQL."""
         # Add memories with different sentiments
         agent.learn_triplet("good", "is", "positive", Rating.Good, 0.8)
         agent.learn_triplet("bad", "is", "negative", Rating.Good, -0.8)
         agent.learn_triplet("neutral", "is", "okay", Rating.Good, 0.0)
         
-        # Query positive memories
-        positive = agent.query_by_sentiment(min_sentiment=0.5, limit=10)
+        # Query positive memories using SQL directly (no query_by_sentiment in API)
+        cursor = agent.db.conn.cursor()
+        cursor.execute("""
+            SELECT * FROM edges 
+            WHERE owner_id = ? AND sentiment >= ?
+        """, (agent.name, 0.5))
+        positive = cursor.fetchall()
         assert len(positive) > 0
         
         # Query negative memories
-        negative = agent.query_by_sentiment(max_sentiment=-0.5, limit=10)
+        cursor.execute("""
+            SELECT * FROM edges 
+            WHERE owner_id = ? AND sentiment <= ?
+        """, (agent.name, -0.5))
+        negative = cursor.fetchall()
         assert len(negative) > 0

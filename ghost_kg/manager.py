@@ -6,11 +6,12 @@ with individual agent Knowledge Graphs without handling the LLM logic.
 """
 
 import datetime
-from typing import Optional, Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
+
 from .agent import GhostAgent
+from .exceptions import AgentNotFoundError, ValidationError
 from .fsrs import Rating
 from .storage import KnowledgeDB
-from .exceptions import ValidationError, AgentNotFoundError
 
 
 class AgentManager:
@@ -25,40 +26,39 @@ class AgentManager:
     - Control time for each interaction
     """
 
-    def __init__(self, db_path: str = "agent_memory.db"):
+    def __init__(self, db_path: str = "agent_memory.db") -> None:
         """
         Initialize the AgentManager.
 
         Args:
-            db_path: Path to the SQLite database file
+            db_path (str): Path to the SQLite database file
+
+        Returns:
+            None
         """
         self.db_path = db_path
         self.agents: Dict[str, GhostAgent] = {}
         self.db = KnowledgeDB(db_path)
 
-    def create_agent(
-        self, name: str, llm_host: str = "http://localhost:11434"
-    ) -> GhostAgent:
+    def create_agent(self, name: str, llm_host: str = "http://localhost:11434") -> GhostAgent:
         """
         Create or retrieve an agent.
 
         Args:
-            name: Name of the agent
-            llm_host: LLM host URL (optional, for internal LLM operations)
+            name (str): Name of the agent
+            llm_host (str): LLM host URL (optional, for internal LLM operations)
 
         Returns:
-            GhostAgent instance
-            
+            GhostAgent: GhostAgent instance
+
         Raises:
             ValidationError: If name is invalid
         """
         if not name or not isinstance(name, str):
             raise ValidationError("Agent name must be a non-empty string")
-            
+
         if name not in self.agents:
-            self.agents[name] = GhostAgent(
-                name, db_path=self.db_path, llm_host=llm_host
-            )
+            self.agents[name] = GhostAgent(name, db_path=self.db_path, llm_host=llm_host)
         return self.agents[name]
 
     def get_agent(self, name: str) -> Optional[GhostAgent]:
@@ -66,10 +66,10 @@ class AgentManager:
         Get an existing agent.
 
         Args:
-            name: Name of the agent
+            name (str): Name of the agent
 
         Returns:
-            GhostAgent instance or None if not found
+            Optional[GhostAgent]: GhostAgent instance or None if not found
         """
         return self.agents.get(name)
 
@@ -78,16 +78,19 @@ class AgentManager:
         Set the current time for an agent (for simulation/tracking purposes).
 
         Args:
-            agent_name: Name of the agent
-            time: Current time to set
-            
+            agent_name (str): Name of the agent
+            time (datetime.datetime): Current time to set
+
+        Returns:
+            None
+
         Raises:
             AgentNotFoundError: If agent doesn't exist
             ValidationError: If time is invalid
         """
         if not isinstance(time, datetime.datetime):
             raise ValidationError("time must be a datetime object")
-            
+
         agent = self.get_agent(agent_name)
         if not agent:
             raise AgentNotFoundError(f"Agent '{agent_name}' not found")
@@ -109,22 +112,44 @@ class AgentManager:
         2. Let the agent extract triplets internally (if triplets=None and LLM available)
 
         Args:
-            agent_name: Name of the agent
-            content: The content to absorb
-            author: Author of the content
-            triplets: Optional list of (source, relation, target) triplets
+            agent_name (str): Name of the agent
+            content (str): The content to absorb
+            author (str): Author of the content
+            triplets (Optional[List[Tuple[str, str, str]]]): Optional list of (source, relation, target) triplets
                      If provided, these will be learned directly
-            fast_mode: If True, use faster processing (if supported by LLM)
-            
+            fast_mode (bool): If True, use faster processing (if supported by LLM)
+
+        Returns:
+            None
+
         Raises:
             AgentNotFoundError: If agent doesn't exist
             ValidationError: If parameters are invalid
+
+        Example:
+            >>> manager = AgentManager()
+            >>> alice = manager.create_agent("Alice")
+            >>> manager.set_agent_time("Alice", datetime.datetime.now(datetime.timezone.utc))
+            >>> # With pre-extracted triplets
+            >>> manager.absorb_content(
+            ...     "Alice",
+            ...     "Bob says climate action is urgent",
+            ...     author="Bob",
+            ...     triplets=[("Bob", "says", "climate_urgent")]
+            ... )
+            >>> # Without triplets (requires LLM)
+            >>> manager.absorb_content("Alice", "The economy is recovering", author="News")
+
+        See Also:
+            - get_context(): Retrieve context for generating responses
+            - process_and_get_context(): Atomic absorb + get_context operation
+            - update_with_response(): Update KG with agent's response
         """
         if not content or not isinstance(content, str):
             raise ValidationError("content must be a non-empty string")
         if not author or not isinstance(author, str):
             raise ValidationError("author must be a non-empty string")
-            
+
         agent = self.get_agent(agent_name)
         if not agent:
             raise AgentNotFoundError(f"Agent '{agent_name}' not found")
@@ -135,8 +160,10 @@ class AgentManager:
                 raise ValidationError("triplets must be a list")
             for triplet in triplets:
                 if not isinstance(triplet, (tuple, list)) or len(triplet) != 3:
-                    raise ValidationError("Each triplet must be a 3-tuple (source, relation, target)")
-                    
+                    raise ValidationError(
+                        "Each triplet must be a 3-tuple (source, relation, target)"
+                    )
+
             # External program provides triplets
             for source, relation, target in triplets:
                 agent.learn_triplet(source, relation, target, rating=Rating.Good)
@@ -167,19 +194,32 @@ class AgentManager:
         - What others think about the topic
 
         Args:
-            agent_name: Name of the agent
-            topic: Topic to get context for
+            agent_name (str): Name of the agent
+            topic (str): Topic to get context for
 
         Returns:
-            Formatted context string
-            
+            str: Formatted context string containing agent's knowledge
+
         Raises:
             AgentNotFoundError: If agent doesn't exist
             ValidationError: If topic is invalid
+
+        Example:
+            >>> manager = AgentManager()
+            >>> alice = manager.create_agent("Alice")
+            >>> manager.learn_triplet("Alice", "I", "support", "UBI", sentiment=0.8)
+            >>> context = manager.get_context("Alice", "UBI")
+            >>> print(context)
+            MY CURRENT STANCE:
+            - I support UBI (strength: 0.85, positive sentiment)
+
+        See Also:
+            - absorb_content(): Update knowledge graph with new content
+            - process_and_get_context(): Combined absorb + context operation
         """
         if not topic or not isinstance(topic, str):
             raise ValidationError("topic must be a non-empty string")
-            
+
         agent = self.get_agent(agent_name)
         if not agent:
             raise AgentNotFoundError(f"Agent '{agent_name}' not found")
@@ -193,7 +233,7 @@ class AgentManager:
         text: str,
         author: str = "User",
         triplets: Optional[List[Tuple[str, str, str]]] = None,
-            fast_mode: bool = False,
+        fast_mode: bool = False,
     ) -> str:
         """
         Update agent's KG with content and return context for replying (atomic operation).
@@ -205,15 +245,16 @@ class AgentManager:
         3. Agent needs context to generate a response
 
         Args:
-            agent_name: Name of the agent
-            topic: The topic of the content
-            text: The text content to process
-            author: Author of the content
-            triplets: Optional list of (source, relation, target) triplets
+            agent_name (str): Name of the agent
+            topic (str): The topic of the content
+            text (str): The text content to process
+            author (str): Author of the content
+            triplets (Optional[List[Tuple[str, str, str]]]): Optional list of (source, relation, target) triplets
                      If provided, these will be learned directly
+            fast_mode (bool): If True, use faster processing
 
         Returns:
-            Formatted context string for the topic (updated with new content)
+            str: Formatted context string for the topic (updated with new content)
 
         Example:
             >>> manager = AgentManager()
@@ -224,6 +265,11 @@ class AgentManager:
             ...     author="Bob", triplets=[("Bob", "says", "climate urgent")]
             ... )
             >>> # Use context with external LLM to generate response
+
+        See Also:
+            - absorb_content(): Just absorb content without getting context
+            - get_context(): Just get context without absorbing new content
+            - update_with_response(): Update KG with agent's generated response
         """
         # Update KG with the content
         self.absorb_content(agent_name, text, author, triplets, fast_mode)
@@ -235,7 +281,7 @@ class AgentManager:
         self,
         agent_name: str,
         response: str,
-        triplets: Optional[List[Tuple[str, str, str, float]]] = None,
+        triplets: Optional[List[Tuple[str, str, float]]] = None,
         context: Optional[str] = None,
     ) -> None:
         """
@@ -246,12 +292,18 @@ class AgentManager:
         2. Let the agent reflect on their own response (if triplets=None and LLM available)
 
         Args:
-            agent_name: Name of the agent
-            response: The response text generated
-            triplets: Optional list of (relation, target, sentiment) triplets
+            agent_name (str): Name of the agent
+            response (str): The response text generated
+            triplets (Optional[List[Tuple[str, str, float]]]): Optional list of (relation, target, sentiment) triplets
                      Source is assumed to be "I" (the agent)
-            context: Optional context that was used to generate the response
+            context (Optional[str]): Optional context that was used to generate the response
                     This will be stored in the logs annotations
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If agent not found
         """
         agent = self.get_agent(agent_name)
         if not agent:
@@ -260,14 +312,12 @@ class AgentManager:
         if triplets:
             # External program provides triplets with sentiment
             for relation, target, sentiment in triplets:
-                agent.learn_triplet(
-                    "I", relation, target, rating=Rating.Easy, sentiment=sentiment
-                )
+                agent.learn_triplet("I", relation, target, rating=Rating.Easy, sentiment=sentiment)
 
             # Log the interaction with context
             annotations = {"triplets_count": len(triplets), "external": True}
             if context is not None:
-                annotations["context_used"] = context
+                annotations["context_used"] = context  # type: ignore[assignment]
 
             self.db.log_interaction(
                 agent_name,
@@ -286,7 +336,7 @@ class AgentManager:
             # Log the interaction with context
             annotations = {"external": False}
             if context is not None:
-                annotations["context_used"] = context
+                annotations["context_used"] = context  # type: ignore[assignment]
 
             self.db.log_interaction(
                 agent_name,
@@ -309,31 +359,38 @@ class AgentManager:
         Directly add a triplet to an agent's KG.
 
         Args:
-            agent_name: Name of the agent
-            source: Source node
-            relation: Relation/edge label
-            target: Target node
-            rating: FSRS rating (1-4, see Rating class)
-            sentiment: Sentiment score (-1.0 to 1.0)
+            agent_name (str): Name of the agent
+            source (str): Source node
+            relation (str): Relation/edge label
+            target (str): Target node
+            rating (int): FSRS rating (1-4, see Rating class)
+            sentiment (float): Sentiment score (-1.0 to 1.0)
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If agent not found
         """
         agent = self.get_agent(agent_name)
         if not agent:
             raise ValueError(f"Agent '{agent_name}' not found")
 
-        agent.learn_triplet(
-            source, relation, target, rating=rating, sentiment=sentiment
-        )
+        agent.learn_triplet(source, relation, target, rating=rating, sentiment=sentiment)
 
     def get_agent_knowledge(self, agent_name: str, topic: Optional[str] = None) -> Dict:
         """
         Retrieve agent's knowledge graph information.
 
         Args:
-            agent_name: Name of the agent
-            topic: Optional topic to filter knowledge
+            agent_name (str): Name of the agent
+            topic (Optional[str]): Optional topic to filter knowledge
 
         Returns:
-            Dictionary with nodes and edges information
+            Dict: Dictionary with nodes and edges information
+
+        Raises:
+            ValueError: If agent not found
         """
         agent = self.get_agent(agent_name)
         if not agent:
@@ -342,9 +399,9 @@ class AgentManager:
         if topic:
             n_topic = agent._normalize(topic)
             my_rows = self.db.get_agent_stance(
-                agent_name, n_topic, current_time=agent.current_time
+                agent_name, n_topic, current_time=agent.current_time  # type: ignore[arg-type]
             )
-            world_rows = self.db.get_world_knowledge(agent_name, n_topic, limit=20)
+            world_rows = self.db.get_world_knowledge(agent_name, n_topic, limit=20)  # type: ignore[arg-type]
         else:
             # Get all knowledge
             my_rows = self.db.conn.execute(

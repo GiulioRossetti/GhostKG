@@ -12,22 +12,25 @@ Old imports will continue to work:
     from ghost_kg.core import GhostAgent, CognitiveLoop, Rating, FSRS
 """
 
-# Re-export from new modules for backward compatibility
-from .fsrs import FSRS, Rating
 from .agent import GhostAgent
 from .cognitive import CognitiveLoop
+
+# Re-export from new modules for backward compatibility
+from .fsrs import FSRS, Rating
 
 __all__ = ["FSRS", "Rating", "GhostAgent", "CognitiveLoop"]
 
 # Keep original implementation for reference, but mark as deprecated
 # If you see this code being executed, update your imports!
 
-import warnings
 import datetime
 import json
 import math
 import re
+import warnings
+
 from ollama import Client
+
 from .storage import KnowledgeDB, NodeState
 
 # Show deprecation warning when this module is imported directly
@@ -36,7 +39,7 @@ warnings.warn(
     "Please import from specific modules: "
     "ghost_kg.fsrs, ghost_kg.agent, ghost_kg.cognitive, ghost_kg.extraction",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # --- LEGACY CODE BELOW (for reference) ---
@@ -46,10 +49,12 @@ warnings.warn(
 try:
     from gliner import GLiNER
     from textblob import TextBlob
+
     GLINER_MODEL = None  # Global cache to prevent reloading
 except ImportError:
     GLiNER = None
     TextBlob = None
+
 
 # --- 1. FSRS Logic (Standard v4.5) ---
 class _LegacyRating:
@@ -62,8 +67,23 @@ class _LegacyRating:
 class _LegacyFSRS:
     def __init__(self):
         self.p = [
-            0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01,
-            1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61,
+            0.4,
+            0.6,
+            2.4,
+            5.8,
+            4.93,
+            0.94,
+            0.86,
+            0.01,
+            1.49,
+            0.14,
+            0.94,
+            2.18,
+            0.05,
+            0.34,
+            1.26,
+            0.29,
+            2.61,
         ]
 
     def calculate_next(self, current_state: NodeState, rating, now):
@@ -90,32 +110,31 @@ class _LegacyFSRS:
 
         next_d = min(
             max(
-                self.p[7] * self.p[4]
-                + (1 - self.p[7]) * (d - self.p[6] * (rating - 3)),
+                self.p[7] * self.p[4] + (1 - self.p[7]) * (d - self.p[6] * (rating - 3)),
                 1,
-                ),
+            ),
             10,
         )
 
         if rating == Rating.Again:
             next_s = (
-                    self.p[11]
-                    * (next_d ** -self.p[12])
-                    * ((s + 1) ** self.p[13] - 1)
-                    * math.exp((1 - retrievability) * self.p[14])
+                self.p[11]
+                * (next_d ** -self.p[12])
+                * ((s + 1) ** self.p[13] - 1)
+                * math.exp((1 - retrievability) * self.p[14])
             )
             state = 1
         else:
             hard_penalty = self.p[15] if rating == Rating.Hard else 1
             easy_bonus = self.p[16] if rating == Rating.Easy else 1
             next_s = s * (
-                    1
-                    + math.exp(self.p[8])
-                    * (11 - next_d)
-                    * (s ** -self.p[9])
-                    * (math.exp((1 - retrievability) * self.p[10]) - 1)
-                    * hard_penalty
-                    * easy_bonus
+                1
+                + math.exp(self.p[8])
+                * (11 - next_d)
+                * (s ** -self.p[9])
+                * (math.exp((1 - retrievability) * self.p[10]) - 1)
+                * hard_penalty
+                * easy_bonus
             )
             state = 2
 
@@ -125,10 +144,9 @@ class _LegacyFSRS:
 
 # --- 2. Ghost Agent (Time-Aware & Hardened) ---
 
+
 class GhostAgent:
-    def __init__(
-            self, name, db_path="agent_memory.db", llm_host="http://localhost:11434"
-    ):
+    def __init__(self, name, db_path="agent_memory.db", llm_host="http://localhost:11434"):
         self.name = name
         self.db = KnowledgeDB(db_path)
         self.fsrs = FSRS()
@@ -166,15 +184,40 @@ class GhostAgent:
 
         # 2. BANNED GRAMMATICAL TERMS (Semantic Gatekeeper)
         banned_relations = {
-            "noun", "verb", "adjective", "adverb", "preposition", "conjunction",
-            "pronoun", "phrase", "clause", "sentence", "statement", "text",
-            "topic", "concept", "word", "term", "rating", "evaluation", "opinion",
+            "noun",
+            "verb",
+            "adjective",
+            "adverb",
+            "preposition",
+            "conjunction",
+            "pronoun",
+            "phrase",
+            "clause",
+            "sentence",
+            "statement",
+            "text",
+            "topic",
+            "concept",
+            "word",
+            "term",
+            "rating",
+            "evaluation",
+            "opinion",
         }
 
         # 3. BANNED GENERIC NODES
         banned_nodes = {
-            "text", "entity", "author", "none", "unknown", "wikipedia",
-            "general knowledge", "source", "target", "adjective", "noun",
+            "text",
+            "entity",
+            "author",
+            "none",
+            "unknown",
+            "wikipedia",
+            "general knowledge",
+            "source",
+            "target",
+            "adjective",
+            "noun",
         }
 
         if not src or not rel or not tgt:
@@ -222,13 +265,9 @@ class GhostAgent:
 
         # Use Simulation Time
         new_state = self.fsrs.calculate_next(current, rating, self.current_time)
-        self.db.upsert_node(
-            self.name, norm_name, new_state, timestamp=self.current_time
-        )
+        self.db.upsert_node(self.name, norm_name, new_state, timestamp=self.current_time)
 
-    def learn_triplet(
-            self, source, relation, target, rating=Rating.Good, sentiment=0.0
-    ):
+    def learn_triplet(self, source, relation, target, rating=Rating.Good, sentiment=0.0):
         n_source = self._normalize(source)
         n_target = self._normalize(target)
         n_relation = self._normalize(relation)
@@ -278,9 +317,7 @@ class GhostAgent:
                 return f"(I have forgotten the details about {topic})"
 
         # Pass self.current_time to DB for retrieval
-        my_rows = self.db.get_agent_stance(
-            self.name, n_topic, current_time=self.current_time
-        )
+        my_rows = self.db.get_agent_stance(self.name, n_topic, current_time=self.current_time)
         world_rows = self.db.get_world_knowledge(self.name, n_topic, limit=8)
 
         my_beliefs = set()
@@ -348,20 +385,25 @@ class CognitiveLoop:
 
         # 2. Extract Sentiment (Edge Coloring)
         blob = TextBlob(text)
-        sentiment = blob.sentiment.polarity # -1.0 to 1.0
+        sentiment = blob.sentiment.polarity  # -1.0 to 1.0
 
         # Determine Relation Verb based on Sentiment
         relation = "discusses"
-        if sentiment > 0.3: relation = "supports"
-        elif sentiment < -0.3: relation = "opposes"
-        elif sentiment > 0.1: relation = "likes"
-        elif sentiment < -0.1: relation = "dislikes"
+        if sentiment > 0.3:
+            relation = "supports"
+        elif sentiment < -0.3:
+            relation = "opposes"
+        elif sentiment > 0.1:
+            relation = "likes"
+        elif sentiment < -0.1:
+            relation = "dislikes"
 
         fact_count = 0
 
         for entity in entities:
             topic_text = entity["text"]
-            if len(topic_text) < 3: continue
+            if len(topic_text) < 3:
+                continue
 
             # A. Partner Stance: Author -> Relation -> Topic
             # e.g. "Bob" -> "supports" -> "UBI"
@@ -369,8 +411,8 @@ class CognitiveLoop:
                 source=author,
                 relation=relation,
                 target=topic_text,
-                rating=Rating.Good, # Standard retention
-                sentiment=sentiment
+                rating=Rating.Good,  # Standard retention
+                sentiment=sentiment,
             )
 
             # B. World Fact (Simple Existence): Topic -> is -> mentioned
@@ -380,7 +422,7 @@ class CognitiveLoop:
                 relation="is",
                 target="discussed",
                 rating=Rating.Good,
-                sentiment=0.0
+                sentiment=0.0,
             )
 
             # C. My Reaction (Passive Hearing): I -> heard -> Topic
@@ -389,8 +431,8 @@ class CognitiveLoop:
                 source="I",
                 relation="heard about",
                 target=topic_text,
-                rating=Rating.Good, # Good = standard retention
-                sentiment=0.0
+                rating=Rating.Good,  # Good = standard retention
+                sentiment=0.0,
             )
 
             fact_count += 1
@@ -399,7 +441,7 @@ class CognitiveLoop:
         log_data = {
             "mode": "FAST",
             "sentiment": sentiment,
-            "entities": [e["text"] for e in entities]
+            "entities": [e["text"] for e in entities],
         }
         self.agent.db.log_interaction(
             self.agent.name, "READ", text, log_data, timestamp=self.agent.current_time
@@ -442,14 +484,10 @@ class CognitiveLoop:
             data = json.loads(res["message"]["content"])
 
             for item in data.get("world_facts", []):
-                self.agent.learn_triplet(
-                    item["source"], item["relation"], item["target"]
-                )
+                self.agent.learn_triplet(item["source"], item["relation"], item["target"])
 
             for item in data.get("partner_stance", []):
-                self.agent.learn_triplet(
-                    item["source"], item["relation"], item["target"]
-                )
+                self.agent.learn_triplet(item["source"], item["relation"], item["target"])
 
             for item in data.get("my_reaction", []):
                 s_score = item.get("sentiment", 0.0)

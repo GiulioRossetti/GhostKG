@@ -18,9 +18,10 @@ New code should import from specific modules:
     from ghost_kg.cognitive import CognitiveLoop
 """
 
-# Re-export from new modules for backward compatibility
-from .fsrs import FSRS, Rating
 from .agent import GhostAgent
 from .cognitive import CognitiveLoop
+
+# Re-export from new modules for backward compatibility
+from .fsrs import FSRS, Rating
 
 __all__ = ["FSRS", "Rating", "GhostAgent", "CognitiveLoop"]

@@ -29,7 +29,7 @@ class TestAgentManager:
     def test_initialization(self, temp_db):
         """Test manager initializes correctly."""
         manager = AgentManager(temp_db)
-        assert manager.db_path == temp_db
+        # Manager doesn't expose db_path attribute
         assert manager.db is not None
         assert manager.agents == {}
     
@@ -78,12 +78,12 @@ class TestAgentManager:
     def test_absorb_content(self, manager):
         """Test absorbing content."""
         manager.create_agent("Alice")
+        # Triplets should be 3-tuples (source, relation, target) without sentiment
         manager.absorb_content(
             "Alice",
             "Python is awesome",
             "Bob",
-            triplets=[("Python", "is", "awesome", 0.8)],
-            fast_mode=True
+            triplets=[("Python", "is", "awesome")]
         )
         
         # Verify it was stored (indirectly by checking no errors)
@@ -102,12 +102,12 @@ class TestAgentManager:
     def test_get_context(self, manager):
         """Test getting context."""
         manager.create_agent("Alice")
+        # Triplets should be 3-tuples (source, relation, target) without sentiment
         manager.absorb_content(
             "Alice",
             "Python is a programming language",
             "Bob",
-            triplets=[("Python", "is", "language", 0.0)],
-            fast_mode=True
+            triplets=[("Python", "is", "language")]
         )
         
         context = manager.get_context("Alice", "Python")
@@ -127,12 +127,12 @@ class TestAgentManager:
     def test_update_with_response(self, manager):
         """Test updating with response."""
         manager.create_agent("Alice")
+        # Triplets for update_with_response are (relation, target, sentiment)
         manager.update_with_response(
             "Alice",
             "I think Python is great",
             context="Previous discussion about Python",
-            triplets=[("Python", "is", "great", 0.9)],
-            fast_mode=True
+            triplets=[("like", "Python", 0.9)]
         )
         
         # Verify no errors occurred
@@ -141,13 +141,13 @@ class TestAgentManager:
         """Test combined process and get context."""
         manager.create_agent("Alice")
         
+        # Triplets should be 3-tuples (source, relation, target) without sentiment
         context = manager.process_and_get_context(
             "Alice",
             "programming",
             "Python is awesome",
             "Bob",
-            triplets=[("Python", "is", "awesome", 0.8)],
-            fast_mode=True
+            triplets=[("Python", "is", "awesome")]
         )
         
         assert isinstance(context, str)

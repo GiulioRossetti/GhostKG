@@ -4,8 +4,8 @@ This module provides utilities to check for optional dependencies and provide
 helpful error messages when they are missing.
 """
 
-from typing import List, Tuple
 import importlib.util
+from typing import List, Tuple
 
 
 class DependencyChecker:
@@ -146,10 +146,14 @@ class DependencyChecker:
         fast_available, fast_missing = DependencyChecker.check_fast_available()
 
         print("GhostKG Dependency Status:")
-        print(f"  {'✓' if llm_available else '✗'} LLM mode: "
-              f"{'Available' if llm_available else f'Missing: {', '.join(llm_missing)}'}")
-        print(f"  {'✓' if fast_available else '✗'} Fast mode: "
-              f"{'Available' if fast_available else f'Missing: {', '.join(fast_missing)}'}")
+        print(
+            f"  {'✓' if llm_available else '✗'} LLM mode: "
+            f"{'Available' if llm_available else f'Missing: {', '.join(llm_missing)}'}"
+        )
+        print(
+            f"  {'✓' if fast_available else '✗'} Fast mode: "
+            f"{'Available' if fast_available else f'Missing: {', '.join(fast_missing)}'}"
+        )
 
         if not llm_available and not fast_available:
             print("\n⚠ Warning: No extraction modes available!")

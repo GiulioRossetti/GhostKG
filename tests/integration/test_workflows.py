@@ -39,8 +39,7 @@ class TestWorkflows:
             "Alice",
             "Climate change is urgent",
             author="Bob",
-            triplets=[("climate change", "is", "urgent", 0.5)],
-            fast_mode=True
+            triplets=[("climate change", "is", "urgent")]
         )
         
         # Get context for Alice
@@ -66,8 +65,7 @@ class TestWorkflows:
             "Alice",
             "Python is a great programming language",
             "Bob",
-            triplets=[("Python", "is", "language", 0.0)],
-            fast_mode=True
+            triplets=[("Python", "is", "language")]
         )
         
         # Round 2: Later, Alice recalls and responds
@@ -78,12 +76,12 @@ class TestWorkflows:
         assert isinstance(context, str)
         
         # Alice generates response and updates her knowledge
+        # update_with_response uses (relation, target, sentiment) format
         manager.update_with_response(
             "Alice",
             "Yes, Python is very popular",
             context=context,
-            triplets=[("Python", "is", "popular", 0.7)],
-            fast_mode=True
+            triplets=[("like", "Python", 0.7)]
         )
     
     def test_process_and_get_context_workflow(self, manager):
@@ -100,8 +98,7 @@ class TestWorkflows:
             topic="AI",
             text="Artificial Intelligence is transforming the world",
             author="Bob",
-            triplets=[("AI", "is transforming", "world", 0.6)],
-            fast_mode=True
+            triplets=[("AI", "is transforming", "world")]
         )
         
         assert isinstance(context, str)
@@ -116,8 +113,7 @@ class TestWorkflows:
             "Alice",
             "Python is awesome",
             "Bob",
-            triplets=[("Python", "is", "awesome", 0.8)],
-            fast_mode=True
+            triplets=[("Python", "is", "awesome")]
         )
         
         # Create second manager with same database
@@ -146,8 +142,7 @@ class TestWorkflows:
             "Alice",
             "Python is versatile",
             "Bob",
-            triplets=[("Python", "is", "versatile", 0.5)],
-            fast_mode=True
+            triplets=[("Python", "is", "versatile")]
         )
         
         # Bob learns about Java
@@ -155,8 +150,7 @@ class TestWorkflows:
             "Bob",
             "Java is robust",
             "Charlie",
-            triplets=[("Java", "is", "robust", 0.5)],
-            fast_mode=True
+            triplets=[("Java", "is", "robust")]
         )
         
         # Charlie learns about JavaScript
@@ -164,8 +158,7 @@ class TestWorkflows:
             "Charlie",
             "JavaScript runs everywhere",
             "Alice",
-            triplets=[("JavaScript", "runs in", "browsers", 0.3)],
-            fast_mode=True
+            triplets=[("JavaScript", "runs in", "browsers")]
         )
         
         # Verify each agent has their own knowledge
