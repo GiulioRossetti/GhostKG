@@ -10,9 +10,6 @@ from ghost_kg import CognitiveLoop
 
 # Also supported: Import from subpackage
 from ghost_kg.core import CognitiveLoop
-
-# Backward compatible: Old flat import
-from ghost_kg.cognitive import CognitiveLoop
 ```
 
 ## Overview

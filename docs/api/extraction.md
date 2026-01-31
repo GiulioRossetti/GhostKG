@@ -10,9 +10,6 @@ from ghost_kg import FastExtractor, LLMExtractor, get_extractor
 
 # Also supported: Import from subpackage
 from ghost_kg.extraction import FastExtractor, LLMExtractor, get_extractor
-
-# Backward compatible: Old flat import
-from ghost_kg.extraction import FastExtractor, LLMExtractor, get_extractor  # (same as subpackage)
 ```
 
 ## Overview

@@ -10,9 +10,6 @@ from ghost_kg import GhostKGError, DatabaseError, LLMError, ValidationError
 
 # Also supported: Import from subpackage
 from ghost_kg.utils import GhostKGError, DatabaseError, LLMError, ValidationError
-
-# Backward compatible: Old flat import
-from ghost_kg.exceptions import GhostKGError, DatabaseError, LLMError, ValidationError
 ```
 
 ## Overview

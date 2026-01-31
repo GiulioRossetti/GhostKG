@@ -28,7 +28,7 @@ GhostKG is organized into logical subpackages for improved maintainability and d
 
 ```
 ghost_kg/
-├── __init__.py          # Main API exports (backward compatible)
+├── __init__.py          # Main API exports
 │
 ├── core/               # Core agent and manager functionality
 │   ├── agent.py        # GhostAgent - Individual agent with KG

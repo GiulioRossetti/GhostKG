@@ -10,9 +10,6 @@ from ghost_kg import GhostAgent, Rating
 
 # Also supported: Import from subpackage
 from ghost_kg.core import GhostAgent
-
-# Backward compatible: Old flat import
-from ghost_kg.agent import GhostAgent
 ```
 
 ## Overview
