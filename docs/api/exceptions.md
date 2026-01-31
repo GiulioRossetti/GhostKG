@@ -2,6 +2,19 @@
 
 The exceptions module defines custom exception classes for error handling throughout GhostKG.
 
+## Module Location
+
+```python
+# Recommended: Import from top-level package
+from ghost_kg import GhostKGError, DatabaseError, LLMError, ValidationError
+
+# Also supported: Import from subpackage
+from ghost_kg.utils import GhostKGError, DatabaseError, LLMError, ValidationError
+
+# Backward compatible: Old flat import
+from ghost_kg.exceptions import GhostKGError, DatabaseError, LLMError, ValidationError
+```
+
 ## Overview
 
 GhostKG defines a hierarchy of exceptions for different error scenarios:

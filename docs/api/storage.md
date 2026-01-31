@@ -2,6 +2,19 @@
 
 The `KnowledgeDB` class provides database operations for storing and querying knowledge graphs in SQLite.
 
+## Module Location
+
+```python
+# Recommended: Import from top-level package
+from ghost_kg import KnowledgeDB, NodeState
+
+# Also supported: Import from subpackage
+from ghost_kg.storage import KnowledgeDB, NodeState
+
+# Backward compatible: Old flat import
+from ghost_kg.storage import KnowledgeDB, NodeState  # (same as subpackage)
+```
+
 ## Overview
 
 KnowledgeDB handles:

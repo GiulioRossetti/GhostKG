@@ -2,6 +2,19 @@
 
 The extraction module provides strategies for extracting semantic triplets from text using different approaches.
 
+## Module Location
+
+```python
+# Recommended: Import from top-level package
+from ghost_kg import FastExtractor, LLMExtractor, get_extractor
+
+# Also supported: Import from subpackage
+from ghost_kg.extraction import FastExtractor, LLMExtractor, get_extractor
+
+# Backward compatible: Old flat import
+from ghost_kg.extraction import FastExtractor, LLMExtractor, get_extractor  # (same as subpackage)
+```
+
 ## Overview
 
 Two extraction strategies are available:

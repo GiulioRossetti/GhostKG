@@ -2,6 +2,19 @@
 
 The `CognitiveLoop` class provides high-level cognitive operations for agents, including absorbing information, reflecting on statements, and generating contextual replies.
 
+## Module Location
+
+```python
+# Recommended: Import from top-level package
+from ghost_kg import CognitiveLoop
+
+# Also supported: Import from subpackage
+from ghost_kg.core import CognitiveLoop
+
+# Backward compatible: Old flat import
+from ghost_kg.cognitive import CognitiveLoop
+```
+
 ## Overview
 
 CognitiveLoop offers:

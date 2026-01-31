@@ -2,6 +2,19 @@
 
 The `AgentManager` class provides a high-level interface for managing multiple agents and their knowledge graphs.
 
+## Module Location
+
+```python
+# Recommended: Import from top-level package
+from ghost_kg import AgentManager, Rating
+
+# Also supported: Import from subpackage
+from ghost_kg.core import AgentManager
+
+# Backward compatible: Old flat import
+from ghost_kg.manager import AgentManager
+```
+
 ## Overview
 
 AgentManager is the primary entry point for external programs to interact with GhostKG. It allows you to:

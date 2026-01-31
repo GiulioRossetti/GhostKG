@@ -2,6 +2,19 @@
 
 The `GhostAgent` class represents an autonomous agent with its own knowledge graph, memory system, and learning capabilities.
 
+## Module Location
+
+```python
+# Recommended: Import from top-level package
+from ghost_kg import GhostAgent, Rating
+
+# Also supported: Import from subpackage
+from ghost_kg.core import GhostAgent
+
+# Backward compatible: Old flat import
+from ghost_kg.agent import GhostAgent
+```
+
 ## Overview
 
 Each GhostAgent maintains:

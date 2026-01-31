@@ -2,6 +2,19 @@
 
 The `FSRS` (Free Spaced Repetition Scheduler) class implements the FSRS v4.5 algorithm for memory modeling and spaced repetition.
 
+## Module Location
+
+```python
+# Recommended: Import from top-level package
+from ghost_kg import FSRS, Rating
+
+# Also supported: Import from subpackage
+from ghost_kg.memory import FSRS, Rating
+
+# Backward compatible: Old flat import
+from ghost_kg.fsrs import FSRS, Rating
+```
+
 ## Overview
 
 FSRS is a sophisticated spaced repetition algorithm that models memory retention and forgetting curves. It's used by GhostKG to:

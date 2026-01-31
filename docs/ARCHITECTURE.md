@@ -22,6 +22,83 @@ GhostKG is a dynamic knowledge graph management system designed specifically for
 - **Testability**: Clear interfaces for unit and integration testing
 - **Extensibility**: Easy to add new features without breaking existing code
 
+## Package Structure
+
+GhostKG is organized into logical subpackages for improved maintainability and discoverability:
+
+```
+ghost_kg/
+├── __init__.py          # Main API exports (backward compatible)
+│
+├── core/               # Core agent and manager functionality
+│   ├── agent.py        # GhostAgent - Individual agent with KG
+│   ├── manager.py      # AgentManager - Multi-agent management API
+│   └── cognitive.py    # CognitiveLoop - Integrated LLM operations
+│
+├── memory/             # Memory management and caching
+│   ├── fsrs.py         # FSRS algorithm, Rating enum
+│   └── cache.py        # AgentCache for performance
+│
+├── storage/            # Database and persistence layer
+│   └── database.py     # KnowledgeDB, NodeState - SQLite storage
+│
+├── extraction/         # Triplet extraction strategies
+│   └── extraction.py   # FastExtractor, LLMExtractor, get_extractor
+│
+├── utils/              # Utilities and helpers
+│   ├── config.py       # Configuration classes
+│   ├── exceptions.py   # Custom exception hierarchy
+│   └── dependencies.py # Dependency checking utilities
+│
+└── templates/          # HTML and JSON templates for visualization
+```
+
+### Import Patterns
+
+**Recommended**: Import from top-level package
+```python
+from ghost_kg import AgentManager, GhostAgent, Rating
+from ghost_kg import KnowledgeDB, FSRSConfig
+```
+
+**Also supported**: Import from subpackages
+```python
+from ghost_kg.core import AgentManager, GhostAgent
+from ghost_kg.memory import FSRS, Rating
+from ghost_kg.storage import KnowledgeDB
+from ghost_kg.utils import ConfigurationError
+```
+
+**Backward compatible**: Old flat imports still work
+```python
+from ghost_kg.agent import GhostAgent
+from ghost_kg.manager import AgentManager
+```
+
+### Module Responsibilities
+
+**ghost_kg.core**
+- `agent.py`: Individual agent with knowledge graph and memory
+- `manager.py`: High-level API for managing multiple agents
+- `cognitive.py`: Integrated LLM operations (optional)
+
+**ghost_kg.memory**
+- `fsrs.py`: Spaced repetition algorithm for memory decay
+- `cache.py`: Performance caching for frequently accessed data
+
+**ghost_kg.storage**
+- `database.py`: SQLite-based persistence layer for KG
+
+**ghost_kg.extraction**
+- `extraction.py`: Strategies for extracting triplets from text
+  - FastExtractor: GLiNER + TextBlob (no LLM required)
+  - LLMExtractor: Deep semantic extraction with LLM
+
+**ghost_kg.utils**
+- `config.py`: Configuration management (FSRSConfig, DatabaseConfig, etc.)
+- `exceptions.py`: Custom exception hierarchy
+- `dependencies.py`: Dependency checking and validation
+
 ## System Architecture
 
 ```

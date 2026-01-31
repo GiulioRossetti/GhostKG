@@ -2,6 +2,19 @@
 
 The configuration module provides dataclasses for managing GhostKG settings across different components.
 
+## Module Location
+
+```python
+# Recommended: Import from top-level package
+from ghost_kg import GhostKGConfig, FSRSConfig, DatabaseConfig, LLMConfig, FastModeConfig
+
+# Also supported: Import from subpackage
+from ghost_kg.utils import GhostKGConfig, FSRSConfig, DatabaseConfig, LLMConfig, FastModeConfig
+
+# Backward compatible: Old flat import
+from ghost_kg.config import GhostKGConfig, FSRSConfig, DatabaseConfig, LLMConfig, FastModeConfig
+```
+
 ## Overview
 
 Configuration classes available:
