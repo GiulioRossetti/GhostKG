@@ -101,31 +101,31 @@ Key parameters for memory modeling:
 
 ## API Reference
 
-::: ghost_kg.config.GhostKGConfig
+::: ghost_kg.utils.config.GhostKGConfig
     options:
       show_root_heading: true
       show_source: true
       heading_level: 3
 
-::: ghost_kg.config.FSRSConfig
+::: ghost_kg.utils.config.FSRSConfig
     options:
       show_root_heading: true
       show_source: true
       heading_level: 3
 
-::: ghost_kg.config.DatabaseConfig
+::: ghost_kg.utils.config.DatabaseConfig
     options:
       show_root_heading: true
       show_source: true
       heading_level: 3
 
-::: ghost_kg.config.LLMConfig
+::: ghost_kg.utils.config.LLMConfig
     options:
       show_root_heading: true
       show_source: true
       heading_level: 3
 
-::: ghost_kg.config.FastModeConfig
+::: ghost_kg.utils.config.FastModeConfig
     options:
       show_root_heading: true
       show_source: true

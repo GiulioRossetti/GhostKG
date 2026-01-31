@@ -41,7 +41,7 @@ LLM_MODEL = "llama3.2"
 #                    Slower, more accurate, extracts complex relationships
 #                    Requires: ollama running with llama3.2
 # ============================================================================
-USE_FAST_MODE = True
+USE_FAST_MODE = False
 
 # Initialize ollama client (needed for response generation and LLM mode)
 ollama_client = Client(host="http://localhost:11434")
@@ -199,28 +199,40 @@ def run_use_case():
     # Initialize agent beliefs
     print("\n📝 Step 3: Initialize agent beliefs")
     manager.learn_triplet(
-        "Alice", "I", "care_about", "climate change", rating=Rating.Easy, sentiment=0.9
+        "Alice", "I", "value", "Greenland", rating=Rating.Easy, sentiment=0.9
+    )
+    manager.learn_triplet(
+        "Alice", "Greenland", "is_part_of", "Denmark", rating=Rating.Easy, sentiment=0.9
     )
     manager.learn_triplet(
         "Bob",
         "I",
-        "care_about",
-        "economic stability",
+        "know",
+        "Greenland",
         rating=Rating.Easy,
         sentiment=0.8,
     )
-    print("  ✓ Alice cares about climate change")
-    print("  ✓ Bob cares about economic stability")
+    manager.learn_triplet(
+        "Bob",
+        "United States",
+        "must_buy",
+        "Greenland",
+        rating=Rating.Easy,
+        sentiment=0.8,
+    )
+
+    print("  ✓ Alice thinks Greenland must be under Denmark")
+    print("  ✓ Bob wants Greenland to become a new United States state")
 
     # Define the conversation topic
-    topic = "climate change"
+    topic = "Greenland"
 
     # Alice starts the conversation
     print("\n" + "=" * 70)
     print("🗣️  CONVERSATION START")
     print("=" * 70)
 
-    alice_initial = "Climate change is the most urgent challenge we face today."
+    alice_initial = "I think Greenland should remain a part of Denmark because of its cultural ties and historical significance."
     print(f"\n💬 Alice: {alice_initial}")
 
     # Multi-round communication (3 rounds)
@@ -281,9 +293,9 @@ def run_use_case():
         print(f"\n🤖 {responding_agent} generates response using external LLM...")
 
         if responding_agent == "Alice":
-            agent_profile = "a democrat environmentalist"
+            agent_profile = "a Denmark politicians"
         else:
-            agent_profile = "an alt-right skeptic who values economic growth and do not believe in climate change"
+            agent_profile = "an American alt-right geopolitical analyst supporting expansion"
         response = external_llm_generate(
             responding_agent, context, topic, agent_profile
         )

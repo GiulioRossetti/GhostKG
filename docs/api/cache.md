@@ -111,19 +111,19 @@ with ThreadPoolExecutor(max_workers=10) as executor:
 
 ## API Reference
 
-::: ghost_kg.cache.AgentCache
+::: ghost_kg.memory.cache.AgentCache
     options:
       show_root_heading: true
       show_source: true
       heading_level: 3
 
-::: ghost_kg.cache.get_global_cache
+::: ghost_kg.memory.cache.get_global_cache
     options:
       show_root_heading: true
       show_source: false
       heading_level: 3
 
-::: ghost_kg.cache.clear_global_cache
+::: ghost_kg.memory.cache.clear_global_cache
     options:
       show_root_heading: true
       show_source: false

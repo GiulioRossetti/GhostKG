@@ -2,34 +2,10 @@
 
 Welcome to the comprehensive documentation for **GhostKG** - a dynamic knowledge graph management system for LLM agents with built-in memory decay using FSRS (Free Spaced Repetition Scheduler).
 
-## 🎯 Latest Updates
-
-**Phase 7 Performance Optimization Complete!** ✅ (January 30, 2026)
-- 7 database indexes for optimized queries (50-80% faster)
-- Full-featured caching layer with LRU eviction (~100x faster cache hits)
-- Comprehensive performance benchmarks
-- Thread-safe implementation
-- 28 tests (18 cache + 10 benchmarks), all passing
-- See [Phase 7 Summary](PHASE7_SUMMARY.md) for details
-
-**Phase 4-6 Also Complete!** ✅
-- Phase 4: Configuration management system with UV support
-- Phase 5: Testing infrastructure with GitHub Actions (manual trigger only)
-- Phase 6: Type hints and validation (planned/in progress)
-- See [Configuration Guide](CONFIGURATION.md) and [Phase 4 Summary](PHASE4_SUMMARY.md)
-
-**Phase 1-3 Complete!** ✅
-- Core codebase refactored into focused modules (fsrs, agent, extraction, cognitive)
-- Modern UV package manager support with flexible dependencies
-- Comprehensive error handling with custom exceptions
-- Thread-safe model caching implemented
-- 100% backward compatibility maintained
-- See [Refactoring Plan](REFACTORING_PLAN.md) for details
-
 ## 📚 Documentation Structure
 
 ### Quick Start
-- [README](../README.md) - Overview, installation, and quick start guide
+- [README on GitHub](https://github.com/GiulioRossetti/GhostKG#readme) - Overview, installation, and quick start guide
 
 ### Core Documentation
 
@@ -136,7 +112,7 @@ Topics covered:
 **Cross-references**:
 - [Core Components](CORE_COMPONENTS.md) - AgentManager details
 - [Architecture](ARCHITECTURE.md) - Integration patterns
-- [Examples](../examples/) - Working code examples
+- [Examples](examples/index.md) - Working code examples
 
 ---
 
@@ -155,9 +131,8 @@ Topics covered:
 **Read this if you want to**: Use modern, fast package management with UV or understand the dependency structure.
 
 **Cross-references**:
-- [README](../README.md#installation) - Installation instructions
+- [README on GitHub](https://github.com/GiulioRossetti/GhostKG#installation) - Installation instructions
 - [Fast Mode Configuration](FAST_MODE_CONFIG.md) - Fast mode dependencies
-- Phase 2 of [Refactoring Plan](REFACTORING_PLAN.md) - Dependency management
 
 ---
 
@@ -179,7 +154,6 @@ Topics covered:
 **Cross-references**:
 - [UV Setup](UV_SETUP.md) - Dependency management
 - [Core Components](CORE_COMPONENTS.md) - Components that use configuration
-- [Phase 4 Summary](PHASE4_SUMMARY.md) - Configuration system implementation
 
 ---
 
@@ -198,48 +172,8 @@ Topics covered:
 **Cross-references**:
 - [Core Components](CORE_COMPONENTS.md) - CognitiveLoop fast mode
 - [Algorithms](ALGORITHMS.md) - Sentiment analysis in fast mode
-- [Examples](../examples/use_case_example.py) - Fast mode in practice
 - [UV Setup](UV_SETUP.md) - Installing fast mode dependencies
 - [Configuration](CONFIGURATION.md) - FastModeConfig options
-
----
-
-#### 9. [Refactoring Plan](REFACTORING_PLAN.md)
-**Comprehensive plan for improving maintainability and efficiency**
-
-Topics covered:
-- Current state analysis with identified issues
-- Detailed refactoring steps across 9 phases
-- Code organization improvements (Phase 1 ✅ COMPLETE)
-- Dependency management strategy (Phase 2 ✅ COMPLETE)
-- Error handling enhancements (Phase 3 ✅ COMPLETE)
-- Configuration management system (Phase 4 ✅ COMPLETE)
-- Testing infrastructure expansion
-- Performance optimizations
-- Implementation timeline and priorities
-- Success metrics and risk assessment
-
-**Phase Completion Summaries**:
-- [Phase 1 Summary](PHASE1_SUMMARY.md) - Code organization refactoring
-- [Phase 2 Summary](PHASE2_SUMMARY.md) - Dependency management with UV
-- [Phase 3 Summary](PHASE3_SUMMARY.md) - Error handling and validation
-- [Phase 4 Summary](PHASE4_SUMMARY.md) - Configuration management
-- [Phase 5 & 6 Summary](PHASE5_6_SUMMARY.md) - Testing infrastructure and type hints
-- [Phase 7 Summary](PHASE7_SUMMARY.md) - Performance optimization ✅ NEW!
-
-**Read this if you want to**: Understand the roadmap for improving GhostKG or contribute to refactoring efforts.
-
-**Cross-references**:
-- [Architecture](ARCHITECTURE.md) - How refactoring improves design
-- [Core Components](CORE_COMPONENTS.md) - Components being refactored
-
-**Read this if you want to**: Understand planned improvements, contribute to refactoring efforts, or learn about maintainability best practices.
-
-**Cross-references**:
-- [Architecture](ARCHITECTURE.md) - Current architecture to be refactored
-- [Core Components](CORE_COMPONENTS.md) - Components to be reorganized
-- [Database Schema](DATABASE_SCHEMA.md) - Performance optimizations planned
-- [UV Setup](UV_SETUP.md) - New dependency management with UV
 
 ---
 
@@ -250,7 +184,7 @@ Topics covered:
 #### I want to integrate GhostKG with my application
 1. Read: [Architecture](ARCHITECTURE.md#integration-patterns) - Integration patterns
 2. Read: [API Documentation](API.md) - Complete API reference
-3. See: [external_program.py](../examples/external_program.py) - Example integration
+3. See: [External Program Example](examples/external_program.md) - Example integration
 4. Read: [Core Components](CORE_COMPONENTS.md#agentmanager) - AgentManager details
 
 #### I want to understand how memory decay works
@@ -261,37 +195,35 @@ Topics covered:
 
 #### I want to build a multi-agent simulation
 1. Read: [API Documentation](API.md) - AgentManager usage
-2. See: [use_case_example.py](../examples/use_case_example.py) - Multi-round conversation
-3. See: [hourly_simulation.py](../examples/hourly_simulation.py) - Time-based simulation
+2. See: [Multi-Agent Conversation Example](examples/use_case_example.md) - Multi-round conversation
+3. See: [Temporal Simulation Example](examples/hourly_simulation.md) - Time-based simulation
 4. Read: [Core Components](CORE_COMPONENTS.md#time-management) - Time handling
 
 #### I want to query the knowledge graph directly
 1. Read: [Database Schema](DATABASE_SCHEMA.md#query-patterns) - Query examples
 2. Read: [Core Components](CORE_COMPONENTS.md#knowledgedb) - KnowledgeDB methods
-3. See: [export_history.py](../examples/export_history.py) - Exporting data
+3. See: [Export and Visualization Example](examples/export_history.md) - Exporting data
 
 #### I want to optimize performance
 1. Read: [Database Schema](DATABASE_SCHEMA.md#performance-considerations) - DB optimization
 2. Read: [Algorithms](ALGORITHMS.md#computational-complexity) - Complexity analysis
 3. Read: [Architecture](ARCHITECTURE.md#scalability-considerations) - Scalability
-4. Read: [Refactoring Plan](REFACTORING_PLAN.md#phase-7-performance-optimization-2-3-days) - Planned optimizations
-5. Read: [Core Components](CORE_COMPONENTS.md) - Algorithm optimizations
+4. Read: [Core Components](CORE_COMPONENTS.md) - Algorithm optimizations
 
 #### I want to understand design decisions
 1. Read: [Architecture](ARCHITECTURE.md#design-decisions) - Key decisions and rationale
 2. Read: [Architecture](ARCHITECTURE.md#design-philosophy) - Core principles
 3. Read: [Algorithms](ALGORITHMS.md#references) - Scientific foundations
-4. Read: [Refactoring Plan](REFACTORING_PLAN.md#current-state-analysis) - Issues and improvements
 
 ---
 
 ## 📖 Reading Paths
 
 ### For New Users
-1. [README](../README.md) - Start here
+1. [README on GitHub](https://github.com/GiulioRossetti/GhostKG#readme) - Start here
 2. [Architecture](ARCHITECTURE.md#system-overview) - Understand the big picture
 3. [API Documentation](API.md) - Learn the API
-4. [Examples](../examples/) - See it in action
+4. [Examples](examples/index.md) - See it in action
 
 ### For Researchers
 1. [Algorithms](ALGORITHMS.md) - Mathematical foundations
@@ -303,14 +235,13 @@ Topics covered:
 1. [Architecture](ARCHITECTURE.md) - System design
 2. [Core Components](CORE_COMPONENTS.md) - Component details
 3. [Database Schema](DATABASE_SCHEMA.md) - Data structures
-4. [Refactoring Plan](REFACTORING_PLAN.md) - Improvement roadmap
-5. Source code in `ghost_kg/` - Implementation
+4. Source code in `ghost_kg/` - Implementation
 
 ### For Integrators
 1. [API Documentation](API.md) - External API
 2. [Architecture](ARCHITECTURE.md#integration-patterns) - Integration patterns
 3. [Fast Mode Config](FAST_MODE_CONFIG.md) - Extraction modes
-4. [Examples](../examples/external_program.py) - Integration example
+4. [External Program Example](examples/external_program.md) - Integration example
 
 ---
 
@@ -326,26 +257,6 @@ Topics covered:
 | **Fast Mode Config** | Core Components (CognitiveLoop)<br>Algorithms (sentiment)<br>Examples (use_case_example.py) |
 | **Refactoring Plan** | Architecture (current design)<br>Core Components (to be refactored)<br>Database Schema (optimizations) |
 
----
-
-## 📁 Code Examples
-
-All code examples are located in the [`examples/`](../examples/) directory:
-
-- **[external_program.py](../examples/external_program.py)** - Complete external program integration
-- **[use_case_example.py](../examples/use_case_example.py)** - Multi-round agent conversation with fast mode
-- **[hourly_simulation.py](../examples/hourly_simulation.py)** - Time-based simulation with CognitiveLoop
-- **[export_history.py](../examples/export_history.py)** - Export and analyze knowledge graphs
-
----
-
-## 🧪 Testing
-
-Tests are located in the [`tests/`](../tests/) directory:
-
-- **[test_comprehensive.py](../tests/test_comprehensive.py)** - Full workflow tests
-- **[test_process_and_get_context.py](../tests/test_process_and_get_context.py)** - API integration tests
-- **[test_fast_mode_config.py](../tests/test_fast_mode_config.py)** - Configuration validation
 
 ---
 
@@ -385,7 +296,7 @@ Tests are located in the [`tests/`](../tests/) directory:
 ### Common Questions
 
 **Q: How do I integrate GhostKG with my LLM?**  
-A: See [API Documentation](API.md) and [external_program.py](../examples/external_program.py)
+A: See [API Documentation](API.md) and [External Program Example](examples/external_program.md)
 
 **Q: What's the difference between fast mode and LLM mode?**  
 A: See [Fast Mode Configuration](FAST_MODE_CONFIG.md)
@@ -399,14 +310,6 @@ A: See [Database Schema](DATABASE_SCHEMA.md#query-patterns)
 **Q: Can I use a different database?**  
 A: Not currently, but see [Architecture](ARCHITECTURE.md#why-sqlite) for why SQLite was chosen
 
-### For More Information
-
-- **Issues**: [GitHub Issues](https://github.com/GiulioRossetti/GhostKG/issues)
-- **Examples**: [`examples/`](../examples/) directory
-- **Tests**: [`tests/`](../tests/) directory
-- **Source Code**: [`ghost_kg/`](../ghost_kg/) directory
-
----
 
 ## 📝 Contributing
 
@@ -422,7 +325,7 @@ When contributing documentation:
 
 ## 📄 License
 
-GhostKG is released under the MIT License. See [LICENSE](../LICENSE) for details.
+GhostKG is released under the [MIT License](https://github.com/GiulioRossetti/GhostKG/blob/main/LICENSE).
 
 ---
 

@@ -58,34 +58,8 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Getting Started:
-    - Installation: index.md
-    - UV Setup: UV_SETUP.md
-  - Architecture:
-    - Overview: ARCHITECTURE.md
-    - Core Components: CORE_COMPONENTS.md
-    - Database Schema: DATABASE_SCHEMA.md
-    - Algorithms: ALGORITHMS.md
-  - Configuration:
-    - Overview: CONFIGURATION.md
-    - Fast Mode: FAST_MODE_CONFIG.md
-  - API Reference:
-    - Manager: api/manager.md
-    - Agent: api/agent.md
-    - CognitiveLoop: api/cognitive.md
-    - FSRS: api/fsrs.md
-    - Storage: api/storage.md
-    - Extraction: api/extraction.md
-    - Configuration: api/config.md
-    - Cache: api/cache.md
-    - Exceptions: api/exceptions.md
-  - External API: API.md
-  - Development:
-    - Refactoring Plan: REFACTORING_PLAN.md
-    - Phase Summaries:
-      - Phase 1: PHASE1_SUMMARY.md
-      - Phase 2: PHASE2_SUMMARY.md
-      - Phase 3: PHASE3_SUMMARY.md
-      - Phase 4: PHASE4_SUMMARY.md
-      - Phase 5-6: PHASE5_6_SUMMARY.md
-      - Phase 7: PHASE7_SUMMARY.md
+  - Getting Started: index.md
+  - Architecture: ARCHITECTURE.md
+  - Configuration: CONFIGURATION.md
+  - Examples: examples/index.md
+  - API Reference: API.md

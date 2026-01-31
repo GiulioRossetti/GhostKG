@@ -172,7 +172,7 @@ except LLMError as e:
 
 ## API Reference
 
-::: ghost_kg.exceptions
+::: ghost_kg.utils.exceptions
     options:
       show_root_heading: true
       show_source: true

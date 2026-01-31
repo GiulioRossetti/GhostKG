@@ -60,7 +60,7 @@ loop.reflect("I believe in economic security")
 
 ## API Reference
 
-::: ghost_kg.cognitive.CognitiveLoop
+::: ghost_kg.core.cognitive.CognitiveLoop
     options:
       show_root_heading: true
       show_source: true

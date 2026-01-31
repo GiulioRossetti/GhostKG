@@ -95,13 +95,13 @@ Where:
 
 ## API Reference
 
-::: ghost_kg.fsrs.FSRS
+::: ghost_kg.memory.fsrs.FSRS
     options:
       show_root_heading: true
       show_source: true
       heading_level: 3
 
-::: ghost_kg.fsrs.Rating
+::: ghost_kg.memory.fsrs.Rating
     options:
       show_root_heading: true
       show_source: false

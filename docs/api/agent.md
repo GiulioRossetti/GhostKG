@@ -64,7 +64,7 @@ GhostAgent
 
 ## API Reference
 
-::: ghost_kg.agent.GhostAgent
+::: ghost_kg.core.agent.GhostAgent
     options:
       show_root_heading: true
       show_source: true

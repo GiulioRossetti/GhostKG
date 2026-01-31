@@ -49,8 +49,6 @@ docs/
 ├── FAST_MODE_CONFIG.md         # Fast mode setup
 ├── API.md                      # External API guide
 ├── UV_SETUP.md                 # UV package manager setup
-├── REFACTORING_PLAN.md         # Development roadmap
-├── PHASE*_SUMMARY.md           # Phase summaries
 └── api/                        # API reference (auto-generated)
     ├── manager.md              # AgentManager API
     ├── agent.md                # GhostAgent API
