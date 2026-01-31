@@ -77,6 +77,22 @@ class FSRS:
             0.1542,
         ]
 
+    def _calculate_initial_difficulty(self, rating: int) -> float:
+        """
+        Calculate initial difficulty for a given rating.
+
+        Args:
+            rating (int): Review rating (1-4)
+
+        Returns:
+            float: Initial difficulty, clamped to [1, 10]
+
+        Formula (FSRS-6):
+            D_0(G) = w_4 - e^(w_5 * (G - 1)) + 1
+        """
+        d = self.p[4] - math.exp(self.p[5] * (rating - 1)) + 1
+        return min(max(d, 1), 10)
+
     def calculate_next(
         self, current_state: NodeState, rating: int, now: datetime.datetime
     ) -> NodeState:
@@ -107,8 +123,8 @@ class FSRS:
         if current_state.state == 0:
             # Initial stability: S_0(G) = w[G-1]
             s = self.p[rating - 1]
-            # Initial difficulty (FSRS-5+): D_0(G) = w_4 - e^(w_5 * (G - 1)) + 1
-            d = min(max(self.p[4] - math.exp(self.p[5] * (rating - 1)) + 1, 1), 10)
+            # Initial difficulty (FSRS-6)
+            d = self._calculate_initial_difficulty(rating)
             return NodeState(s, d, now, 1, 1)
 
         # 2. Existing Cards
@@ -116,6 +132,7 @@ class FSRS:
         d = current_state.difficulty
 
         # Calculate retrievability with trainable decay (FSRS-6)
+        elapsed_days = 0
         if current_state.last_review:
             last_review = current_state.last_review
             if last_review.tzinfo is None:
@@ -132,8 +149,8 @@ class FSRS:
             # Match legacy implementation: new cards have 1.0 retrievability
             retrievability = 1.0
 
-        # Calculate D_0(4) for mean reversion (FSRS-5+)
-        d_0_4 = min(max(self.p[4] - math.exp(self.p[5] * 3) + 1, 1), 10)
+        # Calculate D_0(4) for mean reversion (FSRS-6)
+        d_0_4 = self._calculate_initial_difficulty(4)
 
         # Update difficulty with linear damping (FSRS-5+)
         # ΔD(G) = -w_6 * (G - 3)
@@ -144,7 +161,7 @@ class FSRS:
         next_d = min(max(self.p[7] * d_0_4 + (1 - self.p[7]) * d_prime, 1), 10)
 
         # Check if same-day review (elapsed_days == 0 or very small)
-        is_same_day = current_state.last_review is None or elapsed_days < 1
+        is_same_day = elapsed_days < 1
 
         # Update stability based on rating
         if rating == Rating.Again:

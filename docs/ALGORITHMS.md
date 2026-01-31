@@ -285,7 +285,7 @@ rating = 3 (Good)
 S_next = 2.0 × exp(0.5425 × (3 - 3 + 0.0912)) × (2.0^(-0.0658))
        = 2.0 × exp(0.0495) × 0.911
        = 2.0 × 1.051 × 0.911
-       ≈ 1.91 days
+       ≈ 1.92 days
 
 # For Easy rating:
 rating = 4 (Easy)
@@ -313,10 +313,10 @@ D_initial = min(max(p[4] - exp(p[5] × (rating - 1)) + 1, 1), 10)
 ```
 
 **Values (FSRS-6):**
-- Rating = 1 (Again): D = 6.4133 - exp(0.8334 × 0) + 1 ≈ 6.41
-- Rating = 2 (Hard): D = 6.4133 - exp(0.8334 × 1) + 1 ≈ 5.11
-- Rating = 3 (Good): D = 6.4133 - exp(0.8334 × 2) + 1 ≈ 2.19
-- Rating = 4 (Easy): D = 6.4133 - exp(0.8334 × 3) + 1 ≈ -3.35 → clamped to 1.0
+- Rating = 1 (Again): D = 6.4133 - exp(0.8334 × 0) + 1 = 6.4133 - 1 + 1 ≈ 6.41
+- Rating = 2 (Hard): D = 6.4133 - exp(0.8334 × 1) + 1 ≈ 6.41 - 2.30 + 1 ≈ 5.11
+- Rating = 3 (Good): D = 6.4133 - exp(0.8334 × 2) + 1 ≈ 6.41 - 5.30 + 1 ≈ 2.11
+- Rating = 4 (Easy): D = 6.4133 - exp(0.8334 × 3) + 1 ≈ 6.41 - 12.18 + 1 ≈ -4.77 → clamped to 1.0
 
 Clamped to [1, 10] range.
 
