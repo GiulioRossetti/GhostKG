@@ -373,15 +373,16 @@ class GhostAgent:
         my_rows = self.db.get_agent_stance(self.name, n_topic, current_time=self.current_time)
         world_rows = self.db.get_world_knowledge(self.name, n_topic, limit=8)
 
-        my_beliefs = []
-        world_facts = []
-        others_beliefs = []
+        # Use dicts to maintain uniqueness while preserving order (Python 3.7+)
+        my_beliefs = {}
+        world_facts = {}
+        others_beliefs = {}
 
         for row in my_rows:
             # Add sentiment qualifier to beliefs
             sentiment_qualifier = self._get_sentiment_qualifier(row["sentiment"])
             belief_str = f"I {row['relation']} {row['target']}{sentiment_qualifier}"
-            my_beliefs.append(belief_str)
+            my_beliefs[belief_str] = True  # Use dict as ordered set
 
         for row in world_rows:
             src, rel, tgt = row["source"], row["relation"], row["target"]
@@ -410,20 +411,20 @@ class GhostAgent:
                 "strongly supports",
                 "strongly opposes",
             ]:
-                others_beliefs.append(fact_str)
+                others_beliefs[fact_str] = True
             else:
-                world_facts.append(fact_str)
+                world_facts[fact_str] = True
 
         parts = []
         if my_beliefs:
-            parts.append(f"MY CURRENT STANCE: {'; '.join(my_beliefs)}.")
+            parts.append(f"MY CURRENT STANCE: {'; '.join(my_beliefs.keys())}.")
         else:
             parts.append("MY CURRENT STANCE: (I have no strong opinion yet).")
 
         if world_facts:
-            parts.append(f"KNOWN FACTS: {'; '.join(list(world_facts)[:5])}.")
+            parts.append(f"KNOWN FACTS: {'; '.join(list(world_facts.keys())[:5])}.")
         if others_beliefs:
-            parts.append(f"WHAT OTHERS THINK: {'; '.join(list(others_beliefs)[:3])}.")
+            parts.append(f"WHAT OTHERS THINK: {'; '.join(list(others_beliefs.keys())[:3])}.")
 
         return " ".join(parts)
 
