@@ -2,5 +2,5 @@
 # GLiNER for named entity recognition
 gliner>=0.1.0
 
-# TextBlob for sentiment analysis
-textblob>=0.15.0,<1.0
+# VADER for sentiment analysis (better for social/conversational text)
+vaderSentiment>=3.3.2

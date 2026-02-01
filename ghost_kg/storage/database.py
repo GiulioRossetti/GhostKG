@@ -407,7 +407,7 @@ class KnowledgeDB:
 
     def get_world_knowledge(self, owner_id: str, topic: str, limit: int = 10) -> List[sqlite3.Row]:
         """
-        Get world knowledge (facts from others) about a topic.
+        Get world knowledge (facts from others) about a topic with sentiment.
 
         Args:
             owner_id (str): Owner/agent identifier
@@ -415,7 +415,7 @@ class KnowledgeDB:
             limit (int): Maximum number of results
 
         Returns:
-            List[sqlite3.Row]: List of sqlite3.Row objects
+            List[sqlite3.Row]: List of sqlite3.Row objects with source, relation, target, sentiment
 
         Raises:
             DatabaseError: If query fails
@@ -425,7 +425,7 @@ class KnowledgeDB:
         try:
             return self.conn.execute(
                 """
-                                     SELECT source, relation, target FROM edges
+                                     SELECT source, relation, target, sentiment FROM edges
                                      WHERE owner_id = ? AND source != 'I' AND source != ?
                 AND (source LIKE ? OR target LIKE ?)
                                      ORDER BY created_at DESC LIMIT ?

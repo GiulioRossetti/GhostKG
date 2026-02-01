@@ -16,12 +16,12 @@ from typing import Any, Dict, Optional, Union
 # Optional dependencies for fast mode
 try:
     from gliner import GLiNER
-    from textblob import TextBlob
+    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
     HAS_FAST_MODE = True
 except ImportError:
     GLiNER = None
-    TextBlob = None
+    SentimentIntensityAnalyzer = None
     HAS_FAST_MODE = False
 
 
@@ -76,33 +76,35 @@ class TripletExtractor(ABC):
 
 class FastExtractor(TripletExtractor):
     """
-    Fast triplet extraction using GLiNER + TextBlob.
+    Fast triplet extraction using GLiNER + VADER.
 
     Uses:
     - GLiNER for entity recognition (Topics, People, Concepts, Organizations)
-    - TextBlob for sentiment analysis
-    - Heuristic relation mapping based on sentiment
+    - VADER for sentiment analysis (better for social/conversational text)
+    - Entity-level sentiment analysis (sentiment per entity, not just overall)
+    - Heuristic relation mapping based on sentiment with intensity awareness
 
-    This is faster than LLM but less semantically rich.
+    This is faster than LLM but more semantically aware than simple TextBlob.
     """
 
     def __init__(self) -> None:
         """
-        Initialize fast extractor and preload model.
+        Initialize fast extractor and preload models.
 
         Raises:
             ImportError: If required dependencies are not installed
         """
         if not HAS_FAST_MODE:
             raise ImportError(
-                "Fast mode requires 'gliner' and 'textblob'. "
-                "Install with: pip install gliner textblob"
+                "Fast mode requires 'gliner' and 'vaderSentiment'. "
+                "Install with: pip install gliner vaderSentiment"
             )
         self.model = ModelCache.get_gliner_model()
+        self.sentiment_analyzer = SentimentIntensityAnalyzer()  # type: ignore[misc]
 
     def extract(self, text: str, author: str, agent_name: str) -> Dict[str, Any]:
         """
-        Extract triplets using fast heuristic approach.
+        Extract triplets using fast heuristic approach with entity-level sentiment.
 
         Args:
             text (str): Input text
@@ -118,22 +120,12 @@ class FastExtractor(TripletExtractor):
         labels = ["Topic", "Person", "Concept", "Organization"]
         entities = self.model.predict_entities(text, labels)  # type: ignore[union-attr]
 
-        # 2. Extract Sentiment (Edge Coloring)
-        blob = TextBlob(text)
-        sentiment = blob.sentiment.polarity  # -1.0 to 1.0
+        # 2. Extract Overall Sentiment using VADER
+        sentiment_scores = self.sentiment_analyzer.polarity_scores(text)  # type: ignore[union-attr]
+        overall_sentiment = sentiment_scores['compound']  # -1.0 to 1.0 (compound score)
+        sentiment_intensity = max(abs(sentiment_scores['pos']), abs(sentiment_scores['neg']))
 
-        # 3. Determine Relation Verb based on Sentiment
-        relation = "discusses"
-        if sentiment > 0.3:
-            relation = "supports"
-        elif sentiment < -0.3:
-            relation = "opposes"
-        elif sentiment > 0.1:
-            relation = "likes"
-        elif sentiment < -0.1:
-            relation = "dislikes"
-
-        # 4. Build triplets
+        # 3. Build triplets with entity-specific sentiment
         world_facts = []
         partner_stance = []
         my_reaction = []
@@ -143,13 +135,25 @@ class FastExtractor(TripletExtractor):
             if len(topic_text) < 3:
                 continue
 
+            # Extract entity-specific sentiment by analyzing context around entity
+            entity_context = self._extract_entity_context(text, topic_text)
+            entity_sentiment_scores = self.sentiment_analyzer.polarity_scores(entity_context)  # type: ignore[union-attr]
+            entity_sentiment = entity_sentiment_scores['compound']
+            
+            # Use entity-specific sentiment if significantly different from overall
+            sentiment_for_entity = entity_sentiment if abs(entity_sentiment - overall_sentiment) > 0.2 else overall_sentiment
+
+            # Determine Relation Verb based on Sentiment with intensity awareness
+            relation = self._determine_relation(sentiment_for_entity, sentiment_intensity)
+
             # A. Partner Stance: Author -> Relation -> Topic
             partner_stance.append(
                 {
                     "source": author,
                     "relation": relation,
                     "target": topic_text,
-                    "sentiment": sentiment,
+                    "sentiment": sentiment_for_entity,
+                    "sentiment_intensity": sentiment_intensity,
                 }
             )
 
@@ -157,13 +161,17 @@ class FastExtractor(TripletExtractor):
             world_facts.append({"source": topic_text, "relation": "is", "target": "discussed"})
 
             # C. My Reaction: I -> heard about -> Topic
+            # Agent's reaction should reflect understanding of sentiment
+            my_relation = "heard about" if abs(sentiment_for_entity) < 0.1 else (
+                "interested in" if sentiment_for_entity > 0 else "concerned about"
+            )
             my_reaction.append(
                 {
                     "source": "I",
-                    "relation": "heard about",
+                    "relation": my_relation,
                     "target": topic_text,
                     "rating": 3,  # Good rating
-                    "sentiment": 0.0,
+                    "sentiment": sentiment_for_entity * 0.5,  # Dampened sentiment for observation
                 }
             )
 
@@ -172,12 +180,80 @@ class FastExtractor(TripletExtractor):
             "partner_stance": partner_stance,
             "my_reaction": my_reaction,
             "mode": "FAST",
-            "sentiment": sentiment,
+            "sentiment": overall_sentiment,
+            "sentiment_breakdown": {
+                "positive": sentiment_scores['pos'],
+                "negative": sentiment_scores['neg'],
+                "neutral": sentiment_scores['neu'],
+                "compound": sentiment_scores['compound'],
+            },
             "entities": [e["text"] for e in entities],
         }
 
-        print(f"   > Fast absorbed {len(entities)} entities with sentiment {sentiment:.2f}")
+        print(
+            f"   > Fast absorbed {len(entities)} entities "
+            f"(sentiment: {overall_sentiment:.2f}, pos: {sentiment_scores['pos']:.2f}, "
+            f"neg: {sentiment_scores['neg']:.2f})"
+        )
         return result
+
+    def _extract_entity_context(self, text: str, entity: str, window: int = 50) -> str:
+        """
+        Extract context around an entity for entity-specific sentiment analysis.
+
+        Args:
+            text (str): Full text
+            entity (str): Entity to find context for
+            window (int): Character window on each side of entity
+
+        Returns:
+            str: Context around entity, or full text if entity not found
+        """
+        entity_lower = entity.lower()
+        text_lower = text.lower()
+        
+        pos = text_lower.find(entity_lower)
+        if pos == -1:
+            return text  # Entity not found, use full text
+        
+        start = max(0, pos - window)
+        end = min(len(text), pos + len(entity) + window)
+        return text[start:end]
+
+    def _determine_relation(self, sentiment: float, intensity: float) -> str:
+        """
+        Determine relation verb based on sentiment and intensity.
+
+        Args:
+            sentiment (float): Sentiment score (-1.0 to 1.0)
+            intensity (float): Sentiment intensity (0.0 to 1.0)
+
+        Returns:
+            str: Relation verb that captures sentiment and intensity
+        """
+        # High intensity: stronger verbs
+        if intensity > 0.5:
+            if sentiment > 0.5:
+                return "strongly supports"
+            elif sentiment > 0.2:
+                return "advocates"
+            elif sentiment < -0.5:
+                return "strongly opposes"
+            elif sentiment < -0.2:
+                return "criticizes"
+        
+        # Medium intensity: standard verbs
+        if sentiment > 0.3:
+            return "supports"
+        elif sentiment > 0.1:
+            return "likes"
+        elif sentiment < -0.3:
+            return "opposes"
+        elif sentiment < -0.1:
+            return "dislikes"
+        
+        # Low/neutral sentiment
+        return "discusses"
 
 
 class LLMExtractor(TripletExtractor):
