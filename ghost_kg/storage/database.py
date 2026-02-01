@@ -1,6 +1,7 @@
 import datetime
 import json
 import sqlite3
+import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -28,12 +29,16 @@ class NodeState:
 
 
 class KnowledgeDB:
-    def __init__(self, db_path: str = "agent_memory.db") -> None:
+    def __init__(
+        self, db_path: str = "agent_memory.db", store_log_content: bool = False
+    ) -> None:
         """
         Initialize database connection and schema.
 
         Args:
             db_path (str): Path to SQLite database file
+            store_log_content (bool): If True, stores full content in log table.
+                                     If False (default), stores UUID instead of content.
 
         Returns:
             None
@@ -41,6 +46,7 @@ class KnowledgeDB:
         Raises:
             DatabaseError: If connection or schema initialization fails
         """
+        self.store_log_content = store_log_content
         try:
             self.conn = sqlite3.connect(db_path, check_same_thread=False)
             self.conn.row_factory = sqlite3.Row
@@ -87,7 +93,8 @@ class KnowledgeDB:
             cursor.execute("""
                        CREATE TABLE IF NOT EXISTS logs (
                                                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                           agent_name TEXT, action_type TEXT, content TEXT, annotations JSON,
+                                                           agent_name TEXT, action_type TEXT, content TEXT,
+                                                           content_uuid TEXT, annotations JSON,
                                                            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                        )
                        """)
@@ -264,7 +271,9 @@ class KnowledgeDB:
         content: str,
         annotations: Dict[str, Any],
         timestamp: Optional[datetime.datetime] = None,
-    ) -> None:
+        store_content: Optional[bool] = None,
+        content_uuid: Optional[str] = None,
+    ) -> Optional[str]:
         """
         Log an agent interaction.
 
@@ -274,9 +283,15 @@ class KnowledgeDB:
             content (str): Content of the interaction
             annotations (Dict[str, Any]): Additional metadata (will be JSON-encoded)
             timestamp (Optional[datetime.datetime]): Optional timestamp (defaults to now)
+            store_content (Optional[bool]): If True, stores content in the log table.
+                                           If False, generates and stores a UUID instead.
+                                           If None (default), uses database instance setting.
+            content_uuid (Optional[str]): Optional UUID to use when content is not stored.
+                                         If not provided, a UUID will be auto-generated.
+                                         Only valid when store_content is False.
 
         Returns:
-            None
+            Optional[str]: The content UUID if store_content is False, None otherwise
 
         Raises:
             ValidationError: If parameters are invalid
@@ -287,12 +302,42 @@ class KnowledgeDB:
 
         ts = timestamp or datetime.datetime.now(datetime.timezone.utc)
 
+        # Use instance default if not specified
+        should_store = (
+            store_content if store_content is not None else self.store_log_content
+        )
+
+        # Validate content_uuid parameter usage
+        if content_uuid is not None:
+            if should_store:
+                raise ValidationError(
+                    "content_uuid can only be specified when store_content is False"
+                )
+            # Validate UUID format
+            try:
+                uuid.UUID(content_uuid)
+            except (ValueError, AttributeError) as e:
+                raise ValidationError(f"Invalid UUID format: {content_uuid}") from e
+
+        # Use provided UUID or generate one if not storing content
+        uuid_to_use = None
+        stored_content = content if should_store else None
+
+        if not should_store:
+            uuid_to_use = content_uuid if content_uuid is not None else str(uuid.uuid4())
+
         try:
+            query = """
+                INSERT INTO logs (agent_name, action_type, content, content_uuid,
+                                 annotations, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """
             self.conn.execute(
-                "INSERT INTO logs (agent_name, action_type, content, annotations, timestamp) VALUES (?, ?, ?, ?, ?)",
-                (agent, action, content, json.dumps(annotations), ts),
+                query,
+                (agent, action, stored_content, uuid_to_use, json.dumps(annotations), ts),
             )
             self.conn.commit()
+            return uuid_to_use
         except (sqlite3.Error, TypeError) as e:
             self.conn.rollback()
             raise DatabaseError(f"Failed to log interaction for {agent}: {e}") from e
