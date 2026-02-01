@@ -122,8 +122,8 @@ class FastExtractor(TripletExtractor):
 
         # 2. Extract Overall Sentiment using VADER
         sentiment_scores = self.sentiment_analyzer.polarity_scores(text)  # type: ignore[union-attr]
-        overall_sentiment = sentiment_scores['compound']  # -1.0 to 1.0 (compound score)
-        sentiment_intensity = max(abs(sentiment_scores['pos']), abs(sentiment_scores['neg']))
+        overall_sentiment = sentiment_scores["compound"]  # -1.0 to 1.0 (compound score)
+        sentiment_intensity = max(abs(sentiment_scores["pos"]), abs(sentiment_scores["neg"]))
 
         # 3. Build triplets with entity-specific sentiment
         world_facts = []
@@ -138,10 +138,14 @@ class FastExtractor(TripletExtractor):
             # Extract entity-specific sentiment by analyzing context around entity
             entity_context = self._extract_entity_context(text, topic_text)
             entity_sentiment_scores = self.sentiment_analyzer.polarity_scores(entity_context)  # type: ignore[union-attr]
-            entity_sentiment = entity_sentiment_scores['compound']
-            
+            entity_sentiment = entity_sentiment_scores["compound"]
+
             # Use entity-specific sentiment if significantly different from overall
-            sentiment_for_entity = entity_sentiment if abs(entity_sentiment - overall_sentiment) > 0.2 else overall_sentiment
+            sentiment_for_entity = (
+                entity_sentiment
+                if abs(entity_sentiment - overall_sentiment) > 0.2
+                else overall_sentiment
+            )
 
             # Determine Relation Verb based on Sentiment with intensity awareness
             relation = self._determine_relation(sentiment_for_entity, sentiment_intensity)
@@ -162,8 +166,10 @@ class FastExtractor(TripletExtractor):
 
             # C. My Reaction: I -> heard about -> Topic
             # Agent's reaction should reflect understanding of sentiment
-            my_relation = "heard about" if abs(sentiment_for_entity) < 0.1 else (
-                "interested in" if sentiment_for_entity > 0 else "concerned about"
+            my_relation = (
+                "heard about"
+                if abs(sentiment_for_entity) < 0.1
+                else ("interested in" if sentiment_for_entity > 0 else "concerned about")
             )
             my_reaction.append(
                 {
@@ -182,10 +188,10 @@ class FastExtractor(TripletExtractor):
             "mode": "FAST",
             "sentiment": overall_sentiment,
             "sentiment_breakdown": {
-                "positive": sentiment_scores['pos'],
-                "negative": sentiment_scores['neg'],
-                "neutral": sentiment_scores['neu'],
-                "compound": sentiment_scores['compound'],
+                "positive": sentiment_scores["pos"],
+                "negative": sentiment_scores["neg"],
+                "neutral": sentiment_scores["neu"],
+                "compound": sentiment_scores["compound"],
             },
             "entities": [e["text"] for e in entities],
         }
@@ -211,11 +217,11 @@ class FastExtractor(TripletExtractor):
         """
         entity_lower = entity.lower()
         text_lower = text.lower()
-        
+
         pos = text_lower.find(entity_lower)
         if pos == -1:
             return text  # Entity not found, use full text
-        
+
         start = max(0, pos - window)
         end = min(len(text), pos + len(entity) + window)
         return text[start:end]
@@ -241,7 +247,7 @@ class FastExtractor(TripletExtractor):
                 return "strongly opposes"
             elif sentiment < -0.2:
                 return "criticizes"
-        
+
         # Medium intensity: standard verbs
         if sentiment > 0.3:
             return "supports"
@@ -251,7 +257,7 @@ class FastExtractor(TripletExtractor):
             return "opposes"
         elif sentiment < -0.1:
             return "dislikes"
-        
+
         # Low/neutral sentiment
         return "discusses"
 

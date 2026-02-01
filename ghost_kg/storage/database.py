@@ -29,9 +29,7 @@ class NodeState:
 
 
 class KnowledgeDB:
-    def __init__(
-        self, db_path: str = "agent_memory.db", store_log_content: bool = False
-    ) -> None:
+    def __init__(self, db_path: str = "agent_memory.db", store_log_content: bool = False) -> None:
         """
         Initialize database connection and schema.
 
@@ -238,7 +236,7 @@ class KnowledgeDB:
         # Handle None sentiment by using default value
         if sentiment is None:
             sentiment = 0.0
-        
+
         if not -1.0 <= sentiment <= 1.0:
             raise ValidationError(f"sentiment must be between -1.0 and 1.0, got {sentiment}")
 
@@ -303,9 +301,7 @@ class KnowledgeDB:
         ts = timestamp or datetime.datetime.now(datetime.timezone.utc)
 
         # Use instance default if not specified
-        should_store = (
-            store_content if store_content is not None else self.store_log_content
-        )
+        should_store = store_content if store_content is not None else self.store_log_content
 
         # Validate content_uuid parameter usage
         if content_uuid is not None:

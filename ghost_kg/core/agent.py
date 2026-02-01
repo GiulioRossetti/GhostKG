@@ -57,7 +57,7 @@ class GhostAgent:
         name: str,
         db_path: str = "agent_memory.db",
         llm_host: str = "http://localhost:11434",
-        store_log_content: bool = False
+        store_log_content: bool = False,
     ) -> None:
         """
         Initialize a new GhostAgent.
@@ -290,7 +290,7 @@ class GhostAgent:
         """
         if rating is None:
             rating = Rating.Good
-        
+
         # Handle None sentiment by using default value
         if sentiment is None:
             sentiment = 0.0
@@ -379,7 +379,7 @@ class GhostAgent:
 
         for row in my_rows:
             # Add sentiment qualifier to beliefs
-            sentiment_qualifier = self._get_sentiment_qualifier(row['sentiment'])
+            sentiment_qualifier = self._get_sentiment_qualifier(row["sentiment"])
             belief_str = f"I {row['relation']} {row['target']}{sentiment_qualifier}"
             my_beliefs.append(belief_str)
 
@@ -387,15 +387,29 @@ class GhostAgent:
             src, rel, tgt = row["source"], row["relation"], row["target"]
             # Include sentiment for others' beliefs when available
             try:
-                sentiment = row['sentiment'] if 'sentiment' in row.keys() else 0.0
+                sentiment = row["sentiment"] if "sentiment" in row.keys() else 0.0
             except (KeyError, AttributeError):
                 sentiment = 0.0
-            
-            sentiment_qualifier = self._get_sentiment_qualifier(sentiment) if sentiment != 0.0 else ""
-            
+
+            sentiment_qualifier = (
+                self._get_sentiment_qualifier(sentiment) if sentiment != 0.0 else ""
+            )
+
             fact_str = f"{src} {rel} {tgt}{sentiment_qualifier}"
-            if rel in ["said", "thinks", "believes", "wants", "supports", "opposes", "likes", "dislikes", 
-                       "advocates", "criticizes", "strongly supports", "strongly opposes"]:
+            if rel in [
+                "said",
+                "thinks",
+                "believes",
+                "wants",
+                "supports",
+                "opposes",
+                "likes",
+                "dislikes",
+                "advocates",
+                "criticizes",
+                "strongly supports",
+                "strongly opposes",
+            ]:
                 others_beliefs.append(fact_str)
             else:
                 world_facts.append(fact_str)
@@ -425,7 +439,7 @@ class GhostAgent:
         """
         if sentiment is None or abs(sentiment) < 0.1:
             return ""
-        
+
         if sentiment > 0.6:
             return " (very positively)"
         elif sentiment > 0.3:
@@ -438,5 +452,5 @@ class GhostAgent:
             return " (negatively)"
         elif sentiment < -0.1:
             return " (somewhat negatively)"
-        
+
         return ""
