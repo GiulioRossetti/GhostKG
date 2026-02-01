@@ -386,7 +386,11 @@ class GhostAgent:
         for row in world_rows:
             src, rel, tgt = row["source"], row["relation"], row["target"]
             # Include sentiment for others' beliefs when available
-            sentiment = row.get('sentiment', 0.0)
+            try:
+                sentiment = row['sentiment'] if 'sentiment' in row.keys() else 0.0
+            except (KeyError, AttributeError):
+                sentiment = 0.0
+            
             sentiment_qualifier = self._get_sentiment_qualifier(sentiment) if sentiment != 0.0 else ""
             
             fact_str = f"{src} {rel} {tgt}{sentiment_qualifier}"
