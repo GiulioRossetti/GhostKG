@@ -146,6 +146,33 @@ manager = AgentManager(db_path="agents.db", store_log_content=True)
 - A UUID is generated and stored instead
 - More privacy-friendly and reduces storage requirements
 
+**User-specified UUIDs**:
+You can optionally provide your own UUID when content is not stored:
+
+```python
+import uuid
+
+db = KnowledgeDB(db_path="agents.db", store_log_content=False)
+
+# Provide your own UUID for tracking
+my_uuid = str(uuid.uuid4())
+db.log_interaction(
+    agent="Alice",
+    action="READ",
+    content="sensitive content",
+    annotations={},
+    content_uuid=my_uuid  # Use your own UUID
+)
+
+# Or let the system auto-generate one (default)
+auto_uuid = db.log_interaction(
+    agent="Bob",
+    action="WRITE",
+    content="another message",
+    annotations={}
+)
+```
+
 **When to use store_log_content=True**:
 - When you need full audit trails of all interactions
 - For debugging and analysis purposes
