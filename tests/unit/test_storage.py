@@ -314,10 +314,101 @@ class TestKnowledgeDB:
             annotations={},
             store_content=True
         )
-        
+
         assert content_uuid is None
-        
+
         cursor = db.conn.cursor()
         cursor.execute("SELECT content FROM logs WHERE agent_name = ?", ("agent1",))
         result = cursor.fetchone()
         assert result["content"] == "override content"
+
+    def test_log_interaction_with_user_provided_uuid(self, db):
+        """Test logging interaction with user-provided UUID."""
+        import uuid as uuid_module
+        user_uuid = str(uuid_module.uuid4())
+
+        returned_uuid = db.log_interaction(
+            agent="agent1",
+            action="READ",
+            content="test content",
+            annotations={"key": "value"},
+            store_content=False,
+            content_uuid=user_uuid
+        )
+
+        # Should return the user-provided UUID
+        assert returned_uuid == user_uuid
+
+        # Verify UUID is stored correctly
+        cursor = db.conn.cursor()
+        cursor.execute("""
+            SELECT content, content_uuid FROM logs
+            WHERE agent_name = ? AND action_type = ?
+        """, ("agent1", "READ"))
+        result = cursor.fetchone()
+        assert result is not None
+        assert result["content"] is None
+        assert result["content_uuid"] == user_uuid
+
+    def test_log_interaction_uuid_when_storing_content_raises_error(self, db):
+        """Test that providing UUID when storing content raises ValidationError."""
+        import uuid as uuid_module
+        from ghost_kg import ValidationError
+
+        user_uuid = str(uuid_module.uuid4())
+
+        with pytest.raises(ValidationError, match="content_uuid can only be specified"):
+            db.log_interaction(
+                agent="agent1",
+                action="READ",
+                content="test content",
+                annotations={},
+                store_content=True,
+                content_uuid=user_uuid
+            )
+
+    def test_log_interaction_invalid_uuid_format(self, db):
+        """Test that invalid UUID format raises ValidationError."""
+        from ghost_kg import ValidationError
+
+        with pytest.raises(ValidationError, match="Invalid UUID format"):
+            db.log_interaction(
+                agent="agent1",
+                action="READ",
+                content="test content",
+                annotations={},
+                store_content=False,
+                content_uuid="not-a-valid-uuid"
+            )
+
+    def test_log_interaction_auto_generate_when_uuid_not_provided(self, db):
+        """Test that UUID is auto-generated when not provided (existing behavior)."""
+        import uuid as uuid_module
+
+        returned_uuid = db.log_interaction(
+            agent="agent1",
+            action="READ",
+            content="test content",
+            annotations={},
+            store_content=False
+            # No content_uuid provided
+        )
+
+        # Should return an auto-generated UUID
+        assert returned_uuid is not None
+        # Validate it's a proper UUID format
+        try:
+            uuid_module.UUID(returned_uuid)
+        except ValueError:
+            pytest.fail(f"returned_uuid is not a valid UUID: {returned_uuid}")
+
+        # Verify UUID is stored correctly
+        cursor = db.conn.cursor()
+        cursor.execute("""
+            SELECT content, content_uuid FROM logs
+            WHERE agent_name = ? AND action_type = ?
+        """, ("agent1", "READ"))
+        result = cursor.fetchone()
+        assert result is not None
+        assert result["content"] is None
+        assert result["content_uuid"] == returned_uuid

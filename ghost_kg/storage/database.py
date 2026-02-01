@@ -272,6 +272,7 @@ class KnowledgeDB:
         annotations: Dict[str, Any],
         timestamp: Optional[datetime.datetime] = None,
         store_content: Optional[bool] = None,
+        content_uuid: Optional[str] = None,
     ) -> Optional[str]:
         """
         Log an agent interaction.
@@ -285,6 +286,9 @@ class KnowledgeDB:
             store_content (Optional[bool]): If True, stores content in the log table.
                                            If False, generates and stores a UUID instead.
                                            If None (default), uses database instance setting.
+            content_uuid (Optional[str]): Optional UUID to use when content is not stored.
+                                         If not provided, a UUID will be auto-generated.
+                                         Only valid when store_content is False.
 
         Returns:
             Optional[str]: The content UUID if store_content is False, None otherwise
@@ -303,12 +307,24 @@ class KnowledgeDB:
             store_content if store_content is not None else self.store_log_content
         )
 
-        # Generate UUID if not storing content
-        content_uuid = None
+        # Validate content_uuid parameter usage
+        if content_uuid is not None:
+            if should_store:
+                raise ValidationError(
+                    "content_uuid can only be specified when store_content is False"
+                )
+            # Validate UUID format
+            try:
+                uuid.UUID(content_uuid)
+            except (ValueError, AttributeError) as e:
+                raise ValidationError(f"Invalid UUID format: {content_uuid}") from e
+
+        # Use provided UUID or generate one if not storing content
+        uuid_to_use = None
         stored_content = content if should_store else None
 
         if not should_store:
-            content_uuid = str(uuid.uuid4())
+            uuid_to_use = content_uuid if content_uuid is not None else str(uuid.uuid4())
 
         try:
             query = """
@@ -318,10 +334,10 @@ class KnowledgeDB:
             """
             self.conn.execute(
                 query,
-                (agent, action, stored_content, content_uuid, json.dumps(annotations), ts),
+                (agent, action, stored_content, uuid_to_use, json.dumps(annotations), ts),
             )
             self.conn.commit()
-            return content_uuid
+            return uuid_to_use
         except (sqlite3.Error, TypeError) as e:
             self.conn.rollback()
             raise DatabaseError(f"Failed to log interaction for {agent}: {e}") from e
