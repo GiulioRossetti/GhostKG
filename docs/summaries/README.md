@@ -16,6 +16,11 @@ This directory contains detailed summaries of major features and improvements im
   - Fixed dependencies in requirements files
   - Bug fixes and consistency improvements
 
+- **[PACKAGE_STRUCTURE_UPDATE.md](PACKAGE_STRUCTURE_UPDATE.md)** - Package structure documentation update
+  - Updated all file path references to reflect subpackage organization
+  - Fixed outdated references to flat file structure
+  - Documented current package organization
+
 ### Core Database Features
 
 - **[EXISTING_DB_SUMMARY.md](EXISTING_DB_SUMMARY.md)** - Support for using existing SQLite databases
