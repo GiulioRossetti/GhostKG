@@ -191,7 +191,7 @@ Topics covered:
 1. Read: [Algorithms](ALGORITHMS.md#memory-decay-calculations) - Decay formulas
 2. Read: [Algorithms](ALGORITHMS.md#fsrs-algorithm) - FSRS overview
 3. Read: [Core Components](CORE_COMPONENTS.md#fsrs-memory-system) - Implementation
-4. See: Python code in `ghost_kg/core.py` - FSRS class
+4. See: Python code in `ghost_kg/memory/fsrs.py` - FSRS class
 
 #### I want to build a multi-agent simulation
 1. Read: [API Documentation](API.md) - AgentManager usage
@@ -266,11 +266,11 @@ Topics covered:
 
 | Component | Location | Documentation | Purpose |
 |-----------|----------|---------------|---------|
-| FSRS | `ghost_kg/core.py` | [Core Components](CORE_COMPONENTS.md#fsrs-memory-system) | Memory modeling |
-| GhostAgent | `ghost_kg/core.py` | [Core Components](CORE_COMPONENTS.md#ghostagent) | Individual agent |
-| CognitiveLoop | `ghost_kg/core.py` | [Core Components](CORE_COMPONENTS.md#cognitiveloop) | LLM integration |
-| KnowledgeDB | `ghost_kg/storage.py` | [Core Components](CORE_COMPONENTS.md#knowledgedb) | Database ops |
-| AgentManager | `ghost_kg/manager.py` | [Core Components](CORE_COMPONENTS.md#agentmanager) | External API |
+| FSRS | `ghost_kg/memory/fsrs.py` | [Core Components](CORE_COMPONENTS.md#fsrs-memory-system) | Memory modeling |
+| GhostAgent | `ghost_kg/core/agent.py` | [Core Components](CORE_COMPONENTS.md#ghostagent) | Individual agent |
+| CognitiveLoop | `ghost_kg/core/cognitive.py` | [Core Components](CORE_COMPONENTS.md#cognitiveloop) | LLM integration |
+| KnowledgeDB | `ghost_kg/storage/database.py` | [Core Components](CORE_COMPONENTS.md#knowledgedb) | Database ops |
+| AgentManager | `ghost_kg/core/manager.py` | [Core Components](CORE_COMPONENTS.md#agentmanager) | External API |
 
 ### Formula Lookup
 

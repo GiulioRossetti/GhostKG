@@ -21,7 +21,7 @@ FSRS (Free Spaced Repetition Scheduler) v6 is the memory modeling algorithm at t
 
 ### Class: `FSRS`
 
-**Location**: `ghost_kg/core.py`
+**Location**: `ghost_kg/memory/fsrs.py`
 
 **Purpose**: Calculate memory retention and forgetting curves for knowledge nodes.
 
@@ -197,7 +197,7 @@ print(f"New Stability: {final_state.stability:.2f} days")
 
 ### Class: `NodeState`
 
-**Location**: `ghost_kg/storage.py`
+**Location**: `ghost_kg/storage/database.py`
 
 **Type**: `@dataclass`
 
@@ -238,7 +238,7 @@ state = NodeState(
 
 ### Class: `GhostAgent`
 
-**Location**: `ghost_kg/core.py`
+**Location**: `ghost_kg/core/agent.py`
 
 **Purpose**: Manage an agent's knowledge, memory, and temporal state.
 
@@ -368,7 +368,7 @@ agent.set_time(sim_time)
 
 ### Class: `CognitiveLoop`
 
-**Location**: `ghost_kg/core.py`
+**Location**: `ghost_kg/core/cognitive.py`
 
 **Purpose**: Handle LLM-based operations for GhostAgent.
 
@@ -490,7 +490,7 @@ print(response)  # "I support renewable energy initiatives..."
 
 ### Class: `KnowledgeDB`
 
-**Location**: `ghost_kg/storage.py`
+**Location**: `ghost_kg/storage/database.py`
 
 **Purpose**: Handle all database operations for nodes, edges, and logs.
 
@@ -647,7 +647,7 @@ LIMIT ?
 
 ### Class: `AgentManager`
 
-**Location**: `ghost_kg/manager.py`
+**Location**: `ghost_kg/core/manager.py`
 
 **Purpose**: Simplify multi-agent knowledge graph management.
 
