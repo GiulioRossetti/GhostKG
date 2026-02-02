@@ -57,6 +57,12 @@ This directory contains detailed summaries of major features and improvements im
   - Changed default output to current directory
   - Improved CLI user experience
 
+- **[SERVER_403_FIX_SUMMARY.md](SERVER_403_FIX_SUMMARY.md)** - Flask server reliability improvements
+  - Threading and timing improvements
+  - Comprehensive error handling
+  - Detailed troubleshooting documentation
+  - Request logging and diagnostics
+
 ## Purpose
 
 These summaries document:
