@@ -308,7 +308,7 @@ A: See [Algorithms](ALGORITHMS.md#memory-decay-calculations)
 A: See [Database Schema](DATABASE_SCHEMA.md#query-patterns)
 
 **Q: Can I use a different database?**  
-A: Not currently, but see [Architecture](ARCHITECTURE.md#why-sqlite) for why SQLite was chosen
+A: Yes! GhostKG supports SQLite (default), PostgreSQL, and MySQL. See [Database Configuration](DATABASE_CONFIG.md) for setup instructions.
 
 
 ## 📝 Contributing

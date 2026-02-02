@@ -79,16 +79,27 @@ Demonstrates using **round-based time** `(day, hour)` tuples instead of datetime
 
 ---
 
-### 6. [Export and Visualization](export_history.md)
-**File:** `examples/export_history.py`
+### 6. Export and Visualization 🆕
+**CLI:** `ghostkg export` and `ghostkg serve`
 
-Learn how to export agent knowledge graphs for visualization. This example:
-- Connects to the SQLite database
-- Extracts nodes and edges with temporal filtering
-- Calculates FSRS retrievability scores
-- Exports to JSON format for visualization tools
+Learn how to export and visualize agent knowledge graphs. GhostKG includes built-in CLI tools for:
+- Exporting interaction history to JSON
+- Starting a web visualization server
+- Interactive timeline and graph exploration
+- FSRS memory state heatmaps
+
+See [Visualization Documentation](../VISUALIZATION.md) for complete guide.
 
 **Best for:** Analyzing and visualizing knowledge graph evolution.
+
+**Quick start:**
+```bash
+# Export and visualize in one command
+ghostkg export --database mydb.db --serve --browser
+
+# Or in dev mode (without installation)
+python ghostkg_dev.py export --database mydb.db --serve --browser
+```
 
 ---
 
@@ -114,8 +125,11 @@ python hourly_simulation.py
 # Run the round-based simulation (no Ollama required) 🆕
 python round_based_simulation.py
 
-# Export history from a previous simulation
-python export_history.py
+# Export and visualize (using CLI) 🆕
+ghostkg export --database use_case_example.db --serve --browser
+
+# Or in dev mode
+python ../ghostkg_dev.py export --database use_case_example.db --serve --browser
 ```
 ```
 

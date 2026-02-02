@@ -60,6 +60,12 @@ nav:
   - Home: index.md
   - Getting Started: index.md
   - Architecture: ARCHITECTURE.md
+  - Core Components: CORE_COMPONENTS.md
   - Configuration: CONFIGURATION.md
+  - Database:
+      - Schema: DATABASE_SCHEMA.md
+      - Configuration: DATABASE_CONFIG.md
+  - Development: DEVELOPMENT.md
+  - Visualization: VISUALIZATION.md
   - Examples: examples/index.md
   - API Reference: API.md
