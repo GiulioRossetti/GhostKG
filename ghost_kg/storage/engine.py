@@ -96,7 +96,14 @@ class DatabaseManager:
             if dialect == "sqlite":
                 # SQLite-specific configuration
                 engine_kwargs["connect_args"] = {"check_same_thread": False}
-                engine_kwargs["poolclass"] = NullPool  # SQLite doesn't need pooling
+                
+                # For in-memory databases, we MUST use StaticPool to maintain the same connection
+                # Otherwise each query gets a new connection = new empty database
+                if ":memory:" in self.db_url:
+                    from sqlalchemy.pool import StaticPool
+                    engine_kwargs["poolclass"] = StaticPool
+                else:
+                    engine_kwargs["poolclass"] = NullPool  # File-based SQLite doesn't need pooling
                 
                 # Enable foreign keys for SQLite
                 @event.listens_for(Engine, "connect")

@@ -178,6 +178,22 @@ class KnowledgeDB:
         """Create a new session for isolated operations."""
         return self.db_manager.get_session()
     
+    def _execute_with_session(self, operation, *args, **kwargs):
+        """Execute an operation with proper session management."""
+        session = None
+        try:
+            session = self._get_new_session()
+            result = operation(session, *args, **kwargs)
+            session.commit()
+            return result
+        except Exception as e:
+            if session:
+                session.rollback()
+            raise
+        finally:
+            if session:
+                session.close()
+    
     def close(self):
         """Close the database session."""
         if self._session:
@@ -228,53 +244,48 @@ class KnowledgeDB:
             sim_hour = None
 
         try:
-            session = self._get_new_session()
-            
-            # Check if node exists
-            existing_node = session.query(Node).filter_by(
-                owner_id=owner_id,
-                id=node_id
-            ).first()
-            
-            if existing_node:
-                # Update existing node
-                if fsrs_state:
-                    existing_node.stability = fsrs_state.stability
-                    existing_node.difficulty = fsrs_state.difficulty
-                    existing_node.last_review = fsrs_state.last_review
-                    existing_node.reps = fsrs_state.reps
-                    existing_node.state = fsrs_state.state
-                    existing_node.sim_day = sim_day
-                    existing_node.sim_hour = sim_hour
-            else:
-                # Create new node
-                node_data = {
-                    "owner_id": owner_id,
-                    "id": node_id,
-                    "created_at": ts,
-                    "sim_day": sim_day,
-                    "sim_hour": sim_hour,
-                }
+            def _upsert(session):
+                # Check if node exists
+                existing_node = session.query(Node).filter_by(
+                    owner_id=owner_id,
+                    id=node_id
+                ).first()
                 
-                if fsrs_state:
-                    node_data.update({
-                        "stability": fsrs_state.stability,
-                        "difficulty": fsrs_state.difficulty,
-                        "last_review": fsrs_state.last_review,
-                        "reps": fsrs_state.reps,
-                        "state": fsrs_state.state,
-                    })
-                
-                new_node = Node(**node_data)
-                session.add(new_node)
+                if existing_node:
+                    # Update existing node
+                    if fsrs_state:
+                        existing_node.stability = fsrs_state.stability
+                        existing_node.difficulty = fsrs_state.difficulty
+                        existing_node.last_review = fsrs_state.last_review
+                        existing_node.reps = fsrs_state.reps
+                        existing_node.state = fsrs_state.state
+                        existing_node.sim_day = sim_day
+                        existing_node.sim_hour = sim_hour
+                else:
+                    # Create new node
+                    node_data = {
+                        "owner_id": owner_id,
+                        "id": node_id,
+                        "created_at": ts,
+                        "sim_day": sim_day,
+                        "sim_hour": sim_hour,
+                    }
+                    
+                    if fsrs_state:
+                        node_data.update({
+                            "stability": fsrs_state.stability,
+                            "difficulty": fsrs_state.difficulty,
+                            "last_review": fsrs_state.last_review,
+                            "reps": fsrs_state.reps,
+                            "state": fsrs_state.state,
+                        })
+                    
+                    new_node = Node(**node_data)
+                    session.add(new_node)
             
-            session.commit()
-            session.close()
+            self._execute_with_session(_upsert)
             
         except SQLAlchemyError as e:
-            if session:
-                session.rollback()
-                session.close()
             raise DatabaseError(f"Failed to upsert node {node_id} for {owner_id}: {e}") from e
 
     def add_relation(
