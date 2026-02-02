@@ -1,0 +1,8 @@
+# Optional database drivers for PostgreSQL and MySQL support
+# Install with: pip install ghost_kg[postgres] or pip install ghost_kg[mysql]
+
+# PostgreSQL driver
+psycopg2-binary>=2.9.0,<3.0.0
+
+# MySQL driver
+pymysql>=1.1.0,<2.0.0

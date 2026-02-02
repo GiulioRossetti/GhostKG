@@ -4,3 +4,12 @@ networkx>=3.0,<4.0
 
 # FSRS spaced repetition algorithm
 fsrs>=1.0.0,<2.0
+
+# Database ORM and drivers
+sqlalchemy>=2.0.0,<3.0.0
+
+# Database drivers for multi-database support
+# SQLite is built-in to Python
+# Optional drivers (installed automatically with extras):
+# - PostgreSQL: psycopg2-binary
+# - MySQL: pymysql
