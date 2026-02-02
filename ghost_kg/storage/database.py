@@ -1,12 +1,24 @@
+"""
+Database storage layer for GhostKG using SQLAlchemy ORM.
+
+Supports SQLite (default), PostgreSQL, and MySQL.
+"""
+
 import datetime
 import json
-import sqlite3
 import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union, Tuple
 
+from sqlalchemy import select, and_, or_, func
+from sqlalchemy.dialects import postgresql, mysql, sqlite
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
+from .engine import DatabaseManager
+from .models import Node, Edge, Log
 from ..utils.exceptions import DatabaseError, ValidationError
-from ..utils.time_utils import SimulationTime, parse_time_input
+from ..utils.time_utils import SimulationTime
 
 
 @dataclass
@@ -30,14 +42,32 @@ class NodeState:
 
 
 class KnowledgeDB:
-    def __init__(self, db_path: str = "agent_memory.db", store_log_content: bool = False) -> None:
+    """
+    Knowledge graph database with multi-database support.
+    
+    Supports SQLite (default), PostgreSQL, and MySQL through SQLAlchemy ORM.
+    """
+    
+    def __init__(
+        self, 
+        db_path: str = "agent_memory.db",
+        db_url: Optional[str] = None,
+        store_log_content: bool = False,
+        echo: bool = False
+    ) -> None:
         """
         Initialize database connection and schema.
 
         Args:
-            db_path (str): Path to SQLite database file
+            db_path (str): Path to SQLite database file (legacy parameter)
+            db_url (str): SQLAlchemy database URL (takes precedence over db_path)
+                         Examples:
+                         - SQLite: "sqlite:///path/to/db.db"
+                         - PostgreSQL: "postgresql://user:pass@host:port/dbname"
+                         - MySQL: "mysql+pymysql://user:pass@host:port/dbname"
             store_log_content (bool): If True, stores full content in log table.
                                      If False (default), stores UUID instead of content.
+            echo (bool): Enable SQL query logging for debugging
 
         Returns:
             None
@@ -46,148 +76,114 @@ class KnowledgeDB:
             DatabaseError: If connection or schema initialization fails
         """
         self.store_log_content = store_log_content
-        try:
-            self.conn = sqlite3.connect(db_path, check_same_thread=False)
-            self.conn.row_factory = sqlite3.Row
-            self._init_schema()
-        except sqlite3.Error as e:
-            raise DatabaseError(f"Failed to initialize database at {db_path}: {e}") from e
-
-    def _init_schema(self) -> None:
-        """
-        Initialize database schema.
-
-        Returns:
-            None
-
-        Raises:
-            DatabaseError: If schema creation fails
-        """
-        try:
-            cursor = self.conn.cursor()
-
-            cursor.execute("""
-                       CREATE TABLE IF NOT EXISTS nodes (
-                                                            owner_id TEXT, id TEXT,
-                                                            stability REAL DEFAULT 0, difficulty REAL DEFAULT 0,
-                                                            last_review TIMESTAMP, reps INTEGER DEFAULT 0, state INTEGER DEFAULT 0,
-                                                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                                            sim_day INTEGER, sim_hour INTEGER,
-                                                            PRIMARY KEY (owner_id, id)
-                           )
-                       """)
-
-            # ADDED: sentiment column (REAL)
-            cursor.execute("""
-                       CREATE TABLE IF NOT EXISTS edges (
-                                                            owner_id TEXT, source TEXT, target TEXT, relation TEXT,
-                                                            weight REAL DEFAULT 1.0,
-                                                            sentiment REAL DEFAULT 0.0, -- -1.0 (Hate) to 1.0 (Love)
-                                                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                                            sim_day INTEGER, sim_hour INTEGER,
-                                                            PRIMARY KEY (owner_id, source, target, relation),
-                           FOREIGN KEY(owner_id, source) REFERENCES nodes(owner_id, id),
-                           FOREIGN KEY(owner_id, target) REFERENCES nodes(owner_id, id)
-                           )
-                       """)
-
-            cursor.execute("""
-                       CREATE TABLE IF NOT EXISTS logs (
-                                                           id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                           agent_name TEXT, action_type TEXT, content TEXT,
-                                                           content_uuid TEXT, annotations JSON,
-                                                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                                           sim_day INTEGER, sim_hour INTEGER
-                       )
-                       """)
-
-            # Performance indexes for common queries
-            # Index for querying edges by owner and source (e.g., get_relations)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_edges_owner_source 
-                ON edges(owner_id, source)
-            """)
-
-            # Index for querying edges by owner and target (e.g., reverse lookups)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_edges_owner_target 
-                ON edges(owner_id, target)
-            """)
-
-            # Index for temporal queries on edges (most recent first)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_edges_created 
-                ON edges(owner_id, created_at DESC)
-            """)
-
-            # Index for nodes by last review time (memory recency queries)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_nodes_last_review 
-                ON nodes(owner_id, last_review DESC)
-            """)
-
-            # Index for nodes by owner (common filter)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_nodes_owner 
-                ON nodes(owner_id)
-            """)
-
-            # Index for logs by agent and timestamp (query agent history)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_logs_agent_time 
-                ON logs(agent_name, timestamp DESC)
-            """)
-
-            # Index for logs by action type (filter by action)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_logs_action 
-                ON logs(action_type, timestamp DESC)
-            """)
-
-            # Migrate existing tables to add round-based time columns if needed
-            self._migrate_schema(cursor)
-
-            self.conn.commit()
-        except sqlite3.Error as e:
-            raise DatabaseError(f"Failed to initialize schema: {e}") from e
-
-    def _migrate_schema(self, cursor: sqlite3.Cursor) -> None:
-        """
-        Migrate existing database schema to add round-based time columns.
         
-        Args:
-            cursor: Database cursor
+        try:
+            # Initialize database manager
+            self.db_manager = DatabaseManager(
+                db_url=db_url,
+                db_path=db_path,
+                echo=echo
+            )
             
-        Returns:
-            None
+            # Create tables if they don't exist
+            self.db_manager.create_tables()
+            
+            # Get a session for operations
+            self._session: Optional[Session] = None
+            
+        except Exception as e:
+            raise DatabaseError(f"Failed to initialize database: {e}") from e
+    
+    @property
+    def session(self) -> Session:
+        """Get or create a database session."""
+        if self._session is None or not self._session.is_active:
+            self._session = self.db_manager.get_session()
+        return self._session
+    
+    @property
+    def conn(self):
         """
-        # Check if nodes table needs migration
-        cursor.execute("PRAGMA table_info(nodes)")
-        nodes_columns = {row[1] for row in cursor.fetchall()}
+        Compatibility property for tests that access db.conn directly.
         
-        if "sim_day" not in nodes_columns:
-            cursor.execute("ALTER TABLE nodes ADD COLUMN sim_day INTEGER")
-        if "sim_hour" not in nodes_columns:
-            cursor.execute("ALTER TABLE nodes ADD COLUMN sim_hour INTEGER")
+        Returns a mock object that provides cursor() method for raw SQL access.
+        """
+        class ConnectionMock:
+            def __init__(self, db_instance):
+                self.db = db_instance
+            
+            def cursor(self):
+                """Return a cursor mock for raw SQL execution."""
+                return CursorMock(self.db)
+            
+            def commit(self):
+                """Commit the current session."""
+                if self.db._session:
+                    self.db._session.commit()
+            
+            def rollback(self):
+                """Rollback the current session."""
+                if self.db._session:
+                    self.db._session.rollback()
         
-        # Check if edges table needs migration
-        cursor.execute("PRAGMA table_info(edges)")
-        edges_columns = {row[1] for row in cursor.fetchall()}
+        class CursorMock:
+            def __init__(self, db_instance):
+                self.db = db_instance
+                self.session = db_instance.session
+                self._result = None
+            
+            def execute(self, sql, params=None):
+                """Execute raw SQL using SQLAlchemy."""
+                from sqlalchemy import text
+                
+                # Convert positional parameters to dictionary for SQLAlchemy
+                if params:
+                    if isinstance(params, (list, tuple)):
+                        # Convert SQL with ? placeholders to :p0, :p1, etc.
+                        sql_converted = sql
+                        param_dict = {}
+                        for i, param in enumerate(params):
+                            sql_converted = sql_converted.replace('?', f':p{i}', 1)
+                            param_dict[f'p{i}'] = param
+                        self._result = self.session.execute(text(sql_converted), param_dict)
+                    else:
+                        self._result = self.session.execute(text(sql), params)
+                else:
+                    self._result = self.session.execute(text(sql))
+                
+                self.session.commit()  # Auto-commit for compatibility
+                return self._result
+            
+            def fetchall(self):
+                """Fetch all results from the last query."""
+                if self._result:
+                    return self._result.fetchall()
+                return []
+            
+            def fetchone(self):
+                """Fetch one result from the last query."""
+                if self._result:
+                    return self._result.fetchone()
+                return None
+            
+            def close(self):
+                """Close cursor - no-op for SQLAlchemy."""
+                if self._result:
+                    self._result.close()
+                    self._result = None
         
-        if "sim_day" not in edges_columns:
-            cursor.execute("ALTER TABLE edges ADD COLUMN sim_day INTEGER")
-        if "sim_hour" not in edges_columns:
-            cursor.execute("ALTER TABLE edges ADD COLUMN sim_hour INTEGER")
-        
-        # Check if logs table needs migration
-        cursor.execute("PRAGMA table_info(logs)")
-        logs_columns = {row[1] for row in cursor.fetchall()}
-        
-        if "sim_day" not in logs_columns:
-            cursor.execute("ALTER TABLE logs ADD COLUMN sim_day INTEGER")
-        if "sim_hour" not in logs_columns:
-            cursor.execute("ALTER TABLE logs ADD COLUMN sim_hour INTEGER")
-
+        return ConnectionMock(self)
+    
+    def _get_new_session(self) -> Session:
+        """Create a new session for isolated operations."""
+        return self.db_manager.get_session()
+    
+    def close(self):
+        """Close the database session."""
+        if self._session:
+            self._session.close()
+            self._session = None
+    
     def upsert_node(
         self,
         owner_id: str,
@@ -232,37 +228,53 @@ class KnowledgeDB:
             sim_hour = None
 
         try:
-            if fsrs_state:
-                self.conn.execute(
-                    """
-                                  INSERT INTO nodes (owner_id, id, stability, difficulty, last_review, reps, state, created_at, sim_day, sim_hour)
-                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                      ON CONFLICT(owner_id, id) DO UPDATE SET
-                                      stability=excluded.stability, difficulty=excluded.difficulty,
-                                                                       last_review=excluded.last_review, reps=excluded.reps, state=excluded.state,
-                                                                       sim_day=excluded.sim_day, sim_hour=excluded.sim_hour
-                                  """,
-                    (
-                        owner_id,
-                        node_id,
-                        fsrs_state.stability,
-                        fsrs_state.difficulty,
-                        fsrs_state.last_review,
-                        fsrs_state.reps,
-                        fsrs_state.state,
-                        ts,
-                        sim_day,
-                        sim_hour,
-                    ),
-                )
+            session = self._get_new_session()
+            
+            # Check if node exists
+            existing_node = session.query(Node).filter_by(
+                owner_id=owner_id,
+                id=node_id
+            ).first()
+            
+            if existing_node:
+                # Update existing node
+                if fsrs_state:
+                    existing_node.stability = fsrs_state.stability
+                    existing_node.difficulty = fsrs_state.difficulty
+                    existing_node.last_review = fsrs_state.last_review
+                    existing_node.reps = fsrs_state.reps
+                    existing_node.state = fsrs_state.state
+                    existing_node.sim_day = sim_day
+                    existing_node.sim_hour = sim_hour
             else:
-                self.conn.execute(
-                    "INSERT OR IGNORE INTO nodes (owner_id, id, created_at, sim_day, sim_hour) VALUES (?, ?, ?, ?, ?)",
-                    (owner_id, node_id, ts, sim_day, sim_hour),
-                )
-            self.conn.commit()
-        except sqlite3.Error as e:
-            self.conn.rollback()
+                # Create new node
+                node_data = {
+                    "owner_id": owner_id,
+                    "id": node_id,
+                    "created_at": ts,
+                    "sim_day": sim_day,
+                    "sim_hour": sim_hour,
+                }
+                
+                if fsrs_state:
+                    node_data.update({
+                        "stability": fsrs_state.stability,
+                        "difficulty": fsrs_state.difficulty,
+                        "last_review": fsrs_state.last_review,
+                        "reps": fsrs_state.reps,
+                        "state": fsrs_state.state,
+                    })
+                
+                new_node = Node(**node_data)
+                session.add(new_node)
+            
+            session.commit()
+            session.close()
+            
+        except SQLAlchemyError as e:
+            if session:
+                session.rollback()
+                session.close()
             raise DatabaseError(f"Failed to upsert node {node_id} for {owner_id}: {e}") from e
 
     def add_relation(
@@ -320,21 +332,49 @@ class KnowledgeDB:
             sim_hour = None
 
         try:
+            session = self._get_new_session()
+            
+            # Ensure source and target nodes exist
             self.upsert_node(owner_id, source, timestamp=timestamp)
             self.upsert_node(owner_id, target, timestamp=timestamp)
-
-            self.conn.execute(
-                """
-                INSERT OR REPLACE INTO edges (owner_id, source, target, relation, sentiment, created_at, sim_day, sim_hour)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-                (owner_id, source, target, relation, sentiment, ts, sim_day, sim_hour),
-            )
-            self.conn.commit()
+            
+            # Check if edge exists
+            existing_edge = session.query(Edge).filter_by(
+                owner_id=owner_id,
+                source=source,
+                target=target,
+                relation=relation
+            ).first()
+            
+            if existing_edge:
+                # Update existing edge
+                existing_edge.sentiment = sentiment
+                existing_edge.created_at = ts
+                existing_edge.sim_day = sim_day
+                existing_edge.sim_hour = sim_hour
+            else:
+                # Create new edge
+                new_edge = Edge(
+                    owner_id=owner_id,
+                    source=source,
+                    target=target,
+                    relation=relation,
+                    sentiment=sentiment,
+                    created_at=ts,
+                    sim_day=sim_day,
+                    sim_hour=sim_hour
+                )
+                session.add(new_edge)
+            
+            session.commit()
+            session.close()
+            
         except ValidationError:
             raise  # Re-raise validation errors
-        except sqlite3.Error as e:
-            self.conn.rollback()
+        except SQLAlchemyError as e:
+            if session:
+                session.rollback()
+                session.close()
             raise DatabaseError(
                 f"Failed to add relation {source} -{relation}-> {target} for {owner_id}: {e}"
             ) from e
@@ -415,22 +455,32 @@ class KnowledgeDB:
             uuid_to_use = content_uuid if content_uuid is not None else str(uuid.uuid4())
 
         try:
-            query = """
-                INSERT INTO logs (agent_name, action_type, content, content_uuid,
-                                 annotations, timestamp, sim_day, sim_hour)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """
-            self.conn.execute(
-                query,
-                (agent, action, stored_content, uuid_to_use, json.dumps(annotations), ts, sim_day, sim_hour),
+            session = self._get_new_session()
+            
+            new_log = Log(
+                agent_name=agent,
+                action_type=action,
+                content=stored_content,
+                content_uuid=uuid_to_use,
+                annotations=json.dumps(annotations),
+                timestamp=ts,
+                sim_day=sim_day,
+                sim_hour=sim_hour
             )
-            self.conn.commit()
+            
+            session.add(new_log)
+            session.commit()
+            session.close()
+            
             return uuid_to_use
-        except (sqlite3.Error, TypeError) as e:
-            self.conn.rollback()
+            
+        except (SQLAlchemyError, TypeError) as e:
+            if session:
+                session.rollback()
+                session.close()
             raise DatabaseError(f"Failed to log interaction for {agent}: {e}") from e
 
-    def get_node(self, owner_id: str, node_id: str) -> Optional[sqlite3.Row]:
+    def get_node(self, owner_id: str, node_id: str) -> Optional[Dict[str, Any]]:
         """
         Get a node by ID.
 
@@ -439,22 +489,45 @@ class KnowledgeDB:
             node_id (str): Node identifier
 
         Returns:
-            Optional[sqlite3.Row]: sqlite3.Row or None if not found
+            Optional[Dict[str, Any]]: Node data as dictionary or None if not found
 
         Raises:
             DatabaseError: If query fails
         """
         try:
-            result = self.conn.execute(
-                "SELECT * FROM nodes WHERE owner_id = ? AND id = ?", (owner_id, node_id)
-            ).fetchone()
-            return result  # type: ignore[no-any-return]
-        except sqlite3.Error as e:
+            session = self._get_new_session()
+            
+            node = session.query(Node).filter_by(
+                owner_id=owner_id,
+                id=node_id
+            ).first()
+            
+            session.close()
+            
+            if node:
+                # Convert to dictionary for backward compatibility
+                return {
+                    "owner_id": node.owner_id,
+                    "id": node.id,
+                    "stability": node.stability,
+                    "difficulty": node.difficulty,
+                    "last_review": node.last_review,
+                    "reps": node.reps,
+                    "state": node.state,
+                    "created_at": node.created_at,
+                    "sim_day": node.sim_day,
+                    "sim_hour": node.sim_hour,
+                }
+            return None
+            
+        except SQLAlchemyError as e:
+            if session:
+                session.close()
             raise DatabaseError(f"Failed to get node {node_id} for {owner_id}: {e}") from e
 
     def get_agent_stance(
         self, owner_id: str, topic: str, current_time: Optional[Union[datetime.datetime, SimulationTime]] = None
-    ) -> List[sqlite3.Row]:
+    ) -> List[Dict[str, Any]]:
         """
         Retrieves agent beliefs.
 
@@ -464,7 +537,7 @@ class KnowledgeDB:
             current_time (Optional[Union[datetime.datetime, SimulationTime]]): Optional current simulation time
 
         Returns:
-            List[sqlite3.Row]: List of sqlite3.Row objects
+            List[Dict[str, Any]]: List of edge dictionaries
 
         Raises:
             DatabaseError: If query fails
@@ -483,25 +556,43 @@ class KnowledgeDB:
         search_term = f"%{topic}%"
 
         try:
+            session = self._get_new_session()
+            
             # SQL logic:
             # 1. Source must be 'I' (or agent name)
             # 2. Target matches topic OR it was created in the last 60 mins OF SIMULATION TIME
-            query = """
-                    SELECT source, relation, target, sentiment FROM edges
-                    WHERE owner_id = ?
-                      AND (source = 'I' OR source = ?)
-                      AND (
-                        target LIKE ?
-                            OR created_at >= datetime(?, '-60 minutes')
-                        )
-                    ORDER BY created_at DESC
-                        LIMIT 8 \
-                    """
-            return self.conn.execute(query, (owner_id, owner_id, search_term, ts)).fetchall()
-        except sqlite3.Error as e:
+            time_threshold = ts - datetime.timedelta(minutes=60)
+            
+            edges = session.query(Edge).filter(
+                and_(
+                    Edge.owner_id == owner_id,
+                    or_(Edge.source == 'I', Edge.source == owner_id),
+                    or_(
+                        Edge.target.like(search_term),
+                        Edge.created_at >= time_threshold
+                    )
+                )
+            ).order_by(Edge.created_at.desc()).limit(8).all()
+            
+            session.close()
+            
+            # Convert to dictionaries
+            return [
+                {
+                    "source": edge.source,
+                    "relation": edge.relation,
+                    "target": edge.target,
+                    "sentiment": edge.sentiment,
+                }
+                for edge in edges
+            ]
+            
+        except SQLAlchemyError as e:
+            if session:
+                session.close()
             raise DatabaseError(f"Failed to get agent stance for {owner_id} on {topic}: {e}") from e
 
-    def get_world_knowledge(self, owner_id: str, topic: str, limit: int = 10) -> List[sqlite3.Row]:
+    def get_world_knowledge(self, owner_id: str, topic: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
         Get world knowledge (facts from others) about a topic with sentiment.
 
@@ -511,7 +602,7 @@ class KnowledgeDB:
             limit (int): Maximum number of results
 
         Returns:
-            List[sqlite3.Row]: List of sqlite3.Row objects with source, relation, target, sentiment
+            List[Dict[str, Any]]: List of edge dictionaries
 
         Raises:
             DatabaseError: If query fails
@@ -519,16 +610,35 @@ class KnowledgeDB:
         search_term = f"%{topic}%"
 
         try:
-            return self.conn.execute(
-                """
-                                     SELECT source, relation, target, sentiment FROM edges
-                                     WHERE owner_id = ? AND source != 'I' AND source != ?
-                AND (source LIKE ? OR target LIKE ?)
-                                     ORDER BY created_at DESC LIMIT ?
-                                     """,
-                (owner_id, owner_id, search_term, search_term, limit),
-            ).fetchall()
-        except sqlite3.Error as e:
-            raise DatabaseError(
-                f"Failed to get world knowledge for {owner_id} on {topic}: {e}"
-            ) from e
+            session = self._get_new_session()
+            
+            # Get edges where source is not 'I' and target matches topic
+            edges = session.query(Edge).filter(
+                and_(
+                    Edge.owner_id == owner_id,
+                    Edge.source != 'I',
+                    Edge.target.like(search_term)
+                )
+            ).limit(limit).all()
+            
+            session.close()
+            
+            # Convert to dictionaries
+            return [
+                {
+                    "source": edge.source,
+                    "relation": edge.relation,
+                    "target": edge.target,
+                    "sentiment": edge.sentiment,
+                }
+                for edge in edges
+            ]
+            
+        except SQLAlchemyError as e:
+            if session:
+                session.close()
+            raise DatabaseError(f"Failed to get world knowledge for {owner_id} on {topic}: {e}") from e
+
+    def __del__(self):
+        """Cleanup on deletion."""
+        self.close()
