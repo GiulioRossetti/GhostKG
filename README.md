@@ -74,6 +74,27 @@ pip install -e ".[viz]"    # Visualization server
 pip install -e ".[all]"    # All features
 ```
 
+### Development Mode
+
+For development without full package installation, use the `ghostkg_dev.py` script:
+
+```bash
+# Clone the repository
+git clone https://github.com/GiulioRossetti/GhostKG.git
+cd GhostKG
+
+# Install minimal dependencies
+pip install -r requirements/base.txt
+pip install flask  # for visualization server
+
+# Use dev script (no package installation needed)
+python ghostkg_dev.py --help
+python ghostkg_dev.py export --database mydb.db --serve --browser
+python ghostkg_dev.py serve --json history.json --browser
+```
+
+After installing the package in editable mode (`pip install -e .`), use the regular `ghostkg` command instead.
+
 ## Quick Start
 
 ### Option 1: External Program API (Recommended)
@@ -265,8 +286,16 @@ manager.set_agent_time("Alice", time)
 GhostKG includes an interactive web-based visualization for exploring knowledge graph evolution:
 
 ```bash
-# Export history from database and start visualization server
+# After installation
 ghostkg export --database agent_memory.db --serve --browser
+
+# Development mode (without installation)
+python ghostkg_dev.py export --database agent_memory.db --serve --browser
+
+# Or export first, then serve
+ghostkg export --database agent_memory.db --output history.json
+ghostkg serve --json history.json --browser
+```
 
 # Or export first, then serve
 ghostkg export --database agent_memory.db --output history.json
@@ -295,7 +324,7 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[📊 Visualization Guide](docs/VISUALIZATION.md)** - Interactive visualization and CLI tools
 - **[🔌 API Reference](docs/API.md)** - External API documentation
 - **[⚡ Fast Mode Guide](docs/FAST_MODE_CONFIG.md)** - Fast vs LLM extraction modes
-- **[🔧 Refactoring Plan](docs/REFACTORING_PLAN.md)** - Maintainability improvements roadmap
+- **[📚 Implementation Summaries](docs/summaries/)** - Detailed feature implementation histories
 
 ### Quick Links
 - **[Getting Started](docs/index.md#for-new-users)** - New user guide

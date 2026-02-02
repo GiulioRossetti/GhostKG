@@ -13,7 +13,33 @@ The visualization system includes:
 
 ## Quick Start
 
-### 1. Export History from Database
+### Installation
+
+```bash
+# Install with visualization support
+pip install ghost_kg[viz]
+
+# Or in development mode
+pip install -r requirements/base.txt
+pip install flask
+```
+
+### Development Mode (Without Package Installation)
+
+For development, use the `ghostkg_dev.py` script:
+
+```bash
+# Export and serve in one command
+python ghostkg_dev.py export --database agent_memory.db --serve --browser
+
+# Export to specific file
+python ghostkg_dev.py export --database agent_memory.db --output history.json
+
+# Serve existing JSON
+python ghostkg_dev.py serve --json history.json --browser
+```
+
+### Production Mode (After Installation)
 
 ```bash
 # Export from your database
@@ -24,19 +50,9 @@ ghostkg export --database agent_memory.db --agents Alice,Bob --output history.js
 
 # Export and automatically start server
 ghostkg export --database agent_memory.db --serve --browser
-```
 
-### 2. Serve Visualization
-
-```bash
 # Serve existing JSON file
-ghostkg serve --json history.json
-
-# Open browser automatically
 ghostkg serve --json history.json --browser
-
-# Custom host and port
-ghostkg serve --json history.json --host 0.0.0.0 --port 8080
 ```
 
 ## Command Line Interface
@@ -61,17 +77,16 @@ ghostkg export --database <db_path> [options]
 
 **Examples:**
 ```bash
-# Basic export
+# Production mode (after installation)
 ghostkg export --database agent_memory.db
-
-# Export specific agents to custom file
 ghostkg export --database agent_memory.db --agents Alice,Bob --output my_history.json
-
-# Export and serve with browser
 ghostkg export --database agent_memory.db --serve --browser
-
-# Export from PostgreSQL database
 ghostkg export --database "postgresql://user:pass@localhost/ghostkg" --output history.json
+
+# Development mode (without installation)
+python ghostkg_dev.py export --database agent_memory.db
+python ghostkg_dev.py export --database agent_memory.db --agents Alice,Bob --output my_history.json
+python ghostkg_dev.py export --database agent_memory.db --serve --browser
 ```
 
 ### Serve Command
