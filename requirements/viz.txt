@@ -1,0 +1,5 @@
+# Visualization and CLI server dependencies
+# Install with: pip install ghost_kg[viz]
+
+# Flask web server for visualization
+flask>=2.0.0,<4.0

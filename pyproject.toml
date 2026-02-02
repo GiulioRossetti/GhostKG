@@ -28,6 +28,7 @@ classifiers = [
 dependencies = [
     "networkx>=3.0,<4.0",
     "fsrs>=1.0.0,<2.0",
+    "sqlalchemy>=2.0.0,<3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -40,6 +41,27 @@ llm = [
 fast = [
     "gliner>=0.1.0",
     "vaderSentiment>=3.3.2",
+]
+
+# Visualization and CLI server
+viz = [
+    "flask>=2.0.0,<4.0",
+]
+
+# PostgreSQL database support
+postgres = [
+    "psycopg2-binary>=2.9.0,<3.0.0",
+]
+
+# MySQL database support
+mysql = [
+    "pymysql>=1.1.0,<2.0.0",
+]
+
+# All database drivers
+database = [
+    "psycopg2-binary>=2.9.0,<3.0.0",
+    "pymysql>=1.1.0,<2.0.0",
 ]
 
 # Development tools
@@ -69,6 +91,9 @@ all = [
     "ollama>=0.1.6,<1.0",
     "gliner>=0.1.0",
     "vaderSentiment>=3.3.2",
+    "flask>=2.0.0,<4.0",
+    "psycopg2-binary>=2.9.0,<3.0.0",
+    "pymysql>=1.1.0,<2.0.0",
 ]
 
 [project.urls]
