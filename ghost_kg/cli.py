@@ -13,7 +13,7 @@ from pathlib import Path
 def serve_command(args):
     """Serve the visualization web interface."""
     try:
-        from flask import Flask, send_from_directory, jsonify
+        from flask import Flask, send_file, jsonify
         import json
     except ImportError:
         print("❌ Error: Flask is required for the serve command.")
@@ -30,19 +30,22 @@ def serve_command(args):
         sys.exit(1)
     
     # Create Flask app
-    app = Flask(__name__, static_folder=str(templates_dir))
+    app = Flask(__name__)
     
     @app.route('/')
     def index():
-        return send_from_directory(str(templates_dir), 'index.html')
+        index_path = templates_dir / 'index.html'
+        return send_file(index_path, mimetype='text/html')
     
     @app.route('/style.css')
     def style():
-        return send_from_directory(str(templates_dir), 'style.css')
+        css_path = templates_dir / 'style.css'
+        return send_file(css_path, mimetype='text/css')
     
     @app.route('/app.js')
     def app_js():
-        return send_from_directory(str(templates_dir), 'app.js')
+        js_path = templates_dir / 'app.js'
+        return send_file(js_path, mimetype='application/javascript')
     
     @app.route('/simulation_history.json')
     def data():
@@ -85,7 +88,13 @@ def serve_command(args):
 def export_command(args):
     """Export interaction history to JSON."""
     # Import visualization module only when needed
-    from ghost_kg.visualization import export_history
+    try:
+        from ghost_kg.visualization import export_history
+    except ImportError as e:
+        print("❌ Error: Required dependencies are missing.")
+        print(f"   {e}")
+        print("   Install with: pip install -e .")
+        sys.exit(1)
     
     # Check if database exists
     db_path = Path(args.database).resolve()
@@ -96,9 +105,8 @@ def export_command(args):
     # Determine output file
     output_file = args.output
     if not output_file:
-        # Default to simulation_history.json in templates directory
-        templates_dir = Path(__file__).parent / "templates"
-        output_file = str(templates_dir / "simulation_history.json")
+        # Default to simulation_history.json in current working directory
+        output_file = str(Path.cwd() / "simulation_history.json")
     
     # Parse agents list
     agents = None
@@ -215,7 +223,7 @@ Examples:
     )
     export_parser.add_argument(
         '--output', '-o',
-        help='Output JSON file (default: templates/simulation_history.json)'
+        help='Output JSON file (default: ./simulation_history.json)'
     )
     export_parser.add_argument(
         '--agents', '-a',
