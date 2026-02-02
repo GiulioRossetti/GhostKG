@@ -10,9 +10,10 @@ References:
 
 import datetime
 import math
-from typing import Optional
+from typing import Optional, Union
 
 from ..storage.database import NodeState
+from ..utils.time_utils import SimulationTime
 
 
 class Rating:
@@ -94,7 +95,7 @@ class FSRS:
         return min(max(d, 1), 10)
 
     def calculate_next(
-        self, current_state: NodeState, rating: int, now: datetime.datetime
+        self, current_state: NodeState, rating: int, now: Union[datetime.datetime, SimulationTime]
     ) -> NodeState:
         """
         Calculate the next memory state after a review using FSRS-6.
@@ -102,7 +103,7 @@ class FSRS:
         Args:
             current_state (NodeState): Current NodeState with stability, difficulty, etc.
             rating (int): Review rating (1=Again, 2=Hard, 3=Good, 4=Easy)
-            now (datetime.datetime): Current timestamp for the review
+            now (Union[datetime.datetime, SimulationTime]): Current timestamp for the review
 
         Returns:
             NodeState: New memory state with updated stability and difficulty
@@ -119,13 +120,19 @@ class FSRS:
                 - Update stability based on rating and retrievability
                 - For same-day reviews: S'(S,G) = S * e^(w_17 * (G - 3 + w_18)) * S^(-w_19)
         """
+        # Convert SimulationTime to datetime for last_review storage
+        if isinstance(now, SimulationTime):
+            now_dt = now.to_datetime()
+        else:
+            now_dt = now
+        
         # 1. New Cards
         if current_state.state == 0:
             # Initial stability: S_0(G) = w[G-1]
             s = self.p[rating - 1]
             # Initial difficulty (FSRS-6)
             d = self._calculate_initial_difficulty(rating)
-            return NodeState(s, d, now, 1, 1)
+            return NodeState(s, d, now_dt, 1, 1)
 
         # 2. Existing Cards
         s = current_state.stability
@@ -137,7 +144,23 @@ class FSRS:
             last_review = current_state.last_review
             if last_review.tzinfo is None:
                 last_review = last_review.replace(tzinfo=datetime.timezone.utc)
-            elapsed_days = (now - last_review).total_seconds() / 86400
+            
+            # Calculate elapsed time in days
+            if isinstance(now, SimulationTime):
+                if now.is_round_mode():
+                    # For round-based time, we need to convert to datetime for calculation
+                    # or calculate directly from rounds
+                    # For simplicity in FSRS, we'll use datetime if available, otherwise approximate
+                    if now_dt and last_review:
+                        elapsed_days = (now_dt - last_review).total_seconds() / 86400
+                    else:
+                        # Pure round-based: approximate - 1 day per day number
+                        elapsed_days = 0  # Same day assumption for pure round mode
+                else:
+                    elapsed_days = (now_dt - last_review).total_seconds() / 86400
+            else:
+                elapsed_days = (now - last_review).total_seconds() / 86400
+            
             if elapsed_days < 0:
                 elapsed_days = 0
             
@@ -194,4 +217,4 @@ class FSRS:
             state = 2
 
         next_s = max(next_s, 0.1)
-        return NodeState(next_s, next_d, now, current_state.reps + 1, state)
+        return NodeState(next_s, next_d, now_dt, current_state.reps + 1, state)

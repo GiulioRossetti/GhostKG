@@ -3,9 +3,10 @@ import json
 import sqlite3
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 from ..utils.exceptions import DatabaseError, ValidationError
+from ..utils.time_utils import SimulationTime, parse_time_input
 
 
 @dataclass
@@ -71,6 +72,7 @@ class KnowledgeDB:
                                                             stability REAL DEFAULT 0, difficulty REAL DEFAULT 0,
                                                             last_review TIMESTAMP, reps INTEGER DEFAULT 0, state INTEGER DEFAULT 0,
                                                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                                            sim_day INTEGER, sim_hour INTEGER,
                                                             PRIMARY KEY (owner_id, id)
                            )
                        """)
@@ -82,6 +84,7 @@ class KnowledgeDB:
                                                             weight REAL DEFAULT 1.0,
                                                             sentiment REAL DEFAULT 0.0, -- -1.0 (Hate) to 1.0 (Love)
                                                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                                            sim_day INTEGER, sim_hour INTEGER,
                                                             PRIMARY KEY (owner_id, source, target, relation),
                            FOREIGN KEY(owner_id, source) REFERENCES nodes(owner_id, id),
                            FOREIGN KEY(owner_id, target) REFERENCES nodes(owner_id, id)
@@ -93,7 +96,8 @@ class KnowledgeDB:
                                                            id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                            agent_name TEXT, action_type TEXT, content TEXT,
                                                            content_uuid TEXT, annotations JSON,
-                                                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                                                           timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                                           sim_day INTEGER, sim_hour INTEGER
                        )
                        """)
 
@@ -140,16 +144,56 @@ class KnowledgeDB:
                 ON logs(action_type, timestamp DESC)
             """)
 
+            # Migrate existing tables to add round-based time columns if needed
+            self._migrate_schema(cursor)
+
             self.conn.commit()
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to initialize schema: {e}") from e
+
+    def _migrate_schema(self, cursor: sqlite3.Cursor) -> None:
+        """
+        Migrate existing database schema to add round-based time columns.
+        
+        Args:
+            cursor: Database cursor
+            
+        Returns:
+            None
+        """
+        # Check if nodes table needs migration
+        cursor.execute("PRAGMA table_info(nodes)")
+        nodes_columns = {row[1] for row in cursor.fetchall()}
+        
+        if "sim_day" not in nodes_columns:
+            cursor.execute("ALTER TABLE nodes ADD COLUMN sim_day INTEGER")
+        if "sim_hour" not in nodes_columns:
+            cursor.execute("ALTER TABLE nodes ADD COLUMN sim_hour INTEGER")
+        
+        # Check if edges table needs migration
+        cursor.execute("PRAGMA table_info(edges)")
+        edges_columns = {row[1] for row in cursor.fetchall()}
+        
+        if "sim_day" not in edges_columns:
+            cursor.execute("ALTER TABLE edges ADD COLUMN sim_day INTEGER")
+        if "sim_hour" not in edges_columns:
+            cursor.execute("ALTER TABLE edges ADD COLUMN sim_hour INTEGER")
+        
+        # Check if logs table needs migration
+        cursor.execute("PRAGMA table_info(logs)")
+        logs_columns = {row[1] for row in cursor.fetchall()}
+        
+        if "sim_day" not in logs_columns:
+            cursor.execute("ALTER TABLE logs ADD COLUMN sim_day INTEGER")
+        if "sim_hour" not in logs_columns:
+            cursor.execute("ALTER TABLE logs ADD COLUMN sim_hour INTEGER")
 
     def upsert_node(
         self,
         owner_id: str,
         node_id: str,
         fsrs_state: Optional[NodeState] = None,
-        timestamp: Optional[datetime.datetime] = None,
+        timestamp: Optional[Union[datetime.datetime, SimulationTime]] = None,
     ) -> None:
         """
         Upsert a node with optional FSRS state.
@@ -158,7 +202,8 @@ class KnowledgeDB:
             owner_id (str): Owner/agent identifier
             node_id (str): Node identifier
             fsrs_state (Optional[NodeState]): Optional FSRS state to store
-            timestamp (Optional[datetime.datetime]): Optional timestamp (defaults to now)
+            timestamp (Optional[Union[datetime.datetime, SimulationTime]]): 
+                Optional timestamp (defaults to now). Can be a datetime or SimulationTime object.
 
         Returns:
             None
@@ -170,17 +215,32 @@ class KnowledgeDB:
         if not owner_id or not node_id:
             raise ValidationError("owner_id and node_id are required")
 
-        ts = timestamp or datetime.datetime.now(datetime.timezone.utc)
+        # Handle timestamp
+        if timestamp is None:
+            ts = datetime.datetime.now(datetime.timezone.utc)
+            sim_day = None
+            sim_hour = None
+        elif isinstance(timestamp, SimulationTime):
+            ts = timestamp.to_datetime()
+            round_time = timestamp.to_round()
+            sim_day = round_time[0] if round_time else None
+            sim_hour = round_time[1] if round_time else None
+        else:
+            # datetime.datetime
+            ts = timestamp
+            sim_day = None
+            sim_hour = None
 
         try:
             if fsrs_state:
                 self.conn.execute(
                     """
-                                  INSERT INTO nodes (owner_id, id, stability, difficulty, last_review, reps, state, created_at)
-                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                  INSERT INTO nodes (owner_id, id, stability, difficulty, last_review, reps, state, created_at, sim_day, sim_hour)
+                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                       ON CONFLICT(owner_id, id) DO UPDATE SET
                                       stability=excluded.stability, difficulty=excluded.difficulty,
-                                                                       last_review=excluded.last_review, reps=excluded.reps, state=excluded.state
+                                                                       last_review=excluded.last_review, reps=excluded.reps, state=excluded.state,
+                                                                       sim_day=excluded.sim_day, sim_hour=excluded.sim_hour
                                   """,
                     (
                         owner_id,
@@ -191,12 +251,14 @@ class KnowledgeDB:
                         fsrs_state.reps,
                         fsrs_state.state,
                         ts,
+                        sim_day,
+                        sim_hour,
                     ),
                 )
             else:
                 self.conn.execute(
-                    "INSERT OR IGNORE INTO nodes (owner_id, id, created_at) VALUES (?, ?, ?)",
-                    (owner_id, node_id, ts),
+                    "INSERT OR IGNORE INTO nodes (owner_id, id, created_at, sim_day, sim_hour) VALUES (?, ?, ?, ?, ?)",
+                    (owner_id, node_id, ts, sim_day, sim_hour),
                 )
             self.conn.commit()
         except sqlite3.Error as e:
@@ -210,7 +272,7 @@ class KnowledgeDB:
         relation: str,
         target: str,
         sentiment: float = 0.0,
-        timestamp: Optional[datetime.datetime] = None,
+        timestamp: Optional[Union[datetime.datetime, SimulationTime]] = None,
     ) -> None:
         """
         Add a relation between nodes.
@@ -221,7 +283,8 @@ class KnowledgeDB:
             relation (str): Relation type
             target (str): Target node identifier
             sentiment (float): Sentiment value (-1.0 to 1.0)
-            timestamp (Optional[datetime.datetime]): Optional timestamp (defaults to now)
+            timestamp (Optional[Union[datetime.datetime, SimulationTime]]): 
+                Optional timestamp (defaults to now). Can be a datetime or SimulationTime object.
 
         Returns:
             None
@@ -240,18 +303,32 @@ class KnowledgeDB:
         if not -1.0 <= sentiment <= 1.0:
             raise ValidationError(f"sentiment must be between -1.0 and 1.0, got {sentiment}")
 
-        ts = timestamp or datetime.datetime.now(datetime.timezone.utc)
+        # Handle timestamp
+        if timestamp is None:
+            ts = datetime.datetime.now(datetime.timezone.utc)
+            sim_day = None
+            sim_hour = None
+        elif isinstance(timestamp, SimulationTime):
+            ts = timestamp.to_datetime()
+            round_time = timestamp.to_round()
+            sim_day = round_time[0] if round_time else None
+            sim_hour = round_time[1] if round_time else None
+        else:
+            # datetime.datetime
+            ts = timestamp
+            sim_day = None
+            sim_hour = None
 
         try:
-            self.upsert_node(owner_id, source, timestamp=ts)
-            self.upsert_node(owner_id, target, timestamp=ts)
+            self.upsert_node(owner_id, source, timestamp=timestamp)
+            self.upsert_node(owner_id, target, timestamp=timestamp)
 
             self.conn.execute(
                 """
-                INSERT OR REPLACE INTO edges (owner_id, source, target, relation, sentiment, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT OR REPLACE INTO edges (owner_id, source, target, relation, sentiment, created_at, sim_day, sim_hour)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-                (owner_id, source, target, relation, sentiment, ts),
+                (owner_id, source, target, relation, sentiment, ts, sim_day, sim_hour),
             )
             self.conn.commit()
         except ValidationError:
@@ -268,7 +345,7 @@ class KnowledgeDB:
         action: str,
         content: str,
         annotations: Dict[str, Any],
-        timestamp: Optional[datetime.datetime] = None,
+        timestamp: Optional[Union[datetime.datetime, SimulationTime]] = None,
         store_content: Optional[bool] = None,
         content_uuid: Optional[str] = None,
     ) -> Optional[str]:
@@ -280,7 +357,8 @@ class KnowledgeDB:
             action (str): Action type
             content (str): Content of the interaction
             annotations (Dict[str, Any]): Additional metadata (will be JSON-encoded)
-            timestamp (Optional[datetime.datetime]): Optional timestamp (defaults to now)
+            timestamp (Optional[Union[datetime.datetime, SimulationTime]]): 
+                Optional timestamp (defaults to now). Can be a datetime or SimulationTime object.
             store_content (Optional[bool]): If True, stores content in the log table.
                                            If False, generates and stores a UUID instead.
                                            If None (default), uses database instance setting.
@@ -298,7 +376,21 @@ class KnowledgeDB:
         if not agent or not action:
             raise ValidationError("agent and action are required")
 
-        ts = timestamp or datetime.datetime.now(datetime.timezone.utc)
+        # Handle timestamp
+        if timestamp is None:
+            ts = datetime.datetime.now(datetime.timezone.utc)
+            sim_day = None
+            sim_hour = None
+        elif isinstance(timestamp, SimulationTime):
+            ts = timestamp.to_datetime()
+            round_time = timestamp.to_round()
+            sim_day = round_time[0] if round_time else None
+            sim_hour = round_time[1] if round_time else None
+        else:
+            # datetime.datetime
+            ts = timestamp
+            sim_day = None
+            sim_hour = None
 
         # Use instance default if not specified
         should_store = store_content if store_content is not None else self.store_log_content
@@ -325,12 +417,12 @@ class KnowledgeDB:
         try:
             query = """
                 INSERT INTO logs (agent_name, action_type, content, content_uuid,
-                                 annotations, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?)
+                                 annotations, timestamp, sim_day, sim_hour)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
             self.conn.execute(
                 query,
-                (agent, action, stored_content, uuid_to_use, json.dumps(annotations), ts),
+                (agent, action, stored_content, uuid_to_use, json.dumps(annotations), ts, sim_day, sim_hour),
             )
             self.conn.commit()
             return uuid_to_use
@@ -361,7 +453,7 @@ class KnowledgeDB:
             raise DatabaseError(f"Failed to get node {node_id} for {owner_id}: {e}") from e
 
     def get_agent_stance(
-        self, owner_id: str, topic: str, current_time: Optional[datetime.datetime] = None
+        self, owner_id: str, topic: str, current_time: Optional[Union[datetime.datetime, SimulationTime]] = None
     ) -> List[sqlite3.Row]:
         """
         Retrieves agent beliefs.
@@ -369,7 +461,7 @@ class KnowledgeDB:
         Args:
             owner_id (str): Owner/agent identifier
             topic (str): Topic to search for
-            current_time (Optional[datetime.datetime]): Optional current simulation time
+            current_time (Optional[Union[datetime.datetime, SimulationTime]]): Optional current simulation time
 
         Returns:
             List[sqlite3.Row]: List of sqlite3.Row objects
@@ -378,7 +470,15 @@ class KnowledgeDB:
             DatabaseError: If query fails
         """
         # Default to now if not provided, but simulation SHOULD provide it.
-        ts = current_time or datetime.datetime.now(datetime.timezone.utc)
+        if current_time is None:
+            ts = datetime.datetime.now(datetime.timezone.utc)
+        elif isinstance(current_time, SimulationTime):
+            ts = current_time.to_datetime()
+            if ts is None:
+                # Round-based mode without datetime - use current time as fallback
+                ts = datetime.datetime.now(datetime.timezone.utc)
+        else:
+            ts = current_time
 
         search_term = f"%{topic}%"
 

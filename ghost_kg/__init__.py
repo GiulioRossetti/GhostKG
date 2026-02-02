@@ -62,6 +62,7 @@ from .utils import (
     has_fast_support,
     has_llm_support,
 )
+from .utils.time_utils import SimulationTime, parse_time_input
 
 # Backward compatibility: Also export core module for old imports
 from . import core
@@ -105,6 +106,9 @@ __all__ = [
     "AgentCache",
     "get_global_cache",
     "clear_global_cache",
+    # Time utilities
+    "SimulationTime",
+    "parse_time_input",
     # Backward compatibility
     "core",
 ]
