@@ -132,7 +132,8 @@ class HistoryExporter:
                     "timestamp": log.timestamp.isoformat() if log.timestamp else None,
                     "sim_day": log.sim_day,
                     "sim_hour": log.sim_hour,
-                    "details": log.details
+                    "content": log.content,
+                    "annotations": log.annotations
                 }
                 for log in logs
             ]
