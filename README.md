@@ -298,6 +298,7 @@ ghostkg serve --json history.json --browser
 ```
 
 # Or export first, then serve
+```bash
 ghostkg export --database agent_memory.db --output history.json
 ghostkg serve --json history.json --browser
 ```
