@@ -57,7 +57,7 @@ class GhostAgent:
         name: str,
         db_path: str = "agent_memory.db",
         llm_host: str = "http://localhost:11434",
-        store_log_content: bool = False
+        store_log_content: bool = False,
     ) -> None:
         """
         Initialize a new GhostAgent.
@@ -290,7 +290,7 @@ class GhostAgent:
         """
         if rating is None:
             rating = Rating.Good
-        
+
         # Handle None sentiment by using default value
         if sentiment is None:
             sentiment = 0.0
@@ -373,30 +373,85 @@ class GhostAgent:
         my_rows = self.db.get_agent_stance(self.name, n_topic, current_time=self.current_time)
         world_rows = self.db.get_world_knowledge(self.name, n_topic, limit=8)
 
-        my_beliefs = set()
-        world_facts = set()
-        others_beliefs = set()
+        # Use dicts to maintain uniqueness while preserving order (Python 3.7+)
+        my_beliefs = {}
+        world_facts = {}
+        others_beliefs = {}
 
         for row in my_rows:
-            my_beliefs.add(f"I {row['relation']} {row['target']}")
+            # Add sentiment qualifier to beliefs
+            sentiment_qualifier = self._get_sentiment_qualifier(row["sentiment"])
+            belief_str = f"I {row['relation']} {row['target']}{sentiment_qualifier}"
+            my_beliefs[belief_str] = True  # Use dict as ordered set
 
         for row in world_rows:
             src, rel, tgt = row["source"], row["relation"], row["target"]
-            fact_str = f"{src} {rel} {tgt}"
-            if rel in ["said", "thinks", "believes", "wants"]:
-                others_beliefs.add(fact_str)
+            # Include sentiment for others' beliefs when available
+            try:
+                sentiment = row["sentiment"] if "sentiment" in row.keys() else 0.0
+            except (KeyError, AttributeError):
+                sentiment = 0.0
+
+            sentiment_qualifier = (
+                self._get_sentiment_qualifier(sentiment) if sentiment != 0.0 else ""
+            )
+
+            fact_str = f"{src} {rel} {tgt}{sentiment_qualifier}"
+            if rel in [
+                "said",
+                "thinks",
+                "believes",
+                "wants",
+                "supports",
+                "opposes",
+                "likes",
+                "dislikes",
+                "advocates",
+                "criticizes",
+                "strongly supports",
+                "strongly opposes",
+            ]:
+                others_beliefs[fact_str] = True
             else:
-                world_facts.add(fact_str)
+                world_facts[fact_str] = True
 
         parts = []
         if my_beliefs:
-            parts.append(f"MY CURRENT STANCE: {'; '.join(my_beliefs)}.")
+            parts.append(f"MY CURRENT STANCE: {'; '.join(my_beliefs.keys())}.")
         else:
             parts.append("MY CURRENT STANCE: (I have no strong opinion yet).")
 
         if world_facts:
-            parts.append(f"KNOWN FACTS: {'; '.join(list(world_facts)[:5])}.")
+            parts.append(f"KNOWN FACTS: {'; '.join(list(world_facts.keys())[:5])}.")
         if others_beliefs:
-            parts.append(f"WHAT OTHERS THINK: {'; '.join(list(others_beliefs)[:3])}.")
+            parts.append(f"WHAT OTHERS THINK: {'; '.join(list(others_beliefs.keys())[:3])}.")
 
         return " ".join(parts)
+
+    def _get_sentiment_qualifier(self, sentiment: float) -> str:
+        """
+        Get a human-readable sentiment qualifier for context display.
+
+        Args:
+            sentiment (float): Sentiment score (-1.0 to 1.0)
+
+        Returns:
+            str: Sentiment qualifier string (e.g., " (strongly)", " (mildly)")
+        """
+        if sentiment is None or abs(sentiment) < 0.1:
+            return ""
+
+        if sentiment > 0.6:
+            return " (very positively)"
+        elif sentiment > 0.3:
+            return " (positively)"
+        elif sentiment > 0.1:
+            return " (somewhat positively)"
+        elif sentiment < -0.6:
+            return " (very negatively)"
+        elif sentiment < -0.3:
+            return " (negatively)"
+        elif sentiment < -0.1:
+            return " (somewhat negatively)"
+
+        return ""

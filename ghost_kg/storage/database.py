@@ -29,9 +29,7 @@ class NodeState:
 
 
 class KnowledgeDB:
-    def __init__(
-        self, db_path: str = "agent_memory.db", store_log_content: bool = False
-    ) -> None:
+    def __init__(self, db_path: str = "agent_memory.db", store_log_content: bool = False) -> None:
         """
         Initialize database connection and schema.
 
@@ -238,7 +236,7 @@ class KnowledgeDB:
         # Handle None sentiment by using default value
         if sentiment is None:
             sentiment = 0.0
-        
+
         if not -1.0 <= sentiment <= 1.0:
             raise ValidationError(f"sentiment must be between -1.0 and 1.0, got {sentiment}")
 
@@ -303,9 +301,7 @@ class KnowledgeDB:
         ts = timestamp or datetime.datetime.now(datetime.timezone.utc)
 
         # Use instance default if not specified
-        should_store = (
-            store_content if store_content is not None else self.store_log_content
-        )
+        should_store = store_content if store_content is not None else self.store_log_content
 
         # Validate content_uuid parameter usage
         if content_uuid is not None:
@@ -407,7 +403,7 @@ class KnowledgeDB:
 
     def get_world_knowledge(self, owner_id: str, topic: str, limit: int = 10) -> List[sqlite3.Row]:
         """
-        Get world knowledge (facts from others) about a topic.
+        Get world knowledge (facts from others) about a topic with sentiment.
 
         Args:
             owner_id (str): Owner/agent identifier
@@ -415,7 +411,7 @@ class KnowledgeDB:
             limit (int): Maximum number of results
 
         Returns:
-            List[sqlite3.Row]: List of sqlite3.Row objects
+            List[sqlite3.Row]: List of sqlite3.Row objects with source, relation, target, sentiment
 
         Raises:
             DatabaseError: If query fails
@@ -425,7 +421,7 @@ class KnowledgeDB:
         try:
             return self.conn.execute(
                 """
-                                     SELECT source, relation, target FROM edges
+                                     SELECT source, relation, target, sentiment FROM edges
                                      WHERE owner_id = ? AND source != 'I' AND source != ?
                 AND (source LIKE ? OR target LIKE ?)
                                      ORDER BY created_at DESC LIMIT ?

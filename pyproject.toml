@@ -39,7 +39,7 @@ llm = [
 # Fast mode for local triplet extraction without LLM
 fast = [
     "gliner>=0.1.0",
-    "textblob>=0.15.0,<1.0",
+    "vaderSentiment>=3.3.2",
 ]
 
 # Development tools
@@ -68,7 +68,7 @@ docs = [
 all = [
     "ollama>=0.1.6,<1.0",
     "gliner>=0.1.0",
-    "textblob>=0.15.0,<1.0",
+    "vaderSentiment>=3.3.2",
 ]
 
 [project.urls]
@@ -132,6 +132,10 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "gliner.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "vaderSentiment.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
