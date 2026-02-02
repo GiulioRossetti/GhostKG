@@ -60,7 +60,9 @@ def serve_command(args):
     # Print startup message
     host = args.host
     port = args.port
-    url = f"http://{host}:{port}"
+    # Use 127.0.0.1 instead of localhost for URL to avoid DNS issues
+    display_host = '127.0.0.1' if host in ['localhost', '127.0.0.1'] else host
+    url = f"http://{display_host}:{port}"
     
     print("=" * 70)
     print("🚀 Ghost KG Visualization Server")
@@ -70,17 +72,23 @@ def serve_command(args):
     print(f"   Press Ctrl+C to stop")
     print("=" * 70)
     
-    # Open browser if requested
+    # Open browser if requested (in a separate thread to avoid blocking)
     if args.browser:
         import webbrowser
+        import threading
         import time
-        print(f"   Opening browser...")
-        time.sleep(1)  # Give server time to start
-        webbrowser.open(url)
+        
+        def open_browser():
+            time.sleep(2)  # Give server more time to start
+            print(f"   Opening browser...")
+            webbrowser.open(url)
+        
+        browser_thread = threading.Thread(target=open_browser, daemon=True)
+        browser_thread.start()
     
-    # Run server
+    # Run server with threading enabled for better concurrency
     try:
-        app.run(host=host, port=port, debug=args.debug)
+        app.run(host=host, port=port, debug=args.debug, threaded=True)
     except KeyboardInterrupt:
         print("\n👋 Server stopped")
 
