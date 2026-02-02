@@ -128,6 +128,11 @@ class KnowledgeDB:
                 """Return a cursor mock for raw SQL execution."""
                 return CursorMock(self.db)
             
+            def execute(self, sql, params=None):
+                """Execute raw SQL directly (convenience method)."""
+                cursor = self.cursor()
+                return cursor.execute(sql, params)
+            
             def commit(self):
                 """Commit the current session."""
                 if self.db._session:
@@ -143,10 +148,15 @@ class KnowledgeDB:
                 self.db = db_instance
                 self.session = db_instance.session
                 self._result = None
+                self._cached_results = []
+                self._fetch_index = 0
             
             def execute(self, sql, params=None):
                 """Execute raw SQL using SQLAlchemy."""
                 from sqlalchemy import text
+                
+                # Get a fresh session to ensure it's not closed
+                session = self.db.session
                 
                 # Convert positional parameters to dictionary for SQLAlchemy
                 if params:
@@ -157,25 +167,49 @@ class KnowledgeDB:
                         for i, param in enumerate(params):
                             sql_converted = sql_converted.replace('?', f':p{i}', 1)
                             param_dict[f'p{i}'] = param
-                        self._result = self.session.execute(text(sql_converted), param_dict)
+                        result = session.execute(text(sql_converted), param_dict)
                     else:
-                        self._result = self.session.execute(text(sql), params)
+                        result = session.execute(text(sql), params)
                 else:
-                    self._result = self.session.execute(text(sql))
+                    result = session.execute(text(sql))
                 
-                self.session.commit()  # Auto-commit for compatibility
-                return self._result
+                # Fetch all results before committing to avoid closed cursor issues
+                # Store the fetched data for later retrieval
+                # Convert Row objects to a custom wrapper that supports both dict and tuple access
+                if result.returns_rows:
+                    rows = result.fetchall()
+                    # Create custom row wrapper that supports both dict-style and index access
+                    class RowWrapper(dict):
+                        def __init__(self, row):
+                            # Store the row mapping as dict items
+                            super().__init__(row._mapping)
+                            # Also store values for index access
+                            self._values = tuple(row)
+                        
+                        def __getitem__(self, key):
+                            if isinstance(key, int):
+                                return self._values[key]
+                            return super().__getitem__(key)
+                    
+                    self._cached_results = [RowWrapper(row) for row in rows]
+                else:
+                    self._cached_results = []
+                self._fetch_index = 0
+                self._result = result
+                
+                session.commit()  # Auto-commit for compatibility
+                return self
             
             def fetchall(self):
                 """Fetch all results from the last query."""
-                if self._result:
-                    return self._result.fetchall()
-                return []
+                return self._cached_results
             
             def fetchone(self):
                 """Fetch one result from the last query."""
-                if self._result:
-                    return self._result.fetchone()
+                if self._fetch_index < len(self._cached_results):
+                    result = self._cached_results[self._fetch_index]
+                    self._fetch_index += 1
+                    return result
                 return None
             
             def close(self):
@@ -208,9 +242,13 @@ class KnowledgeDB:
     
     def close(self):
         """Close the database session."""
-        if self._session:
-            self._session.close()
-            self._session = None
+        try:
+            if self._session:
+                self._session.close()
+                self._session = None
+        except Exception:
+            # Ignore errors during cleanup
+            pass
     
     def upsert_node(
         self,
@@ -664,4 +702,8 @@ class KnowledgeDB:
 
     def __del__(self):
         """Cleanup on deletion."""
-        self.close()
+        try:
+            self.close()
+        except Exception:
+            # Ignore errors during cleanup
+            pass

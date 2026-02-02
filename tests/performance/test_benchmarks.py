@@ -53,7 +53,7 @@ class TestDatabasePerformance:
         
         # Verify all nodes were inserted
         cursor = self.db.conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM nodes WHERE owner_id = 'test_agent'")
+        cursor.execute("SELECT COUNT(*) FROM kg_nodes WHERE owner_id = 'test_agent'")
         count = cursor.fetchone()[0]
         assert count == 100
         
@@ -86,7 +86,7 @@ class TestDatabasePerformance:
         
         # Verify edges were inserted
         cursor = self.db.conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM edges WHERE owner_id = 'test_agent'")
+        cursor.execute("SELECT COUNT(*) FROM kg_edges WHERE owner_id = 'test_agent'")
         count = cursor.fetchone()[0]
         assert count == 90  # 10 * 9 (no self-loops)
         
@@ -103,7 +103,7 @@ class TestDatabasePerformance:
         def query_nodes():
             cursor = self.db.conn.cursor()
             cursor.execute("""
-                SELECT * FROM nodes WHERE owner_id = 'agent_0'
+                SELECT * FROM kg_nodes WHERE owner_id = 'agent_0'
             """)
             return cursor.fetchall()
         
@@ -136,7 +136,7 @@ class TestDatabasePerformance:
         def query_recent():
             cursor = self.db.conn.cursor()
             cursor.execute("""
-                SELECT * FROM edges 
+                SELECT * FROM kg_edges 
                 WHERE owner_id = 'test_agent'
                 ORDER BY created_at DESC 
                 LIMIT 20

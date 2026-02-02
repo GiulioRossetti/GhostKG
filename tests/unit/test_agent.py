@@ -78,7 +78,7 @@ class TestGhostAgent:
         cursor = agent.db.conn.cursor()
         since = now - timedelta(days=1)
         cursor.execute("""
-            SELECT * FROM edges 
+            SELECT * FROM kg_edges 
             WHERE owner_id = ? AND created_at >= ?
             ORDER BY created_at DESC
         """, (agent.name, since))
@@ -133,7 +133,7 @@ class TestGhostAgent:
         # Query positive memories using SQL directly (no query_by_sentiment in API)
         cursor = agent.db.conn.cursor()
         cursor.execute("""
-            SELECT * FROM edges 
+            SELECT * FROM kg_edges 
             WHERE owner_id = ? AND sentiment >= ?
         """, (agent.name, 0.5))
         positive = cursor.fetchall()
@@ -141,7 +141,7 @@ class TestGhostAgent:
         
         # Query negative memories
         cursor.execute("""
-            SELECT * FROM edges 
+            SELECT * FROM kg_edges 
             WHERE owner_id = ? AND sentiment <= ?
         """, (agent.name, -0.5))
         negative = cursor.fetchall()

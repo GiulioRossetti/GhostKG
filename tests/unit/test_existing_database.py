@@ -100,7 +100,7 @@ class TestExistingDatabases:
         # Get initial count
         conn = sqlite3.connect(temp_db_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM edges")
+        cursor.execute("SELECT COUNT(*) FROM kg_edges")
         initial_count = cursor.fetchone()[0]
         conn.close()
         
@@ -111,7 +111,7 @@ class TestExistingDatabases:
         # Verify both agents' data exists
         conn = sqlite3.connect(temp_db_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM edges")
+        cursor.execute("SELECT COUNT(*) FROM kg_edges")
         final_count = cursor.fetchone()[0]
         conn.close()
         
