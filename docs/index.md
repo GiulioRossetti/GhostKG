@@ -191,7 +191,7 @@ Topics covered:
 1. Read: [Algorithms](ALGORITHMS.md#memory-decay-calculations) - Decay formulas
 2. Read: [Algorithms](ALGORITHMS.md#fsrs-algorithm) - FSRS overview
 3. Read: [Core Components](CORE_COMPONENTS.md#fsrs-memory-system) - Implementation
-4. See: Python code in `ghost_kg/core.py` - FSRS class
+4. See: Python code in `ghost_kg/memory/fsrs.py` - FSRS class
 
 #### I want to build a multi-agent simulation
 1. Read: [API Documentation](API.md) - AgentManager usage
@@ -202,7 +202,7 @@ Topics covered:
 #### I want to query the knowledge graph directly
 1. Read: [Database Schema](DATABASE_SCHEMA.md#query-patterns) - Query examples
 2. Read: [Core Components](CORE_COMPONENTS.md#knowledgedb) - KnowledgeDB methods
-3. See: [Export and Visualization Example](examples/export_history.md) - Exporting data
+3. See: [Visualization Guide](VISUALIZATION.md) - Exporting and visualizing data
 
 #### I want to optimize performance
 1. Read: [Database Schema](DATABASE_SCHEMA.md#performance-considerations) - DB optimization
@@ -266,11 +266,11 @@ Topics covered:
 
 | Component | Location | Documentation | Purpose |
 |-----------|----------|---------------|---------|
-| FSRS | `ghost_kg/core.py` | [Core Components](CORE_COMPONENTS.md#fsrs-memory-system) | Memory modeling |
-| GhostAgent | `ghost_kg/core.py` | [Core Components](CORE_COMPONENTS.md#ghostagent) | Individual agent |
-| CognitiveLoop | `ghost_kg/core.py` | [Core Components](CORE_COMPONENTS.md#cognitiveloop) | LLM integration |
-| KnowledgeDB | `ghost_kg/storage.py` | [Core Components](CORE_COMPONENTS.md#knowledgedb) | Database ops |
-| AgentManager | `ghost_kg/manager.py` | [Core Components](CORE_COMPONENTS.md#agentmanager) | External API |
+| FSRS | `ghost_kg/memory/fsrs.py` | [Core Components](CORE_COMPONENTS.md#fsrs-memory-system) | Memory modeling |
+| GhostAgent | `ghost_kg/core/agent.py` | [Core Components](CORE_COMPONENTS.md#ghostagent) | Individual agent |
+| CognitiveLoop | `ghost_kg/core/cognitive.py` | [Core Components](CORE_COMPONENTS.md#cognitiveloop) | LLM integration |
+| KnowledgeDB | `ghost_kg/storage/database.py` | [Core Components](CORE_COMPONENTS.md#knowledgedb) | Database ops |
+| AgentManager | `ghost_kg/core/manager.py` | [Core Components](CORE_COMPONENTS.md#agentmanager) | External API |
 
 ### Formula Lookup
 
@@ -308,7 +308,7 @@ A: See [Algorithms](ALGORITHMS.md#memory-decay-calculations)
 A: See [Database Schema](DATABASE_SCHEMA.md#query-patterns)
 
 **Q: Can I use a different database?**  
-A: Not currently, but see [Architecture](ARCHITECTURE.md#why-sqlite) for why SQLite was chosen
+A: Yes! GhostKG supports SQLite (default), PostgreSQL, and MySQL. See [Database Configuration](DATABASE_CONFIG.md) for setup instructions.
 
 
 ## 📝 Contributing

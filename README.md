@@ -16,6 +16,9 @@ GhostKG is a Python package that provides dynamic knowledge graph management for
 - 🔌 **Flexible Integration**: Use with any LLM (GPT-4, Claude, Ollama, etc.)
 - 🎯 **External API**: Decouple KG management from LLM logic for maximum flexibility
 - ⚡ **Fast Mode**: Optional GLiNER+TextBlob for quick extraction without LLM calls
+- 💾 **Database Flexibility**: Works with existing SQLite databases, preserving other tables
+- 📊 **Interactive Visualization**: Web-based visualization of knowledge graph evolution over time
+- 🗄️ **Multi-Database Support**: SQLite, PostgreSQL, and MySQL support with configurable connection pools
 
 ## Installation
 
@@ -41,6 +44,9 @@ uv pip install -e ".[llm]"
 # With fast mode (GLiNER + TextBlob)
 uv pip install -e ".[fast]"
 
+# With visualization
+uv pip install -e ".[viz]"
+
 # With all features
 uv pip install -e ".[all]"
 
@@ -64,8 +70,30 @@ pip install -e .
 # With optional features
 pip install -e ".[llm]"    # LLM support
 pip install -e ".[fast]"   # Fast mode
+pip install -e ".[viz]"    # Visualization server
 pip install -e ".[all]"    # All features
 ```
+
+### Development Mode
+
+For development without full package installation, use the `ghostkg_dev.py` script:
+
+```bash
+# Clone the repository
+git clone https://github.com/GiulioRossetti/GhostKG.git
+cd GhostKG
+
+# Install minimal dependencies
+pip install -r requirements/base.txt
+pip install flask  # for visualization server
+
+# Use dev script (no package installation needed)
+python ghostkg_dev.py --help
+python ghostkg_dev.py export --database mydb.db --serve --browser
+python ghostkg_dev.py serve --json history.json --browser
+```
+
+After installing the package in editable mode (`pip install -e .`), use the regular `ghostkg` command instead.
 
 ## Quick Start
 
@@ -253,6 +281,36 @@ manager.set_agent_time("Alice", time)
        └──────────────┘
 ```
 
+## 📊 Visualization
+
+GhostKG includes an interactive web-based visualization for exploring knowledge graph evolution:
+
+```bash
+# After installation
+ghostkg export --database agent_memory.db --serve --browser
+
+# Development mode (without installation)
+python ghostkg_dev.py export --database agent_memory.db --serve --browser
+
+# Or export first, then serve
+ghostkg export --database agent_memory.db --output history.json
+ghostkg serve --json history.json --browser
+```
+
+# Or export first, then serve
+ghostkg export --database agent_memory.db --output history.json
+ghostkg serve --json history.json --browser
+```
+
+Features:
+- **Interactive Force-Directed Graph**: D3.js visualization with zoom, pan, and drag
+- **Temporal Playback**: Step through agent interactions chronologically
+- **Multi-Agent View**: Switch between individual agents or consolidated view
+- **Memory Heatmap**: Node colors represent FSRS retrievability (forgetting curve)
+- **Playback Controls**: Play/pause, speed adjustment, timeline scrubbing
+
+See [Visualization Guide](docs/VISUALIZATION.md) for detailed documentation.
+
 ## 📚 Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
@@ -263,9 +321,10 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[🔧 Core Components](docs/CORE_COMPONENTS.md)** - Detailed component specifications
 - **[📐 Algorithms & Formulas](docs/ALGORITHMS.md)** - Mathematical foundations and FSRS details
 - **[💾 Database Schema](docs/DATABASE_SCHEMA.md)** - Complete schema and query patterns
+- **[📊 Visualization Guide](docs/VISUALIZATION.md)** - Interactive visualization and CLI tools
 - **[🔌 API Reference](docs/API.md)** - External API documentation
 - **[⚡ Fast Mode Guide](docs/FAST_MODE_CONFIG.md)** - Fast vs LLM extraction modes
-- **[🔧 Refactoring Plan](docs/REFACTORING_PLAN.md)** - Maintainability improvements roadmap
+- **[📚 Implementation Summaries](docs/summaries/)** - Detailed feature implementation histories
 
 ### Quick Links
 - **[Getting Started](docs/index.md#for-new-users)** - New user guide

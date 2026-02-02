@@ -3,3 +3,5 @@
 # Include all optional dependency sets
 -r llm.txt
 -r fast.txt
+-r database.txt
+-r viz.txt

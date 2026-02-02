@@ -85,7 +85,7 @@ class TestKnowledgeDB:
         assert db.get_node("agent1", "concept1") is not None
         
         # Delete using SQL directly (no delete_node method in API)
-        db.conn.execute("DELETE FROM nodes WHERE owner_id = ? AND id = ?", 
+        db.conn.execute("DELETE FROM kg_nodes WHERE owner_id = ? AND id = ?", 
                        ("agent1", "concept1"))
         db.conn.commit()
         
@@ -105,7 +105,7 @@ class TestKnowledgeDB:
         # Verify relation was added by querying edges table directly
         cursor = db.conn.cursor()
         cursor.execute("""
-            SELECT * FROM edges 
+            SELECT * FROM kg_edges 
             WHERE owner_id = ? AND source = ?
         """, ("agent1", "Python"))
         relations = cursor.fetchall()
@@ -116,7 +116,7 @@ class TestKnowledgeDB:
         # Query edges table directly (no get_relations method in API)
         cursor = db.conn.cursor()
         cursor.execute("""
-            SELECT * FROM edges 
+            SELECT * FROM kg_edges 
             WHERE owner_id = ? AND source = ?
         """, ("agent1", "nonexistent"))
         relations = cursor.fetchall()
@@ -137,7 +137,7 @@ class TestKnowledgeDB:
         cursor = db.conn.cursor()
         since = now - timedelta(days=3)
         cursor.execute("""
-            SELECT id FROM nodes 
+            SELECT id FROM kg_nodes 
             WHERE owner_id = ? AND created_at >= ?
             LIMIT 10
         """, ("agent1", since))
@@ -157,7 +157,7 @@ class TestKnowledgeDB:
         # Query positive using SQL directly (no query_by_sentiment in API)
         cursor = db.conn.cursor()
         cursor.execute("""
-            SELECT * FROM edges 
+            SELECT * FROM kg_edges 
             WHERE owner_id = ? AND sentiment >= ?
         """, ("agent1", 0.5))
         positive = cursor.fetchall()
@@ -165,7 +165,7 @@ class TestKnowledgeDB:
         
         # Query negative
         cursor.execute("""
-            SELECT * FROM edges 
+            SELECT * FROM kg_edges 
             WHERE owner_id = ? AND sentiment <= ?
         """, ("agent1", -0.5))
         negative = cursor.fetchall()
@@ -215,7 +215,7 @@ class TestKnowledgeDB:
         # Verify relation was added
         cursor = db.conn.cursor()
         cursor.execute("""
-            SELECT sentiment FROM edges 
+            SELECT sentiment FROM kg_edges 
             WHERE owner_id = ? AND source = ? AND target = ?
         """, ("agent1", "a", "b"))
         result = cursor.fetchone()
@@ -245,7 +245,7 @@ class TestKnowledgeDB:
         # Verify content is NOT stored but UUID is
         cursor = db.conn.cursor()
         cursor.execute("""
-            SELECT content, content_uuid FROM logs
+            SELECT content, content_uuid FROM kg_logs
             WHERE agent_name = ? AND action_type = ?
         """, ("agent1", "READ"))
         result = cursor.fetchone()
@@ -271,7 +271,7 @@ class TestKnowledgeDB:
         # Verify content IS stored and UUID is NULL
         cursor = db.conn.cursor()
         cursor.execute("""
-            SELECT content, content_uuid FROM logs 
+            SELECT content, content_uuid FROM kg_logs 
             WHERE agent_name = ? AND action_type = ?
         """, ("agent1", "WRITE"))
         result = cursor.fetchone()
@@ -296,7 +296,7 @@ class TestKnowledgeDB:
         assert content_uuid is None
         
         cursor = db_with_storage.conn.cursor()
-        cursor.execute("SELECT content, content_uuid FROM logs WHERE agent_name = ?", ("agent1",))
+        cursor.execute("SELECT content, content_uuid FROM kg_logs WHERE agent_name = ?", ("agent1",))
         result = cursor.fetchone()
         assert result["content"] == "test content"
         assert result["content_uuid"] is None
@@ -318,7 +318,7 @@ class TestKnowledgeDB:
         assert content_uuid is None
 
         cursor = db.conn.cursor()
-        cursor.execute("SELECT content FROM logs WHERE agent_name = ?", ("agent1",))
+        cursor.execute("SELECT content FROM kg_logs WHERE agent_name = ?", ("agent1",))
         result = cursor.fetchone()
         assert result["content"] == "override content"
 
@@ -342,7 +342,7 @@ class TestKnowledgeDB:
         # Verify UUID is stored correctly
         cursor = db.conn.cursor()
         cursor.execute("""
-            SELECT content, content_uuid FROM logs
+            SELECT content, content_uuid FROM kg_logs
             WHERE agent_name = ? AND action_type = ?
         """, ("agent1", "READ"))
         result = cursor.fetchone()
@@ -405,7 +405,7 @@ class TestKnowledgeDB:
         # Verify UUID is stored correctly
         cursor = db.conn.cursor()
         cursor.execute("""
-            SELECT content, content_uuid FROM logs
+            SELECT content, content_uuid FROM kg_logs
             WHERE agent_name = ? AND action_type = ?
         """, ("agent1", "READ"))
         result = cursor.fetchone()

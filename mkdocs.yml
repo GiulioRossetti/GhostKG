@@ -4,6 +4,9 @@ site_author: Giulio Rossetti
 repo_url: https://github.com/GiulioRossetti/GhostKG
 repo_name: GiulioRossetti/GhostKG
 
+exclude_docs: |
+  README.md
+
 theme:
   name: material
   palette:
@@ -58,8 +61,16 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Getting Started: index.md
-  - Architecture: ARCHITECTURE.md
-  - Configuration: CONFIGURATION.md
+  - User Guide:
+      - Architecture: ARCHITECTURE.md
+      - Core Components: CORE_COMPONENTS.md
+      - Configuration: CONFIGURATION.md
+      - Visualization: VISUALIZATION.md
+  - Database:
+      - Schema: DATABASE_SCHEMA.md
+      - Configuration: DATABASE_CONFIG.md
+  - Developer Guide:
+      - Development: DEVELOPMENT.md
+      - Troubleshooting: TROUBLESHOOTING.md
   - Examples: examples/index.md
   - API Reference: API.md

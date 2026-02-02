@@ -17,6 +17,12 @@ with open("requirements/dev.txt") as f:
 with open("requirements/docs.txt") as f:
     docs_requires = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
+with open("requirements/database.txt") as f:
+    database_requires = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+
+with open("requirements/viz.txt") as f:
+    viz_requires = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+
 setup(
     name="ghost_kg",
     version="0.2.0",  # Updated for Phase 2
@@ -32,9 +38,18 @@ setup(
     extras_require={
         "llm": llm_requires,           # pip install ghost_kg[llm]
         "fast": fast_requires,         # pip install ghost_kg[fast]
+        "postgres": [database_requires[0]],  # pip install ghost_kg[postgres]
+        "mysql": [database_requires[1]],     # pip install ghost_kg[mysql]
+        "database": database_requires,  # pip install ghost_kg[database] (all drivers)
+        "viz": viz_requires,           # pip install ghost_kg[viz]
         "dev": dev_requires,           # pip install ghost_kg[dev]
         "docs": docs_requires,         # pip install ghost_kg[docs]
-        "all": llm_requires + fast_requires,  # pip install ghost_kg[all]
+        "all": llm_requires + fast_requires + database_requires + viz_requires,  # pip install ghost_kg[all]
+    },
+    entry_points={
+        'console_scripts': [
+            'ghostkg=ghost_kg.cli:main',
+        ],
     },
     classifiers=[
         "Development Status :: 4 - Beta",

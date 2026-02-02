@@ -1,0 +1,4 @@
+include README.md
+include LICENSE
+recursive-include ghost_kg/templates *.html *.css *.js *.json
+recursive-include requirements *.txt

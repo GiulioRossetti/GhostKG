@@ -123,6 +123,8 @@ class FastExtractor(TripletExtractor):
         # 2. Extract Overall Sentiment using VADER
         sentiment_scores = self.sentiment_analyzer.polarity_scores(text)  # type: ignore[union-attr]
         overall_sentiment = sentiment_scores["compound"]  # -1.0 to 1.0 (compound score)
+        # Clamp overall_sentiment to valid range to handle any edge cases
+        overall_sentiment = max(-1.0, min(1.0, overall_sentiment))
         sentiment_intensity = max(abs(sentiment_scores["pos"]), abs(sentiment_scores["neg"]))
 
         # 3. Build triplets with entity-specific sentiment
@@ -139,6 +141,8 @@ class FastExtractor(TripletExtractor):
             entity_context = self._extract_entity_context(text, topic_text)
             entity_sentiment_scores = self.sentiment_analyzer.polarity_scores(entity_context)  # type: ignore[union-attr]
             entity_sentiment = entity_sentiment_scores["compound"]
+            # Clamp entity_sentiment to valid range to handle any edge cases
+            entity_sentiment = max(-1.0, min(1.0, entity_sentiment))
 
             # Use entity-specific sentiment if significantly different from overall
             sentiment_for_entity = (
@@ -177,7 +181,7 @@ class FastExtractor(TripletExtractor):
                     "relation": my_relation,
                     "target": topic_text,
                     "rating": 3,  # Good rating
-                    "sentiment": sentiment_for_entity * 0.5,  # Dampened sentiment for observation
+                    "sentiment": max(-1.0, min(1.0, sentiment_for_entity * 0.5)),  # Dampened sentiment for observation, clamped to valid range
                 }
             )
 

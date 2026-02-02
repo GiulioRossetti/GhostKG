@@ -332,7 +332,7 @@ python hourly_simulation.py
 
 ## Next Steps
 
-- Try [Export History](export_history.md) to visualize the knowledge graph evolution
+- Use `ghostkg export` command to visualize the knowledge graph evolution (see [Visualization Guide](../VISUALIZATION.md))
 - See [External Program](external_program.md) for more control over LLM interactions
 - Read [FSRS Documentation](../ALGORITHMS.md#fsrs-algorithm) to understand memory calculations
 

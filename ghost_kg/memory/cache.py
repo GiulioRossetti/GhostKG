@@ -41,9 +41,6 @@ class AgentCache:
         Args:
             max_size (int): Maximum number of entries to cache (default: 128)
             enabled (bool): Whether caching is enabled (default: True)
-
-        Returns:
-            None
         """
         self.max_size = max_size
         self.enabled = enabled

@@ -13,7 +13,7 @@ Each agent maintains:
 
 import datetime
 import re
-from typing import Any, Optional
+from typing import Any, Optional, Union, Tuple
 
 try:
     from ollama import Client
@@ -25,6 +25,7 @@ except ImportError:
 
 from ..memory.fsrs import FSRS, Rating
 from ..storage.database import KnowledgeDB, NodeState
+from ..utils.time_utils import SimulationTime, parse_time_input
 
 
 class GhostAgent:
@@ -43,10 +44,10 @@ class GhostAgent:
         db (KnowledgeDB): Database connection for knowledge storage
         fsrs (FSRS): Memory scheduler for tracking concept strength
         client (Client): Ollama LLM client for generation
-        current_time (datetime): Simulation clock for temporal tracking
+        current_time (SimulationTime): Simulation clock for temporal tracking
 
     Methods:
-        set_time: Update simulation clock
+        set_time: Update simulation clock (accepts datetime or (day, hour) tuple)
         learn_triplet: Add new knowledge triplet to graph
         update_memory: Update memory strength of a concept
         get_memory_view: Retrieve agent's knowledge about a topic
@@ -82,23 +83,33 @@ class GhostAgent:
         else:
             self.client = None
 
-        # Simulation Clock
-        self.current_time = datetime.datetime.now(datetime.timezone.utc)
+        # Simulation Clock - initialized with datetime mode
+        self.current_time = SimulationTime.from_datetime(
+            datetime.datetime.now(datetime.timezone.utc)
+        )
         self.db.upsert_node(self.name, "I", timestamp=self.current_time)
 
-    def set_time(self, new_time: datetime.datetime) -> None:
+    def set_time(
+        self, new_time: Union[datetime.datetime, Tuple[int, int], SimulationTime]
+    ) -> None:
         """
         Update the agent's simulation clock.
 
         Args:
-            new_time (datetime.datetime): New timestamp for the simulation clock
+            new_time: Can be:
+                - datetime.datetime: Real datetime with timezone
+                - (day, hour) tuple: Round-based time where day >= 1, hour in [0, 23]
+                - SimulationTime: Pre-constructed SimulationTime object
 
         Returns:
             None
+            
+        Examples:
+            >>> agent.set_time(datetime.datetime(2025, 1, 1, 9, 0, 0, tzinfo=timezone.utc))
+            >>> agent.set_time((1, 9))  # Day 1, Hour 9
+            >>> agent.set_time(SimulationTime.from_round(5, 14))  # Day 5, Hour 14
         """
-        if new_time.tzinfo is None:
-            new_time = new_time.replace(tzinfo=datetime.timezone.utc)
-        self.current_time = new_time
+        self.current_time = parse_time_input(new_time)
 
     def _normalize(self, text: Optional[str]) -> Optional[str]:
         """
@@ -230,8 +241,13 @@ class GhostAgent:
                 try:
                     last_review = datetime.datetime.fromisoformat(last_review)
                 except (ValueError, TypeError):
-                    last_review = self.current_time
-            if last_review.tzinfo is None:
+                    # Use a datetime default even in round mode
+                    last_review = (
+                        self.current_time.to_datetime()
+                        if self.current_time.is_datetime_mode()
+                        else datetime.datetime.now(datetime.timezone.utc)
+                    )
+            if last_review and last_review.tzinfo is None:
                 last_review = last_review.replace(tzinfo=datetime.timezone.utc)
             current = NodeState(
                 row["stability"],
@@ -330,7 +346,17 @@ class GhostAgent:
         """
         if not last_review or stability == 0:
             return 0.0
-        elapsed_days = (self.current_time - last_review).days
+        
+        # Handle time difference calculation
+        if self.current_time.is_datetime_mode():
+            current_dt = self.current_time.to_datetime()
+            elapsed_days = (current_dt - last_review).days
+        else:
+            # Fallback for round-based mode without datetime conversion
+            # Assumes same-day review (elapsed_days = 0) which is conservative
+            # This maintains high retrievability in pure round-based simulations
+            elapsed_days = 0
+        
         if elapsed_days < 0:
             elapsed_days = 0
         return (1 + elapsed_days / (9 * stability)) ** -1
@@ -361,8 +387,12 @@ class GhostAgent:
                 try:
                     lr = datetime.datetime.fromisoformat(lr)
                 except (ValueError, TypeError):
-                    lr = self.current_time
-            if lr.tzinfo is None:
+                    lr = (
+                        self.current_time.to_datetime()
+                        if self.current_time.is_datetime_mode()
+                        else datetime.datetime.now(datetime.timezone.utc)
+                    )
+            if lr and lr.tzinfo is None:
                 lr = lr.replace(tzinfo=datetime.timezone.utc)
 
             r = self._get_retrievability(row["stability"], lr)
