@@ -104,7 +104,7 @@ $ python ghostkg_dev.py export --database test_dev_mode.db --output test_history
 
 ✅ **Serve Command:**
 ```bash
-$ python ghostkg_dev.py serve --json ghost_kg/templates/simulation_history.json --port 5555
+$ python ghostkg_dev.py serve --json simulation_history.json --port 5555
 ======================================================================
 🚀 Ghost KG Visualization Server
 ======================================================================

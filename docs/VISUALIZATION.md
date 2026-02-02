@@ -67,7 +67,7 @@ ghostkg export --database <db_path> [options]
 
 **Options:**
 - `--database`, `--db` (required): Path to database file or connection string
-- `--output`, `-o`: Output JSON file path (default: templates/simulation_history.json)
+- `--output`, `-o`: Output JSON file path (default: ./simulation_history.json in current directory)
 - `--agents`, `-a`: Comma-separated list of agent names (default: auto-detect)
 - `--topic`, `-t`: Title/topic for visualization (default: "Knowledge Graph Evolution")
 - `--serve`: Start server after export
