@@ -11,6 +11,11 @@ This directory contains detailed summaries of major features and improvements im
   - Documentation organization and cleanup
   - Comprehensive development guide
 
+- **[DOCUMENTATION_REVIEW_SUMMARY.md](DOCUMENTATION_REVIEW_SUMMARY.md)** - Complete documentation review
+  - Updated all docs for recent library changes
+  - Fixed dependencies in requirements files
+  - Bug fixes and consistency improvements
+
 ### Core Database Features
 
 - **[EXISTING_DB_SUMMARY.md](EXISTING_DB_SUMMARY.md)** - Support for using existing SQLite databases
@@ -46,6 +51,11 @@ This directory contains detailed summaries of major features and improvements im
   - Template separation (HTML, CSS, JavaScript)
   - CLI commands for export and serve
   - Interactive D3.js knowledge graph visualization
+
+- **[VISUALIZATION_FIX_SUMMARY.md](VISUALIZATION_FIX_SUMMARY.md)** - Server 403 error and output path fixes
+  - Fixed Flask server access denied errors
+  - Changed default output to current directory
+  - Improved CLI user experience
 
 ## Purpose
 
