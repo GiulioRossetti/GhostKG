@@ -38,9 +38,15 @@ setup(
         "postgres": [database_requires[0]],  # pip install ghost_kg[postgres]
         "mysql": [database_requires[1]],     # pip install ghost_kg[mysql]
         "database": database_requires,  # pip install ghost_kg[database] (all drivers)
+        "viz": ["flask>=2.0.0"],       # pip install ghost_kg[viz]
         "dev": dev_requires,           # pip install ghost_kg[dev]
         "docs": docs_requires,         # pip install ghost_kg[docs]
-        "all": llm_requires + fast_requires + database_requires,  # pip install ghost_kg[all]
+        "all": llm_requires + fast_requires + database_requires + ["flask>=2.0.0"],  # pip install ghost_kg[all]
+    },
+    entry_points={
+        'console_scripts': [
+            'ghostkg=ghost_kg.cli:main',
+        ],
     },
     classifiers=[
         "Development Status :: 4 - Beta",

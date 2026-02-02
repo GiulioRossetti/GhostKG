@@ -1,0 +1,152 @@
+/* Ghost KG - Memory Heatmap Styles */
+
+body {
+    background-color: #121212;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* UI Controls Overlay */
+#controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 320px;
+    background: rgba(30, 30, 30, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #444;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    z-index: 100;
+}
+
+h2 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    color: #4CAF50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Elements */
+label {
+    display: block;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+select {
+    width: 100%;
+    padding: 8px;
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    outline: none;
+}
+
+/* Playback */
+.playback-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+button#playBtn {
+    flex: 1;
+    padding: 10px;
+    background: #2196F3;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button#playBtn:hover {
+    background: #1976D2;
+}
+
+button#playBtn.playing {
+    background: #F44336;
+}
+
+input[type=range] {
+    width: 100%;
+    margin: 8px 0;
+    cursor: pointer;
+    accent-color: #4CAF50;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.action-log {
+    font-size: 12px;
+    color: #888;
+    font-style: italic;
+    min-height: 18px;
+    margin-top: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#graph {
+    width: 100vw;
+    height: 100vh;
+}
+
+.tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.85);
+    padding: 8px 12px;
+    border: 1px solid #555;
+    pointer-events: none;
+    opacity: 0;
+    font-size: 12px;
+    border-radius: 4px;
+    line-height: 1.4;
+    transition: opacity 0.1s;
+    z-index: 200;
+}
+
+text {
+    font-family: sans-serif;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Legend Gradient */
+.legend {
+    margin-top: 15px;
+    font-size: 11px;
+    color: #bbb;
+}
+
+.gradient-bar {
+    height: 8px;
+    width: 100%;
+    margin: 5px 0;
+    border-radius: 4px;
+    background: linear-gradient(to right, #37474F 0%, #FFEB3B 50%, #00E676 100%);
+}
+
+.legend-labels {
+    display: flex;
+    justify-content: space-between;
+}
