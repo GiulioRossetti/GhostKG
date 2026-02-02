@@ -32,19 +32,35 @@ def serve_command(args):
     # Create Flask app
     app = Flask(__name__)
     
+    # Add request logging for debugging
+    @app.before_request
+    def log_request():
+        from flask import request
+        if args.debug:
+            print(f"[DEBUG] {request.method} {request.path} from {request.remote_addr}")
+    
     @app.route('/')
     def index():
+        """Serve the main HTML page."""
         index_path = templates_dir / 'index.html'
+        if not index_path.exists():
+            return f"Error: Template file not found: {index_path}", 404
         return send_file(index_path, mimetype='text/html')
     
     @app.route('/style.css')
     def style():
+        """Serve the CSS stylesheet."""
         css_path = templates_dir / 'style.css'
+        if not css_path.exists():
+            return f"Error: CSS file not found: {css_path}", 404
         return send_file(css_path, mimetype='text/css')
     
     @app.route('/app.js')
     def app_js():
+        """Serve the JavaScript application."""
         js_path = templates_dir / 'app.js'
+        if not js_path.exists():
+            return f"Error: JavaScript file not found: {js_path}", 404
         return send_file(js_path, mimetype='application/javascript')
     
     @app.route('/simulation_history.json')
@@ -56,6 +72,21 @@ def serve_command(args):
             return jsonify(data)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+    
+    @app.errorhandler(403)
+    def forbidden(e):
+        """Handle 403 Forbidden errors."""
+        return f"403 Forbidden: {e}", 403
+    
+    @app.errorhandler(404)
+    def not_found(e):
+        """Handle 404 Not Found errors."""
+        return f"404 Not Found: {e}", 404
+    
+    @app.errorhandler(500)
+    def internal_error(e):
+        """Handle 500 Internal Server errors."""
+        return f"500 Internal Server Error: {e}", 500
     
     # Print startup message
     host = args.host
@@ -69,8 +100,16 @@ def serve_command(args):
     print("=" * 70)
     print(f"   JSON file: {json_path}")
     print(f"   Server: {url}")
+    if args.debug:
+        print(f"   Debug mode: ON")
     print(f"   Press Ctrl+C to stop")
     print("=" * 70)
+    
+    # Verify template files exist
+    for file, desc in [('index.html', 'HTML'), ('style.css', 'CSS'), ('app.js', 'JavaScript')]:
+        file_path = templates_dir / file
+        if not file_path.exists():
+            print(f"⚠️  Warning: {desc} file not found: {file_path}")
     
     # Open browser if requested (in a separate thread to avoid blocking)
     if args.browser:
@@ -80,7 +119,7 @@ def serve_command(args):
         
         def open_browser():
             time.sleep(2)  # Give server more time to start
-            print(f"   Opening browser...")
+            print(f"   Opening browser at {url}...")
             webbrowser.open(url)
         
         browser_thread = threading.Thread(target=open_browser, daemon=True)
@@ -88,9 +127,17 @@ def serve_command(args):
     
     # Run server with threading enabled for better concurrency
     try:
-        app.run(host=host, port=port, debug=args.debug, threaded=True)
+        # Use use_reloader=False to avoid issues with threading
+        app.run(host=host, port=port, debug=args.debug, threaded=True, use_reloader=False)
     except KeyboardInterrupt:
         print("\n👋 Server stopped")
+    except OSError as e:
+        if 'Address already in use' in str(e):
+            print(f"\n❌ Error: Port {port} is already in use")
+            print(f"   Try a different port with --port <number>")
+        else:
+            print(f"\n❌ Error starting server: {e}")
+        sys.exit(1)
 
 
 def export_command(args):
