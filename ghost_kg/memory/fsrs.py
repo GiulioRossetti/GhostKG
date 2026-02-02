@@ -154,8 +154,9 @@ class FSRS:
                     if now_dt and last_review:
                         elapsed_days = (now_dt - last_review).total_seconds() / 86400
                     else:
-                        # Pure round-based: approximate - 1 day per day number
-                        elapsed_days = 0  # Same day assumption for pure round mode
+                        # Fallback when datetime conversion isn't available in pure round mode
+                        # Assumes same-day review which is conservative for memory calculations
+                        elapsed_days = 0
                 else:
                     elapsed_days = (now_dt - last_review).total_seconds() / 86400
             else:

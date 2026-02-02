@@ -352,8 +352,9 @@ class GhostAgent:
             current_dt = self.current_time.to_datetime()
             elapsed_days = (current_dt - last_review).days
         else:
-            # For round-based time, we need last_review as datetime
-            # Since we don't have round info in old data, treat as 0 elapsed for now
+            # Fallback for round-based mode without datetime conversion
+            # Assumes same-day review (elapsed_days = 0) which is conservative
+            # This maintains high retrievability in pure round-based simulations
             elapsed_days = 0
         
         if elapsed_days < 0:
