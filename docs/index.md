@@ -202,7 +202,7 @@ Topics covered:
 #### I want to query the knowledge graph directly
 1. Read: [Database Schema](DATABASE_SCHEMA.md#query-patterns) - Query examples
 2. Read: [Core Components](CORE_COMPONENTS.md#knowledgedb) - KnowledgeDB methods
-3. See: [Export and Visualization Example](examples/export_history.md) - Exporting data
+3. See: [Visualization Guide](VISUALIZATION.md) - Exporting and visualizing data
 
 #### I want to optimize performance
 1. Read: [Database Schema](DATABASE_SCHEMA.md#performance-considerations) - DB optimization

@@ -453,7 +453,7 @@ mysql ghostkg < dump.sql # MySQL
 
 ## Next Steps
 
-- See [Multi-Database Demo](../examples/multi_database_demo.py) for working examples
+- Check the `examples/multi_database_demo.py` script for working examples
 - Check [API Documentation](API.md) for database methods
 - Read [Database Schema](DATABASE_SCHEMA.md) for table structures
 

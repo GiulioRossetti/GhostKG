@@ -329,7 +329,7 @@ We welcome contributions! Please:
 4. Add tests and documentation
 5. Submit a pull request
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for detailed guidelines (if available).
+For detailed guidelines, check the repository's contribution guidelines.
 
 ## Release Process
 

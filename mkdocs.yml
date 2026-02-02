@@ -4,6 +4,9 @@ site_author: Giulio Rossetti
 repo_url: https://github.com/GiulioRossetti/GhostKG
 repo_name: GiulioRossetti/GhostKG
 
+exclude_docs: |
+  README.md
+
 theme:
   name: material
   palette:

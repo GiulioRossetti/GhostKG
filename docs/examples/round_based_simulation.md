@@ -179,5 +179,5 @@ SIMULATION ROUNDS
 ## 🔗 API Reference
 
 - [`GhostAgent.set_time()`](../api/agent.md#set_time): Set simulation clock
-- [`SimulationTime`](../api/time_utils.md): Flexible time representation class
+- [`SimulationTime`](../CORE_COMPONENTS.md#time-management): Flexible time representation (see Core Components)
 - [Database Schema](../DATABASE_SCHEMA.md): Database design and time storage
