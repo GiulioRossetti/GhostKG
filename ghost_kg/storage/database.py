@@ -53,7 +53,11 @@ class KnowledgeDB:
         db_path: str = "agent_memory.db",
         db_url: Optional[str] = None,
         store_log_content: bool = False,
-        echo: bool = False
+        echo: bool = False,
+        pool_size: Optional[int] = None,
+        max_overflow: Optional[int] = None,
+        pool_timeout: Optional[float] = None,
+        pool_recycle: Optional[int] = None,
     ) -> None:
         """
         Initialize database connection and schema.
@@ -68,6 +72,10 @@ class KnowledgeDB:
             store_log_content (bool): If True, stores full content in log table.
                                      If False (default), stores UUID instead of content.
             echo (bool): Enable SQL query logging for debugging
+            pool_size (int): Connection pool size (PostgreSQL/MySQL only, default: 5)
+            max_overflow (int): Max overflow connections (PostgreSQL/MySQL only, default: 10)
+            pool_timeout (float): Pool checkout timeout in seconds (PostgreSQL/MySQL only, default: 30)
+            pool_recycle (int): Recycle connections after N seconds (MySQL default: 3600)
 
         Returns:
             None
@@ -82,7 +90,11 @@ class KnowledgeDB:
             self.db_manager = DatabaseManager(
                 db_url=db_url,
                 db_path=db_path,
-                echo=echo
+                echo=echo,
+                pool_size=pool_size,
+                max_overflow=max_overflow,
+                pool_timeout=pool_timeout,
+                pool_recycle=pool_recycle,
             )
             
             # Create tables if they don't exist

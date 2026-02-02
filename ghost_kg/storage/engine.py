@@ -29,7 +29,11 @@ class DatabaseManager:
         self,
         db_url: Optional[str] = None,
         db_path: Optional[str] = None,
-        echo: bool = False
+        echo: bool = False,
+        pool_size: Optional[int] = None,
+        max_overflow: Optional[int] = None,
+        pool_timeout: Optional[float] = None,
+        pool_recycle: Optional[int] = None,
     ):
         """
         Initialize database manager.
@@ -39,12 +43,24 @@ class DatabaseManager:
                    Takes precedence over db_path
             db_path: Legacy SQLite file path (for backward compatibility)
             echo: Enable SQL query logging
+            pool_size: Number of connections to maintain in the pool (PostgreSQL/MySQL only)
+                      Default: 5
+            max_overflow: Maximum overflow connections beyond pool_size (PostgreSQL/MySQL only)
+                         Default: 10
+            pool_timeout: Timeout for getting a connection from the pool (PostgreSQL/MySQL only)
+                         Default: 30 seconds
+            pool_recycle: Recycle connections after this many seconds (MySQL only recommended)
+                         Default: 3600 (1 hour) for MySQL, None for PostgreSQL
         
         Raises:
             DatabaseError: If database connection fails
         """
         self.db_url = self._resolve_url(db_url, db_path)
         self.echo = echo
+        self.pool_size = pool_size
+        self.max_overflow = max_overflow
+        self.pool_timeout = pool_timeout
+        self.pool_recycle = pool_recycle
         self.engine: Optional[Engine] = None
         self.SessionLocal: Optional[sessionmaker] = None
         
@@ -116,17 +132,24 @@ class DatabaseManager:
             elif dialect == "postgresql":
                 # PostgreSQL-specific configuration
                 engine_kwargs["poolclass"] = QueuePool
-                engine_kwargs["pool_size"] = 5
-                engine_kwargs["max_overflow"] = 10
+                engine_kwargs["pool_size"] = self.pool_size if self.pool_size is not None else 5
+                engine_kwargs["max_overflow"] = self.max_overflow if self.max_overflow is not None else 10
                 engine_kwargs["pool_pre_ping"] = True  # Verify connections
+                if self.pool_timeout is not None:
+                    engine_kwargs["pool_timeout"] = self.pool_timeout
+                if self.pool_recycle is not None:
+                    engine_kwargs["pool_recycle"] = self.pool_recycle
             
             elif dialect == "mysql":
                 # MySQL-specific configuration
                 engine_kwargs["poolclass"] = QueuePool
-                engine_kwargs["pool_size"] = 5
-                engine_kwargs["max_overflow"] = 10
+                engine_kwargs["pool_size"] = self.pool_size if self.pool_size is not None else 5
+                engine_kwargs["max_overflow"] = self.max_overflow if self.max_overflow is not None else 10
                 engine_kwargs["pool_pre_ping"] = True
-                engine_kwargs["pool_recycle"] = 3600  # Recycle connections after 1 hour
+                # MySQL connections can go stale, so recycle them by default
+                engine_kwargs["pool_recycle"] = self.pool_recycle if self.pool_recycle is not None else 3600
+                if self.pool_timeout is not None:
+                    engine_kwargs["pool_timeout"] = self.pool_timeout
             
             else:
                 raise DatabaseError(

@@ -34,7 +34,7 @@ class Node(Base):
     Represents concepts, people, topics with spaced repetition tracking.
     Multi-tenant via owner_id.
     """
-    __tablename__ = "nodes"
+    __tablename__ = "kg_nodes"
     
     # Composite primary key for multi-tenancy
     owner_id: Mapped[str] = mapped_column(String(255), primary_key=True)
@@ -60,8 +60,8 @@ class Node(Base):
     
     # Indexes
     __table_args__ = (
-        Index("idx_nodes_owner", "owner_id"),
-        Index("idx_nodes_last_review", "owner_id", "last_review"),
+        Index("idx_kg_nodes_owner", "owner_id"),
+        Index("idx_kg_nodes_last_review", "owner_id", "last_review"),
     )
     
     def __repr__(self):
@@ -75,7 +75,7 @@ class Edge(Base):
     Represents triplets (source, relation, target) with sentiment scoring.
     Multi-tenant via owner_id.
     """
-    __tablename__ = "edges"
+    __tablename__ = "kg_edges"
     
     # Composite primary key
     owner_id: Mapped[str] = mapped_column(String(255), primary_key=True)
@@ -106,21 +106,21 @@ class Edge(Base):
     __table_args__ = (
         ForeignKeyConstraint(
             ["owner_id", "source"],
-            ["nodes.owner_id", "nodes.id"],
-            name="fk_edges_source"
+            ["kg_nodes.owner_id", "kg_nodes.id"],
+            name="fk_kg_edges_source"
         ),
         ForeignKeyConstraint(
             ["owner_id", "target"],
-            ["nodes.owner_id", "nodes.id"],
-            name="fk_edges_target"
+            ["kg_nodes.owner_id", "kg_nodes.id"],
+            name="fk_kg_edges_target"
         ),
         CheckConstraint(
             "sentiment >= -1.0 AND sentiment <= 1.0",
-            name="ck_edges_sentiment_range"
+            name="ck_kg_edges_sentiment_range"
         ),
-        Index("idx_edges_owner_source", "owner_id", "source"),
-        Index("idx_edges_owner_target", "owner_id", "target"),
-        Index("idx_edges_created", "owner_id", "created_at"),
+        Index("idx_kg_edges_owner_source", "owner_id", "source"),
+        Index("idx_kg_edges_owner_target", "owner_id", "target"),
+        Index("idx_kg_edges_created", "owner_id", "created_at"),
     )
     
     def __repr__(self):
@@ -133,7 +133,7 @@ class Log(Base):
     
     Records agent actions with optional content storage (UUID-based archiving).
     """
-    __tablename__ = "logs"
+    __tablename__ = "kg_logs"
     
     # Auto-incrementing primary key
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -162,8 +162,8 @@ class Log(Base):
     
     # Indexes
     __table_args__ = (
-        Index("idx_logs_agent_time", "agent_name", "timestamp"),
-        Index("idx_logs_action", "action_type", "timestamp"),
+        Index("idx_kg_logs_agent_time", "agent_name", "timestamp"),
+        Index("idx_kg_logs_action", "action_type", "timestamp"),
     )
     
     def __repr__(self):
