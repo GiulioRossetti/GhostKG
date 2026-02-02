@@ -89,12 +89,39 @@ class TestGhostAgent:
         """Test setting agent time."""
         now = datetime.now(timezone.utc)
         agent.set_time(now)
-        assert agent.current_time == now
+        # SimulationTime comparison
+        assert agent.current_time.to_datetime() == now
         
         # Set future time
         future = now + timedelta(days=7)
         agent.set_time(future)
-        assert agent.current_time == future
+        assert agent.current_time.to_datetime() == future
+    
+    def test_set_time_round_based(self, agent):
+        """Test setting agent time with round-based time."""
+        # Set using tuple
+        agent.set_time((5, 14))
+        assert agent.current_time.is_round_mode()
+        assert agent.current_time.to_round() == (5, 14)
+        
+        # Set using different round
+        agent.set_time((10, 23))
+        assert agent.current_time.to_round() == (10, 23)
+    
+    def test_set_time_mixed_modes(self, agent):
+        """Test switching between datetime and round-based time."""
+        # Start with datetime
+        dt = datetime(2025, 1, 1, 9, 0, 0, tzinfo=timezone.utc)
+        agent.set_time(dt)
+        assert agent.current_time.is_datetime_mode()
+        
+        # Switch to round-based
+        agent.set_time((5, 14))
+        assert agent.current_time.is_round_mode()
+        
+        # Switch back to datetime
+        agent.set_time(dt)
+        assert agent.current_time.is_datetime_mode()
     
     def test_query_by_sentiment(self, agent):
         """Test querying by sentiment via SQL."""

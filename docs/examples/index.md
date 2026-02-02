@@ -35,7 +35,7 @@ A complete example of two agents (Alice and Bob) having a multi-round conversati
 **File:** `examples/hourly_simulation.py`
 
 Shows how to run time-based simulations with realistic time gaps between interactions. Features:
-- Setting and advancing simulation time
+- Setting and advancing simulation time with datetime objects
 - Using CognitiveLoop for integrated LLM operations
 - Random time delays between messages
 - Memory decay over time
@@ -44,7 +44,26 @@ Shows how to run time-based simulations with realistic time gaps between interac
 
 ---
 
-### 4. [Export and Visualization](export_history.md)
+### 4. [Round-Based Simulation](round_based_simulation.md) 🆕
+**File:** `examples/round_based_simulation.py`
+
+Demonstrates using **round-based time** `(day, hour)` tuples instead of datetime objects. Perfect for:
+- Game simulations with discrete rounds or turns
+- Agent-based models with step-based time
+- Economic or social simulations with time periods
+- Any scenario where real datetime is not appropriate
+
+**Key Features:**
+- Simple `(day, hour)` tuple format where day >= 1, hour in [0, 23]
+- Automatic database storage of round-based time
+- Full FSRS memory system compatibility
+- Can mix with datetime mode as needed
+
+**Best for:** Simulations with discrete time steps rather than continuous time.
+
+---
+
+### 5. [Export and Visualization](export_history.md)
 **File:** `examples/export_history.py`
 
 Learn how to export agent knowledge graphs for visualization. This example:
@@ -70,8 +89,11 @@ python external_program.py
 # Run the multi-agent conversation (requires Ollama)
 python use_case_example.py
 
-# Run the temporal simulation
+# Run the temporal simulation with datetime
 python hourly_simulation.py
+
+# Run the round-based simulation (no Ollama required) 🆕
+python round_based_simulation.py
 
 # Export history from a previous simulation
 python export_history.py

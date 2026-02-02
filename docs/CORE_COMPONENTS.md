@@ -326,19 +326,37 @@ context = agent.get_memory_view("climate change")
 #  OTHERS' VIEWS: Bob supports carbon tax; Alice advocates for green policy."
 ```
 
-#### set_time(timestamp)
+#### set_time(new_time)
 
 **Purpose**: Set the agent's current time (for simulation).
 
 **Parameters**:
-- `timestamp`: datetime object with timezone
+- `new_time`: Can be one of:
+  - `datetime.datetime`: Real datetime with timezone
+  - `(day, hour)` tuple: Round-based time where day >= 1, hour in [0, 23]
+  - `SimulationTime`: Pre-constructed SimulationTime object
 
-**Example**:
+**Examples**:
 ```python
 import datetime
+
+# Using real datetime
 time = datetime.datetime(2025, 1, 1, 9, 0, 0, tzinfo=datetime.timezone.utc)
 agent.set_time(time)
+
+# Using round-based time (day, hour)
+agent.set_time((1, 9))  # Day 1, Hour 9
+
+# Using SimulationTime object
+from ghost_kg import SimulationTime
+sim_time = SimulationTime.from_round(5, 14)
+agent.set_time(sim_time)
 ```
+
+**Notes**:
+- Round-based time is perfect for game simulations, agent-based models, or any scenario with discrete time steps
+- You can switch between datetime and round-based time modes as needed
+- Round-based time is automatically stored in the database with `sim_day` and `sim_hour` columns
 
 ---
 

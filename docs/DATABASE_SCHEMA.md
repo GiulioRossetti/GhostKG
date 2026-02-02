@@ -52,6 +52,8 @@ CREATE TABLE IF NOT EXISTS nodes (
     reps INTEGER DEFAULT 0,     -- Number of repetitions
     state INTEGER DEFAULT 0,    -- FSRS state (0=new, 1=learning, 2=review)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sim_day INTEGER,            -- Round-based time: day number (>= 1)
+    sim_hour INTEGER,           -- Round-based time: hour (0-23)
     PRIMARY KEY (owner_id, id)
 )
 ```
@@ -68,6 +70,13 @@ CREATE TABLE IF NOT EXISTS nodes (
 | reps | INTEGER | DEFAULT 0 | Number of times reviewed/reinforced |
 | state | INTEGER | DEFAULT 0 | FSRS state: 0=new, 1=learning, 2=review |
 | created_at | TIMESTAMP | DEFAULT NOW | When entity was first added |
+| sim_day | INTEGER | NULL | Round-based time: day number (>= 1) |
+| sim_hour | INTEGER | NULL | Round-based time: hour (0-23) |
+
+**Note on Time Columns**: 
+- `created_at`/`last_review`: Used for datetime-based simulations
+- `sim_day`/`sim_hour`: Used for round-based simulations (e.g., game turns)
+- Both can coexist, or only one set may be populated depending on simulation mode
 
 #### Indexes
 
@@ -103,6 +112,8 @@ CREATE TABLE IF NOT EXISTS edges (
     weight REAL DEFAULT 1.0,    -- Connection strength
     sentiment REAL DEFAULT 0.0, -- Emotional valence (-1.0 to 1.0)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sim_day INTEGER,            -- Round-based time: day number (>= 1)
+    sim_hour INTEGER,           -- Round-based time: hour (0-23)
     PRIMARY KEY (owner_id, source, target, relation),
     FOREIGN KEY(owner_id, source) REFERENCES nodes(owner_id, id),
     FOREIGN KEY(owner_id, target) REFERENCES nodes(owner_id, id)
@@ -120,6 +131,8 @@ CREATE TABLE IF NOT EXISTS edges (
 | weight | REAL | DEFAULT 1.0 | Connection strength (unused currently) |
 | sentiment | REAL | DEFAULT 0.0 | Emotional valence: -1.0 (negative) to 1.0 (positive) |
 | created_at | TIMESTAMP | DEFAULT NOW | When relationship was established |
+| sim_day | INTEGER | NULL | Round-based time: day number (>= 1) |
+| sim_hour | INTEGER | NULL | Round-based time: hour (0-23) |
 
 #### Indexes
 
@@ -153,8 +166,11 @@ CREATE TABLE IF NOT EXISTS logs (
     agent_name TEXT,            -- Agent who performed the action
     action_type TEXT,           -- Type of action (READ/WRITE)
     content TEXT,               -- Text content of the interaction
+    content_uuid TEXT,          -- UUID when content is not stored
     annotations JSON,           -- Metadata in JSON format
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sim_day INTEGER,            -- Round-based time: day number (>= 1)
+    sim_hour INTEGER            -- Round-based time: hour (0-23)
 )
 ```
 
@@ -166,8 +182,11 @@ CREATE TABLE IF NOT EXISTS logs (
 | agent_name | TEXT | NOT NULL | Agent name |
 | action_type | TEXT | NOT NULL | "READ" (absorbing) or "WRITE" (generating) |
 | content | TEXT | NULL | The actual text content |
+| content_uuid | TEXT | NULL | UUID when content is not stored |
 | annotations | JSON | NULL | Metadata: context_used, triplets_count, mode, etc. |
 | timestamp | TIMESTAMP | DEFAULT NOW | When action occurred |
+| sim_day | INTEGER | NULL | Round-based time: day number (>= 1) |
+| sim_hour | INTEGER | NULL | Round-based time: hour (0-23) |
 
 #### Indexes
 
