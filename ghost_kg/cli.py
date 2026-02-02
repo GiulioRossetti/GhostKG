@@ -251,8 +251,8 @@ Examples:
     serve_parser.add_argument(
         '--port',
         type=int,
-        default=5000,
-        help='Port to bind server (default: 5000)'
+        default=5050,
+        help='Port to bind server (default: 5050)'
     )
     serve_parser.add_argument(
         '--browser',
