@@ -4,10 +4,10 @@ This document describes the database schema used by GhostKG for storing knowledg
 
 ## Overview
 
-GhostKG uses SQLite for persistence, with three main tables:
-- **nodes**: Entities in the knowledge graph with FSRS memory states
-- **edges**: Relationships (triplets) between entities with sentiment
-- **logs**: Interaction history for debugging and analysis
+GhostKG uses SQLite for persistence, with three main tables (prefixed with `kg_` to avoid conflicts):
+- **kg_nodes**: Entities in the knowledge graph with FSRS memory states
+- **kg_edges**: Relationships (triplets) between entities with sentiment
+- **kg_logs**: Interaction history for debugging and analysis
 
 ## Working with Existing Databases
 
@@ -17,6 +17,7 @@ GhostKG uses SQLite for persistence, with three main tables:
 2. **Preserve existing tables**: Any existing tables in the database are left untouched
 3. **Share a database**: Multiple applications can use the same SQLite file
 4. **Reuse GhostKG tables**: Multiple agents can share the same GhostKG tables
+5. **Avoid naming conflicts**: All GhostKG tables are prefixed with `kg_` to reduce potential conflicts
 
 ### Example: Using an Existing Database
 
@@ -26,7 +27,7 @@ from ghost_kg import GhostAgent
 # Connect to your existing database
 agent = GhostAgent("MyAgent", db_path="/path/to/existing_app.db")
 
-# GhostKG creates its tables (nodes, edges, logs) if they don't exist
+# GhostKG creates its tables (kg_nodes, kg_edges, kg_logs) if they don't exist
 # Your existing tables remain untouched
 agent.learn_triplet("Python", "is", "great", Rating.Good)
 ```
@@ -45,7 +46,7 @@ agent.learn_triplet("Python", "is", "great", Rating.Good)
 │                    SQLite Database                       │
 │                                                          │
 │  ┌────────────────────┐                                │
-│  │      nodes         │◄───┐                           │
+│  │     kg_nodes       │◄───┐                           │
 │  │  (Entities/KG)     │    │                           │
 │  └────────────────────┘    │  Foreign Keys             │
 │           ▲                 │                           │
@@ -72,7 +73,7 @@ Stores entities (concepts, people, topics) with their FSRS memory states.
 #### Schema
 
 ```sql
-CREATE TABLE IF NOT EXISTS nodes (
+CREATE TABLE IF NOT EXISTS kg_nodes (
     owner_id TEXT,              -- Agent who owns this node
     id TEXT,                    -- Node identifier (entity name)
     stability REAL DEFAULT 0,   -- FSRS stability (days)
@@ -111,8 +112,8 @@ CREATE TABLE IF NOT EXISTS nodes (
 
 ```sql
 -- Primary key automatically creates index on (owner_id, id)
-CREATE INDEX idx_nodes_owner ON nodes(owner_id);
-CREATE INDEX idx_nodes_last_review ON nodes(owner_id, last_review);
+CREATE INDEX idx_kg_nodes_owner ON kg_nodes(owner_id);
+CREATE INDEX idx_kg_nodes_last_review ON kg_nodes(owner_id, last_review);
 ```
 
 #### Example Data
@@ -126,14 +127,14 @@ Alice    | Bob             | 2.4       | 5.0        | 2025-01-01 09:00:00 | 1   
 Bob      | I               | 15.3      | 3.2        | 2025-01-01 10:30:00 | 5    | 2     | 2025-01-01 09:00:00
 ```
 
-### edges Table
+### kg_edges Table
 
 Stores relationships (triplets) between entities, forming the knowledge graph.
 
 #### Schema
 
 ```sql
-CREATE TABLE IF NOT EXISTS edges (
+CREATE TABLE IF NOT EXISTS kg_edges (
     owner_id TEXT,              -- Agent who owns this edge
     source TEXT,                -- Subject entity
     target TEXT,                -- Object entity
@@ -144,8 +145,8 @@ CREATE TABLE IF NOT EXISTS edges (
     sim_day INTEGER,            -- Round-based time: day number (>= 1)
     sim_hour INTEGER,           -- Round-based time: hour (0-23)
     PRIMARY KEY (owner_id, source, target, relation),
-    FOREIGN KEY(owner_id, source) REFERENCES nodes(owner_id, id),
-    FOREIGN KEY(owner_id, target) REFERENCES nodes(owner_id, id)
+    FOREIGN KEY(owner_id, source) REFERENCES kg_nodes(owner_id, id),
+    FOREIGN KEY(owner_id, target) REFERENCES kg_nodes(owner_id, id)
 )
 ```
 
@@ -167,9 +168,9 @@ CREATE TABLE IF NOT EXISTS edges (
 
 ```sql
 -- Primary key automatically creates index on (owner_id, source, target, relation)
-CREATE INDEX idx_edges_owner_source ON edges(owner_id, source);
-CREATE INDEX idx_edges_owner_target ON edges(owner_id, target);
-CREATE INDEX idx_edges_created ON edges(owner_id, created_at);
+CREATE INDEX idx_kg_edges_owner_source ON kg_edges(owner_id, source);
+CREATE INDEX idx_kg_edges_owner_target ON kg_edges(owner_id, target);
+CREATE INDEX idx_kg_edges_created ON kg_edges(owner_id, created_at);
 ```
 
 #### Example Data
@@ -183,14 +184,14 @@ Alice    | Bob    | carbon tax      | supports   | 1.0    | 0.6       | 2025-01-
 Bob      | I      | economy         | prioritize | 1.0    | 0.7       | 2025-01-01 09:00:00
 ```
 
-### logs Table
+### kg_logs Table
 
 Stores interaction history for debugging, analysis, and replay.
 
 #### Schema
 
 ```sql
-CREATE TABLE IF NOT EXISTS logs (
+CREATE TABLE IF NOT EXISTS kg_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     agent_name TEXT,            -- Agent who performed the action
     action_type TEXT,           -- Type of action (READ/WRITE)
@@ -220,9 +221,9 @@ CREATE TABLE IF NOT EXISTS logs (
 #### Indexes
 
 ```sql
-CREATE INDEX idx_logs_agent ON logs(agent_name);
-CREATE INDEX idx_logs_timestamp ON logs(timestamp);
-CREATE INDEX idx_logs_action ON logs(action_type);
+CREATE INDEX idx_kg_logs_agent ON kg_logs(agent_name);
+CREATE INDEX idx_kg_logs_timestamp ON kg_logs(timestamp);
+CREATE INDEX idx_kg_logs_action ON kg_logs(action_type);
 ```
 
 #### Annotations Format
@@ -364,7 +365,7 @@ ORDER BY n.last_review DESC;
 
 ```sql
 SELECT action_type, content, annotations, timestamp
-FROM logs
+FROM kg_logs
 WHERE agent_name = 'Alice'
 ORDER BY timestamp DESC
 LIMIT 20;

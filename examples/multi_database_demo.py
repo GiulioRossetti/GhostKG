@@ -122,6 +122,7 @@ def demo_mysql():
 
 
 def demo_multi_database():
+    demo_pool_configuration()
     """Demonstrate using multiple databases simultaneously."""
     print("\n" + "="*70)
     print("DEMO 4: Multiple Databases Simultaneously")
@@ -155,7 +156,77 @@ def demo_multi_database():
         print(f"❌ Error: {e}")
 
 
+
+def demo_pool_configuration():
+    """Demonstrate connection pool configuration."""
+    print("\n" + "="*70)
+    print("DEMO 5: Connection Pool Configuration")
+    print("="*70)
+    
+    print("\n1. Default pool settings (PostgreSQL simulation):")
+    print("   agent = GhostAgent('name', db_path='postgresql://...')")
+    print("   Default: pool_size=5, max_overflow=10")
+    
+    print("\n2. Custom pool settings (High Concurrency):")
+    agent_config = """
+    agent = GhostAgent(
+        'HighConcurrency',
+        db_path='postgresql://user:pass@localhost/ghostkg',
+        pool_size=20,           # 20 connections in pool
+        max_overflow=30,        # Up to 30 additional connections
+        pool_timeout=60.0,      # 60 second timeout
+    )
+    """
+    print(agent_config)
+    print("   ✓ Suitable for 20+ concurrent agents")
+    
+    print("\n3. MySQL with connection recycling:")
+    mysql_config = """
+    agent = GhostAgent(
+        'MySQLAgent',
+        db_path='mysql+pymysql://user:pass@localhost/ghostkg',
+        pool_size=8,
+        pool_recycle=1800,      # Recycle after 30 minutes
+    )
+    """
+    print(mysql_config)
+    print("   ✓ Prevents stale MySQL connections")
+    
+    print("\n4. Memory-constrained environment:")
+    low_mem_config = """
+    agent = GhostAgent(
+        'LowMemory',
+        db_path='postgresql://user:pass@localhost/ghostkg',
+        pool_size=2,            # Only 2 connections
+        max_overflow=3,         # Max 5 total connections
+    )
+    """
+    print(low_mem_config)
+    print("   ✓ Reduces memory footprint")
+    
+    # Test with actual SQLite (pool settings ignored but accepted)
+    try:
+        from ghost_kg.storage.database import KnowledgeDB
+        db = KnowledgeDB(
+            db_path=":memory:",
+            pool_size=10,
+            max_overflow=20,
+        )
+        print("\n5. Testing with SQLite (pool settings stored but not applied):")
+        print(f"   ✓ Pool size: {db.db_manager.pool_size}")
+        print(f"   ✓ Max overflow: {db.db_manager.max_overflow}")
+        print(f"   ✓ Actual pool: {db.db_manager.engine.pool.__class__.__name__}")
+        print("   (SQLite uses StaticPool for :memory: or NullPool for files)")
+        
+        print("\n✅ Pool configuration demo complete!")
+        
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+
 def main():
+
     """Run all demonstrations."""
     print("\n" + "="*70)
     print("GhostKG Multi-Database Support Demonstration")
@@ -170,6 +241,7 @@ def main():
     demo_postgresql()
     demo_mysql()
     demo_multi_database()
+    demo_pool_configuration()
     
     print("\n" + "="*70)
     print("SUMMARY")

@@ -68,6 +68,86 @@ agent = GhostAgent("Charlie", db_path=":memory:")
    )
    ```
 
+## Connection Pool Configuration
+
+GhostKG exposes connection pool settings for PostgreSQL and MySQL to optimize performance for your workload.
+
+### Pool Parameters
+
+| Parameter | Description | Default | Applies To |
+|-----------|-------------|---------|------------|
+| `pool_size` | Number of connections to keep in the pool | 5 | PostgreSQL, MySQL |
+| `max_overflow` | Maximum additional connections beyond pool_size | 10 | PostgreSQL, MySQL |
+| `pool_timeout` | Seconds to wait for a connection from the pool | 30 | PostgreSQL, MySQL |
+| `pool_recycle` | Seconds before recycling connections | 3600 (MySQL only) | MySQL, PostgreSQL |
+
+**Note**: Pool configuration does not apply to SQLite (uses StaticPool for `:memory:` or NullPool for file-based).
+
+### Examples
+
+#### PostgreSQL with Custom Pool
+
+```python
+from ghost_kg import GhostAgent
+
+agent = GhostAgent(
+    "Alice",
+    db_path="postgresql://user:pass@localhost/ghostkg",
+    pool_size=10,           # Keep 10 connections in pool
+    max_overflow=20,        # Allow up to 20 additional connections
+    pool_timeout=60.0,      # Wait up to 60 seconds for connection
+)
+```
+
+#### MySQL with Connection Recycling
+
+```python
+from ghost_kg import GhostAgent
+
+agent = GhostAgent(
+    "Bob",
+    db_path="mysql+pymysql://user:pass@localhost/ghostkg",
+    pool_size=8,
+    max_overflow=15,
+    pool_recycle=1800,      # Recycle connections after 30 minutes
+)
+```
+
+#### High-Concurrency Setup
+
+For applications with many agents or concurrent access:
+
+```python
+from ghost_kg.storage.database import KnowledgeDB
+
+db = KnowledgeDB(
+    db_url="postgresql://user:pass@localhost/ghostkg",
+    pool_size=20,           # Large pool for many concurrent agents
+    max_overflow=30,
+    pool_timeout=10.0,      # Quick timeout to avoid blocking
+)
+```
+
+### When to Tune Pool Settings
+
+- **Low concurrency** (1-5 agents): Use defaults
+- **Medium concurrency** (5-20 agents): `pool_size=10`, `max_overflow=20`
+- **High concurrency** (20+ agents): `pool_size=20+`, `max_overflow=30+`
+- **Memory constrained**: Lower `pool_size` and `max_overflow`
+- **Connection limit reached**: Lower `pool_size` + `max_overflow`
+
+### Monitoring Pool Usage
+
+To debug connection issues, enable SQL logging:
+
+```python
+db = KnowledgeDB(
+    db_url="postgresql://...",
+    echo=True,              # Log all SQL queries
+    pool_size=5,
+)
+```
+
 ## Connection String Formats
 
 ### SQLite
@@ -376,3 +456,297 @@ mysql ghostkg < dump.sql # MySQL
 - See [Multi-Database Demo](../examples/multi_database_demo.py) for working examples
 - Check [API Documentation](API.md) for database methods
 - Read [Database Schema](DATABASE_SCHEMA.md) for table structures
+
+## Complete Setup Examples
+
+### PostgreSQL Setup (Step-by-Step)
+
+#### 1. Install PostgreSQL
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install postgresql postgresql-contrib
+
+# macOS
+brew install postgresql
+
+# Start PostgreSQL service
+sudo service postgresql start  # Linux
+brew services start postgresql # macOS
+```
+
+#### 2. Create Database and User
+
+```bash
+# Connect to PostgreSQL as postgres user
+sudo -u postgres psql
+
+# In psql prompt:
+CREATE DATABASE ghostkg;
+CREATE USER ghostkg_user WITH ENCRYPTED PASSWORD 'your_secure_password';
+GRANT ALL PRIVILEGES ON DATABASE ghostkg TO ghostkg_user;
+
+# Grant schema permissions (PostgreSQL 15+)
+\c ghostkg
+GRANT ALL ON SCHEMA public TO ghostkg_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ghostkg_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ghostkg_user;
+
+\q
+```
+
+#### 3. Test Connection
+
+```bash
+psql -h localhost -U ghostkg_user -d ghostkg
+# Enter password when prompted
+```
+
+#### 4. Use in GhostKG
+
+```python
+from ghost_kg import GhostAgent
+
+agent = GhostAgent(
+    "Alice",
+    db_path="postgresql://ghostkg_user:your_secure_password@localhost:5432/ghostkg",
+    pool_size=10,
+    max_overflow=20,
+)
+
+# Tables (kg_nodes, kg_edges, kg_logs) are created automatically
+agent.learn_triplet("PostgreSQL", "is", "powerful", Rating.Good)
+```
+
+#### 5. Verify Tables
+
+```bash
+psql -h localhost -U ghostkg_user -d ghostkg
+
+# In psql:
+\dt  # List all tables
+SELECT * FROM kg_nodes LIMIT 5;
+```
+
+### MySQL Setup (Step-by-Step)
+
+#### 1. Install MySQL
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install mysql-server
+
+# macOS
+brew install mysql
+
+# Start MySQL service
+sudo service mysql start       # Linux
+brew services start mysql      # macOS
+```
+
+#### 2. Secure Installation
+
+```bash
+# Run security script
+sudo mysql_secure_installation
+
+# Set root password and answer security questions
+```
+
+#### 3. Create Database and User
+
+```bash
+# Connect to MySQL as root
+sudo mysql -u root -p
+
+# In MySQL prompt:
+CREATE DATABASE ghostkg CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'ghostkg_user'@'localhost' IDENTIFIED BY 'your_secure_password';
+GRANT ALL PRIVILEGES ON ghostkg.* TO 'ghostkg_user'@'localhost';
+FLUSH PRIVILEGES;
+
+# Verify
+SHOW DATABASES;
+SELECT user, host FROM mysql.user WHERE user='ghostkg_user';
+
+EXIT;
+```
+
+#### 4. Test Connection
+
+```bash
+mysql -h localhost -u ghostkg_user -p ghostkg
+# Enter password when prompted
+```
+
+#### 5. Use in GhostKG
+
+```python
+from ghost_kg import GhostAgent
+
+agent = GhostAgent(
+    "Bob",
+    db_path="mysql+pymysql://ghostkg_user:your_secure_password@localhost:3306/ghostkg",
+    pool_size=8,
+    pool_recycle=3600,  # Important for MySQL
+)
+
+# Tables (kg_nodes, kg_edges, kg_logs) are created automatically
+agent.learn_triplet("MySQL", "is", "popular", Rating.Good)
+```
+
+#### 6. Verify Tables
+
+```bash
+mysql -h localhost -u ghostkg_user -p ghostkg
+
+# In MySQL:
+SHOW TABLES;
+DESCRIBE kg_nodes;
+SELECT * FROM kg_nodes LIMIT 5;
+```
+
+### Docker Setup (Quick Start)
+
+#### PostgreSQL with Docker
+
+```bash
+# Start PostgreSQL container
+docker run --name ghostkg-postgres \
+  -e POSTGRES_DB=ghostkg \
+  -e POSTGRES_USER=ghostkg_user \
+  -e POSTGRES_PASSWORD=secure_password \
+  -p 5432:5432 \
+  -d postgres:15
+
+# Connection string
+postgresql://ghostkg_user:secure_password@localhost:5432/ghostkg
+```
+
+#### MySQL with Docker
+
+```bash
+# Start MySQL container
+docker run --name ghostkg-mysql \
+  -e MYSQL_DATABASE=ghostkg \
+  -e MYSQL_USER=ghostkg_user \
+  -e MYSQL_PASSWORD=secure_password \
+  -e MYSQL_ROOT_PASSWORD=root_password \
+  -p 3306:3306 \
+  -d mysql:8
+
+# Connection string
+mysql+pymysql://ghostkg_user:secure_password@localhost:3306/ghostkg
+```
+
+### Cloud Database Examples
+
+#### AWS RDS (PostgreSQL)
+
+```python
+from ghost_kg import GhostAgent
+
+agent = GhostAgent(
+    "CloudAgent",
+    db_path="postgresql://username:password@mydb.xxxx.us-east-1.rds.amazonaws.com:5432/ghostkg",
+    pool_size=15,
+    max_overflow=25,
+    pool_timeout=30,
+)
+```
+
+#### Google Cloud SQL (MySQL)
+
+```python
+from ghost_kg import GhostAgent
+
+agent = GhostAgent(
+    "CloudAgent",
+    db_path="mysql+pymysql://username:password@34.xxx.xxx.xxx:3306/ghostkg",
+    pool_size=12,
+    pool_recycle=1800,
+)
+```
+
+#### Azure Database for PostgreSQL
+
+```python
+from ghost_kg import GhostAgent
+
+agent = GhostAgent(
+    "AzureAgent",
+    db_path="postgresql://username@servername:password@servername.postgres.database.azure.com:5432/ghostkg?sslmode=require",
+    pool_size=10,
+)
+```
+
+## Troubleshooting Different DBMS
+
+### PostgreSQL Issues
+
+**Connection refused:**
+```bash
+# Check if PostgreSQL is running
+sudo service postgresql status
+sudo service postgresql start
+
+# Check if listening on correct port
+sudo netstat -plnt | grep 5432
+
+# Edit postgresql.conf if needed
+# Find with: sudo find / -name postgresql.conf
+# Set: listen_addresses = '*'
+```
+
+**Authentication failed:**
+```bash
+# Edit pg_hba.conf to allow password authentication
+# Find with: sudo find / -name pg_hba.conf
+# Add line: host    all    all    127.0.0.1/32    md5
+sudo service postgresql restart
+```
+
+### MySQL Issues
+
+**Access denied:**
+```bash
+# Reset password if needed
+sudo mysql
+ALTER USER 'ghostkg_user'@'localhost' IDENTIFIED BY 'new_password';
+FLUSH PRIVILEGES;
+```
+
+**Connection timeout:**
+```bash
+# Edit my.cnf to increase timeouts
+# Find with: sudo find / -name my.cnf
+# Add under [mysqld]:
+# wait_timeout = 28800
+# interactive_timeout = 28800
+sudo service mysql restart
+```
+
+### General Issues
+
+**"No module named psycopg2":**
+```bash
+pip install ghost_kg[postgres]
+# or
+pip install psycopg2-binary
+```
+
+**"No module named pymysql":**
+```bash
+pip install ghost_kg[mysql]
+# or
+pip install pymysql
+```
+
+**Tables not found:**
+```python
+# Explicitly create tables
+from ghost_kg.storage.database import KnowledgeDB
+db = KnowledgeDB(db_url="your_connection_string")
+# Tables are created automatically on init
+```
+
