@@ -35,9 +35,9 @@ class TestExistingDatabases:
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tables = {row[0] for row in cursor.fetchall()}
         
-        assert 'nodes' in tables
-        assert 'edges' in tables
-        assert 'logs' in tables
+        assert 'kg_nodes' in tables
+        assert 'kg_edges' in tables
+        assert 'kg_logs' in tables
     
     def test_existing_empty_database(self, temp_db_path):
         """Test that GhostKG works with an existing empty database."""
@@ -54,9 +54,9 @@ class TestExistingDatabases:
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tables = {row[0] for row in cursor.fetchall()}
         
-        assert 'nodes' in tables
-        assert 'edges' in tables
-        assert 'logs' in tables
+        assert 'kg_nodes' in tables
+        assert 'kg_edges' in tables
+        assert 'kg_logs' in tables
     
     def test_existing_database_with_other_tables(self, temp_db_path):
         """Test that GhostKG preserves existing tables in the database."""
@@ -83,9 +83,9 @@ class TestExistingDatabases:
         tables = {row[0] for row in cursor.fetchall()}
         
         assert 'users' in tables  # Original table preserved
-        assert 'nodes' in tables  # GhostKG table added
-        assert 'edges' in tables  # GhostKG table added
-        assert 'logs' in tables   # GhostKG table added
+        assert 'kg_nodes' in tables  # GhostKG table added
+        assert 'kg_edges' in tables  # GhostKG table added
+        assert 'kg_logs' in tables   # GhostKG table added
         
         # Verify original data is intact
         cursor.execute("SELECT COUNT(*) FROM users")

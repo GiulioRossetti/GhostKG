@@ -108,6 +108,11 @@ class SimulationTime:
     
     def __eq__(self, other: object) -> bool:
         """Equality comparison."""
+        # Allow comparison with datetime objects
+        if isinstance(other, datetime.datetime):
+            if self.is_datetime_mode():
+                return self.datetime_value == other
+            return False
         if not isinstance(other, SimulationTime):
             return False
         if self.is_datetime_mode() and other.is_datetime_mode():

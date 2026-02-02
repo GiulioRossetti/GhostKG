@@ -142,6 +142,13 @@ class KnowledgeDB:
                 """Rollback the current session."""
                 if self.db._session:
                     self.db._session.rollback()
+            
+            def close(self):
+                """Close the connection (delegate to database close)."""
+                try:
+                    self.db.close()
+                except Exception:
+                    pass
         
         class CursorMock:
             def __init__(self, db_instance):
@@ -673,12 +680,15 @@ class KnowledgeDB:
         try:
             session = self._get_new_session()
             
-            # Get edges where source is not 'I' and target matches topic
+            # Get edges where source is not 'I' and either source or target matches topic
             edges = session.query(Edge).filter(
                 and_(
                     Edge.owner_id == owner_id,
                     Edge.source != 'I',
-                    Edge.target.like(search_term)
+                    or_(
+                        Edge.source.like(search_term),
+                        Edge.target.like(search_term)
+                    )
                 )
             ).limit(limit).all()
             
