@@ -4,6 +4,13 @@ This directory contains detailed summaries of major features and improvements im
 
 ## Contents
 
+### Development and Tooling
+
+- **[DEV_MODE_SUMMARY.md](DEV_MODE_SUMMARY.md)** - Development mode CLI support
+  - `ghostkg_dev.py` script for running CLI without installation
+  - Documentation organization and cleanup
+  - Comprehensive development guide
+
 ### Core Database Features
 
 - **[EXISTING_DB_SUMMARY.md](EXISTING_DB_SUMMARY.md)** - Support for using existing SQLite databases
