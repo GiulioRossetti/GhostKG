@@ -346,8 +346,51 @@ gunicorn -w 4 -b 0.0.0.0:8000 'ghost_kg.cli:create_app("/var/www/history.json")'
 
 Note: The CLI currently uses Flask's development server. For production, consider implementing a proper WSGI application.
 
+## Troubleshooting
+
+### HTTP 403 Forbidden Error
+
+If you see "Access to localhost was denied" or "HTTP ERROR 403":
+
+1. **The server is working correctly** - This is typically a browser or system configuration issue
+
+2. **Quick fixes:**
+   ```bash
+   # Try a different browser
+   ghostkg serve --json history.json --browser
+   
+   # Try a different port
+   ghostkg serve --json history.json --port 8080 --browser
+   
+   # Try manual navigation
+   ghostkg serve --json history.json
+   # Then open http://127.0.0.1:5000 manually in browser
+   ```
+
+3. **Test with curl:**
+   ```bash
+   curl http://127.0.0.1:5000/
+   ```
+   If curl shows HTML, the server works and it's a browser issue.
+
+4. **Enable debug mode:**
+   ```bash
+   ghostkg serve --json history.json --debug
+   ```
+   Check if requests are being received.
+
+**See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed diagnostic steps and solutions.**
+
+### Common Issues
+
+- **Port already in use**: Try `--port 8080`
+- **Browser cache**: Clear cache or use incognito mode
+- **Firewall blocking**: Check firewall settings
+- **VPN interference**: Try disconnecting VPN temporarily
+
 ## See Also
 
 - [Core Components](CORE_COMPONENTS.md) - Agent and memory system architecture
 - [Database Schema](DATABASE_SCHEMA.md) - Database structure
 - [Examples](examples/) - Code examples and tutorials
+- [Troubleshooting Guide](TROUBLESHOOTING.md) - Detailed problem resolution

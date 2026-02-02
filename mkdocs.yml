@@ -68,4 +68,5 @@ nav:
   - Development: DEVELOPMENT.md
   - Visualization: VISUALIZATION.md
   - Examples: examples/index.md
+  - Troubleshooting: TROUBLESHOOTING.md
   - API Reference: API.md
