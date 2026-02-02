@@ -4,7 +4,20 @@ This section provides step-by-step walkthroughs of the example scripts included 
 
 ## Available Examples
 
-### 1. [External Program Integration](external_program.md)
+### 1. [Existing Database Integration](existing_database_integration.md) 🆕
+**File:** `examples/existing_database_integration.py`
+
+Learn how to integrate GhostKG into an application that already uses SQLite. This example shows:
+- Using GhostKG with an existing SQLite database
+- Preserving existing application tables
+- Creating GhostKG tables alongside application tables
+- Verifying data coexistence and integrity
+
+**Best for:** Integrating GhostKG into existing applications without creating a separate database.
+
+---
+
+### 2. [External Program Integration](external_program.md)
 **File:** `examples/external_program.py`
 
 Learn how to integrate GhostKG with your own application that uses external LLMs (like GPT-4, Claude, etc.) for text generation. This example shows:
@@ -17,7 +30,7 @@ Learn how to integrate GhostKG with your own application that uses external LLMs
 
 ---
 
-### 2. [Multi-Agent Conversation](use_case_example.md)
+### 3. [Multi-Agent Conversation](use_case_example.md)
 **File:** `examples/use_case_example.py`
 
 A complete example of two agents (Alice and Bob) having a multi-round conversation about Greenland using Ollama's LLaMA model. Demonstrates:
@@ -32,6 +45,9 @@ A complete example of two agents (Alice and Bob) having a multi-round conversati
 ---
 
 ### 3. [Temporal Simulation](hourly_simulation.md)
+---
+
+### 4. [Temporal Simulation](hourly_simulation.md)
 **File:** `examples/hourly_simulation.py`
 
 Shows how to run time-based simulations with realistic time gaps between interactions. Features:
@@ -44,7 +60,7 @@ Shows how to run time-based simulations with realistic time gaps between interac
 
 ---
 
-### 4. [Round-Based Simulation](round_based_simulation.md) 🆕
+### 5. [Round-Based Simulation](round_based_simulation.md) 🆕
 **File:** `examples/round_based_simulation.py`
 
 Demonstrates using **round-based time** `(day, hour)` tuples instead of datetime objects. Perfect for:
@@ -63,7 +79,7 @@ Demonstrates using **round-based time** `(day, hour)` tuples instead of datetime
 
 ---
 
-### 5. [Export and Visualization](export_history.md)
+### 6. [Export and Visualization](export_history.md)
 **File:** `examples/export_history.py`
 
 Learn how to export agent knowledge graphs for visualization. This example:
@@ -83,6 +99,9 @@ All examples can be run directly from the `examples/` directory:
 ```bash
 cd examples
 
+# Run the existing database integration example 🆕
+python existing_database_integration.py
+
 # Run the external program example
 python external_program.py
 
@@ -97,6 +116,7 @@ python round_based_simulation.py
 
 # Export history from a previous simulation
 python export_history.py
+```
 ```
 
 ## Prerequisites

@@ -9,6 +9,35 @@ GhostKG uses SQLite for persistence, with three main tables:
 - **edges**: Relationships (triplets) between entities with sentiment
 - **logs**: Interaction history for debugging and analysis
 
+## Working with Existing Databases
+
+**GhostKG is designed to work seamlessly with existing SQLite databases.** You can:
+
+1. **Use an existing database file**: GhostKG will create its tables if they don't exist
+2. **Preserve existing tables**: Any existing tables in the database are left untouched
+3. **Share a database**: Multiple applications can use the same SQLite file
+4. **Reuse GhostKG tables**: Multiple agents can share the same GhostKG tables
+
+### Example: Using an Existing Database
+
+```python
+from ghost_kg import GhostAgent
+
+# Connect to your existing database
+agent = GhostAgent("MyAgent", db_path="/path/to/existing_app.db")
+
+# GhostKG creates its tables (nodes, edges, logs) if they don't exist
+# Your existing tables remain untouched
+agent.learn_triplet("Python", "is", "great", Rating.Good)
+```
+
+### Database Initialization Behavior
+
+- **File doesn't exist**: SQLite creates a new database file automatically
+- **File exists, tables don't exist**: GhostKG creates its tables using `CREATE TABLE IF NOT EXISTS`
+- **Tables exist**: GhostKG reuses existing tables without modification
+- **Schema migration**: Automatically adds missing columns (e.g., `sim_day`, `sim_hour`) to existing tables
+
 ## Database Architecture
 
 ```

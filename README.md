@@ -16,6 +16,7 @@ GhostKG is a Python package that provides dynamic knowledge graph management for
 - 🔌 **Flexible Integration**: Use with any LLM (GPT-4, Claude, Ollama, etc.)
 - 🎯 **External API**: Decouple KG management from LLM logic for maximum flexibility
 - ⚡ **Fast Mode**: Optional GLiNER+TextBlob for quick extraction without LLM calls
+- 💾 **Database Flexibility**: Works with existing SQLite databases, preserving other tables
 
 ## Installation
 
