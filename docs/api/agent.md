@@ -59,7 +59,7 @@ GhostAgent
 ├── Knowledge Graph (NetworkX + SQLite)
 ├── Memory System (FSRS)
 ├── Simulation Clock (datetime)
-└── LLM Client (Ollama, optional)
+└── LLM Service (supports Ollama, OpenAI, Anthropic, etc.)
 ```
 
 ## API Reference

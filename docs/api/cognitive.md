@@ -53,9 +53,9 @@ loop.reflect("I believe in economic security")
 - Fast processing (~100 messages/second)
 
 ### LLM Mode
-- Uses Ollama for semantic triplet extraction
+- Uses LLM service (supports Ollama, OpenAI, Anthropic, Google, Cohere)
 - Higher quality extraction
-- Requires LLM server
+- Requires LLM service
 - Slower processing (~1-5 messages/second)
 
 ## API Reference

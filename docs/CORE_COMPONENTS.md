@@ -256,7 +256,8 @@ def __init__(
 **Parameters**:
 - `name`: Unique agent identifier
 - `db_path`: SQLite database file path
-- `llm_host`: Ollama server URL (for CognitiveLoop)
+- `llm_host`: LLM server URL (for backward compatibility with Ollama)
+- `llm_service`: Optional LLMService instance (supports Ollama, OpenAI, Anthropic, etc.)
 
 ### Attributes
 
@@ -264,7 +265,8 @@ def __init__(
 self.name              # Agent's name
 self.db                # KnowledgeDB instance
 self.fsrs              # FSRS instance
-self.client            # Ollama client
+self.client            # LLM client (backward compatibility)
+self.llm_service       # LLMService instance (supports multiple providers)
 self.current_time      # Simulation time
 ```
 
@@ -385,8 +387,8 @@ def __init__(
 
 **Parameters**:
 - `agent`: GhostAgent instance
-- `model`: Ollama model name
-- `fast_mode`: Use GLiNER+TextBlob (True) or LLM (False)
+- `model`: LLM model name (e.g., "llama3.2", "gpt-4", "claude-3-opus")
+- `fast_mode`: Use GLiNER+TextBlob (True) or LLM service (False)
 
 ### Key Methods
 
@@ -403,7 +405,7 @@ def __init__(
    - Very fast, no LLM needed
 
 2. **LLM Mode** (Semantic):
-   - Send text to LLM
+   - Send text to LLM service (Ollama, OpenAI, Anthropic, etc.)
    - Extract structured knowledge
    - World facts, partner stance, agent reaction
    - More accurate, slower
@@ -662,9 +664,14 @@ def __init__(self, db_path: str = "agent_memory.db")
 
 ### Key Methods
 
-#### create_agent(name, llm_host)
+#### create_agent(name, llm_host, llm_service)
 
 **Purpose**: Create or retrieve an agent.
+
+**Parameters**:
+- `name`: Agent identifier
+- `llm_host`: Optional LLM host URL (for backward compatibility)
+- `llm_service`: Optional LLMService instance (supports multiple providers)
 
 **Returns**: GhostAgent instance
 
