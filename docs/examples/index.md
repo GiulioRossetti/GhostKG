@@ -33,14 +33,14 @@ Learn how to integrate GhostKG with your own application that uses external LLMs
 ### 3. [Multi-Agent Conversation](use_case_example.md)
 **File:** `examples/use_case_example.py`
 
-A complete example of two agents (Alice and Bob) having a multi-round conversation about Greenland using Ollama's LLaMA model. Demonstrates:
+A complete example of two agents (Alice and Bob) having a multi-round conversation about Greenland using LLM services. Demonstrates:
 - Setting up the simulation time
 - Processing content and retrieving context atomically
-- Using external LLM for response generation
+- Using LLM service (supports Ollama, OpenAI, Anthropic, etc.)
 - Both Fast Mode (GLiNER) and LLM Mode for triplet extraction
 - Knowledge graph evolution over time
 
-**Best for:** Understanding the complete workflow of multi-agent simulations.
+**Best for:** Understanding the complete workflow of multi-agent simulations with any LLM provider.
 
 ---
 
@@ -116,13 +116,13 @@ python existing_database_integration.py
 # Run the external program example
 python external_program.py
 
-# Run the multi-agent conversation (requires Ollama)
+# Run the multi-agent conversation (requires LLM service)
 python use_case_example.py
 
 # Run the temporal simulation with datetime
 python hourly_simulation.py
 
-# Run the round-based simulation (no Ollama required) 🆕
+# Run the round-based simulation (no LLM required) 🆕
 python round_based_simulation.py
 
 # Export and visualize (using CLI) 🆕
@@ -131,14 +131,16 @@ ghostkg export --database use_case_example.db --serve --browser
 # Or in dev mode
 python ../ghostkg_dev.py export --database use_case_example.db --serve --browser
 ```
-```
 
 ## Prerequisites
 
 Different examples have different requirements:
 
 - **Base examples** (external_program.py, hourly_simulation.py): Only core GhostKG
-- **LLM examples** (use_case_example.py): Requires Ollama with llama3.2 model
+- **LLM examples** (use_case_example.py): Requires an LLM service:
+  - **Ollama** (local): Install and run `ollama serve`, then `ollama pull llama3.2`
+  - **OpenAI**: Set `OPENAI_API_KEY` environment variable
+  - **Anthropic**: Set `ANTHROPIC_API_KEY` environment variable
 - **Fast mode**: Requires GLiNER and TextBlob (`pip install gliner textblob`)
 
 See the [Installation Guide](https://github.com/GiulioRossetti/GhostKG#installation) for setup instructions.
