@@ -156,8 +156,8 @@ R = (1 + elapsed_days / (9 * stability)) ^ -1
 ### Example Usage
 
 ```python
-from ghost_kg.core import FSRS, Rating
-from ghost_kg.storage import NodeState
+from ghost_kg import FSRS, Rating
+from ghost_kg import NodeState
 import datetime
 
 fsrs = FSRS()
@@ -216,7 +216,7 @@ class NodeState:
 ### Example
 
 ```python
-from ghost_kg.storage import NodeState
+from ghost_kg import NodeState
 import datetime
 
 state = NodeState(
@@ -452,7 +452,7 @@ print(response)  # "I support renewable energy initiatives..."
 
 ### Fast Mode Details
 
-**Requirements**: `pip install gliner textblob`
+**Requirements**: `pip install gliner vaderSentiment`
 
 **Process**:
 1. **Entity Extraction** (GLiNER):
@@ -498,10 +498,10 @@ print(response)  # "I support renewable energy initiatives..."
 
 ### Schema
 
-#### nodes Table
+#### kg_nodes Table
 
 ```sql
-CREATE TABLE nodes (
+CREATE TABLE kg_nodes (
     owner_id TEXT,        -- Agent name
     id TEXT,              -- Node identifier
     stability REAL,       -- FSRS stability
@@ -510,39 +510,60 @@ CREATE TABLE nodes (
     reps INTEGER,         -- Review count
     state INTEGER,        -- FSRS state (0/1/2)
     created_at TIMESTAMP, -- Creation time
+    sim_day INTEGER,      -- Simulation day (round-based time)
+    sim_hour INTEGER,     -- Simulation hour (round-based time)
     PRIMARY KEY (owner_id, id)
 )
 ```
 
-#### edges Table
+**Indexes:**
+- `idx_kg_nodes_owner` on `owner_id`
+- `idx_kg_nodes_last_review` on `(owner_id, last_review)`
+
+#### kg_edges Table
 
 ```sql
-CREATE TABLE edges (
+CREATE TABLE kg_edges (
     owner_id TEXT,        -- Agent name
     source TEXT,          -- Subject entity
     target TEXT,          -- Object entity
     relation TEXT,        -- Relationship type
-    weight REAL,          -- Connection strength
+    weight REAL,          -- Connection strength (default: 1.0)
     sentiment REAL,       -- Emotional valence [-1, 1]
     created_at TIMESTAMP, -- Creation time
+    sim_day INTEGER,      -- Simulation day (round-based time)
+    sim_hour INTEGER,     -- Simulation hour (round-based time)
     PRIMARY KEY (owner_id, source, target, relation),
-    FOREIGN KEY(owner_id, source) REFERENCES nodes(owner_id, id),
-    FOREIGN KEY(owner_id, target) REFERENCES nodes(owner_id, id)
+    FOREIGN KEY(owner_id, source) REFERENCES kg_nodes(owner_id, id),
+    FOREIGN KEY(owner_id, target) REFERENCES kg_nodes(owner_id, id),
+    CHECK (sentiment >= -1.0 AND sentiment <= 1.0)
 )
 ```
 
-#### logs Table
+**Indexes:**
+- `idx_kg_edges_owner_source` on `(owner_id, source)`
+- `idx_kg_edges_owner_target` on `(owner_id, target)`
+- `idx_kg_edges_created` on `(owner_id, created_at)`
+
+#### kg_logs Table
 
 ```sql
-CREATE TABLE logs (
+CREATE TABLE kg_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     agent_name TEXT,      -- Agent name
-    action_type TEXT,     -- READ/WRITE
-    content TEXT,         -- Text content
-    annotations JSON,     -- Metadata
-    timestamp TIMESTAMP   -- Action time
+    action_type TEXT,     -- Action type (e.g., "READ", "WRITE")
+    content TEXT,         -- Text content (nullable)
+    content_uuid TEXT,    -- Content UUID reference (nullable)
+    annotations TEXT,     -- Metadata as JSON string
+    timestamp TIMESTAMP,  -- Action time
+    sim_day INTEGER,      -- Simulation day (round-based time)
+    sim_hour INTEGER      -- Simulation hour (round-based time)
 )
 ```
+
+**Indexes:**
+- `idx_kg_logs_agent_time` on `(agent_name, timestamp)`
+- `idx_kg_logs_action` on `(action_type, timestamp)`
 
 ### Key Methods
 
@@ -585,7 +606,7 @@ CREATE TABLE logs (
 **Query Logic**:
 ```sql
 SELECT source, relation, target, sentiment 
-FROM edges
+FROM kg_edges
 WHERE owner_id = ?
   AND (source = 'I' OR source = ?)  -- Agent's own beliefs
   AND (
@@ -610,7 +631,7 @@ LIMIT 8
 **Query Logic**:
 ```sql
 SELECT source, relation, target
-FROM edges
+FROM kg_edges
 WHERE owner_id = ?
   AND source != 'I'               -- Not agent's beliefs
   AND source != ?                 -- Not agent's statements

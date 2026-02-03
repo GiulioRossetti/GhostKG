@@ -205,14 +205,14 @@ FSRS (Free Spaced Repetition Scheduler) algorithm configuration.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `parameters` | `List[float]` | 17 optimized values | FSRS algorithm parameters |
+| `parameters` | `List[float]` | 21 optimized values | FSRS algorithm parameters |
 
 **Example**:
 ```python
 from ghost_kg import FSRSConfig
 
 fsrs = FSRSConfig(
-    parameters=[0.4, 0.6, 2.4, ...] # 17 float values
+    parameters=[0.212, 1.2931, 2.3065, ...]  # 21 float values
 )
 ```
 

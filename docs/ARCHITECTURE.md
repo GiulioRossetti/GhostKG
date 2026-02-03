@@ -297,9 +297,9 @@ SQLite Database
 - Interaction logging
 
 **Schema:**
-- `nodes` - Entities with FSRS state
-- `edges` - Relationships (triplets) with sentiment
-- `logs` - Interaction history with annotations
+- `kg_nodes` - Entities with FSRS state
+- `kg_edges` - Relationships (triplets) with sentiment
+- `kg_logs` - Interaction history with annotations
 
 ### Persistence Layer
 
