@@ -8,9 +8,12 @@ from ghost_kg import CognitiveLoop, GhostAgent, LLMError, ExtractionError
 def mock_agent(tmp_path):
     """Create a mock agent for testing."""
     db_path = tmp_path / "test.db"
-    agent = GhostAgent("TestAgent", str(db_path))
-    # Mock the client to avoid actual LLM calls
-    agent.client = Mock()
+    # Create mock LLM service
+    mock_llm_service = Mock()
+    mock_llm_service.chat.return_value = {
+        'message': {'content': '{"result": "test"}'}
+    }
+    agent = GhostAgent("TestAgent", str(db_path), llm_service=mock_llm_service)
     return agent
 
 
@@ -52,7 +55,7 @@ class TestCognitiveLoop:
             loop = CognitiveLoop(mock_agent)
             
             # Mock successful LLM response
-            mock_agent.client.chat.return_value = {
+            mock_agent.llm_service.chat.return_value = {
                 'message': {'content': '{"result": "test"}'}
             }
             
@@ -68,7 +71,7 @@ class TestCognitiveLoop:
             loop = CognitiveLoop(mock_agent)
             
             # Mock failed LLM response
-            mock_agent.client.chat.side_effect = Exception("LLM error")
+            mock_agent.llm_service.chat.side_effect = Exception("LLM error")
             
             with pytest.raises(LLMError):
                 loop._call_llm_with_retry("test prompt", max_retries=2)
@@ -164,7 +167,7 @@ class TestCognitiveLoop:
             mock_agent.learn_triplet = Mock()
             
             # Mock LLM response with missing fields
-            mock_agent.client.chat.return_value = {
+            mock_agent.llm_service.chat.return_value = {
                 'message': {'content': '{"my_expressed_stances": [{"relation": "support"}, {"target": "UBI"}, {}, {"relation": "oppose", "target": "taxes"}]}'}
             }
             

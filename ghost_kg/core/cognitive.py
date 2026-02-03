@@ -54,29 +54,35 @@ class CognitiveLoop:
         try:
             if self.fast_mode:
                 self.extractor = get_extractor(
-                    fast_mode=True, client=None, model=None  # type: ignore[arg-type]
+                    fast_mode=True, llm_service=None, model=None  # type: ignore[arg-type]
                 )
             else:
-                # Use agent's LLM service if available, fallback to client
-                llm_service = getattr(self.agent, 'llm_service', None)
+                # Require LLM service for LLM mode
+                if self.agent.llm_service is None:
+                    raise ValueError(
+                        "LLM service is required for CognitiveLoop in LLM mode. "
+                        "Please provide llm_service when creating the agent."
+                    )
                 self.extractor = get_extractor(
                     fast_mode=False,
-                    client=self.agent.client,
+                    llm_service=self.agent.llm_service,
                     model=self.model or "llama3.2",  # type: ignore[arg-type]
                     max_retries=3,
-                    llm_service=llm_service,
                 )
         except ImportError as e:
             print(f"Warning: {e}")
             print("Falling back to LLM mode")
             self.fast_mode = False
-            llm_service = getattr(self.agent, 'llm_service', None)
+            if self.agent.llm_service is None:
+                raise ValueError(
+                    "LLM service is required for CognitiveLoop. "
+                    "Please provide llm_service when creating the agent."
+                ) from e
             self.extractor = get_extractor(
                 fast_mode=False,
-                client=self.agent.client,
+                llm_service=self.agent.llm_service,
                 model=self.model,  # type: ignore[arg-type]
                 max_retries=3,
-                llm_service=llm_service,
             )
 
     def _call_llm_with_retry(
@@ -95,8 +101,12 @@ class CognitiveLoop:
             Dict[str, Any]: LLM response
 
         Raises:
-            LLMError: If all retries fail
+            LLMError: If all retries fail or if no LLM service is available
         """
+        # Require LLM service
+        if self.agent.llm_service is None:
+            raise LLMError("No LLM service available. Please provide llm_service when creating the agent.")
+        
         for attempt in range(max_retries):
             try:
                 kwargs = {
@@ -105,14 +115,8 @@ class CognitiveLoop:
                 if format:
                     kwargs["format"] = format
 
-                # Use agent's LLM service if available, fallback to direct client
-                if hasattr(self.agent, 'llm_service') and self.agent.llm_service is not None:
-                    res = self.agent.llm_service.chat(model=self.model, **kwargs)
-                elif self.agent.client is not None:
-                    kwargs["model"] = self.model
-                    res = self.agent.client.chat(**kwargs)
-                else:
-                    raise LLMError("No LLM service or client available")
+                # Use agent's LLM service
+                res = self.agent.llm_service.chat(model=self.model, **kwargs)
                 
                 return res  # type: ignore[no-any-return]
 

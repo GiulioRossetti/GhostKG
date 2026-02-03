@@ -280,31 +280,27 @@ class LLMExtractor(TripletExtractor):
     - Agent's reaction (agent's opinion)
 
     This is slower but more semantically accurate than fast mode.
-    Supports both direct Ollama client (legacy) and unified LLMService.
+    Requires LLMService for unified access to any LLM provider.
     """
 
     def __init__(
         self, 
-        client: Optional[Any] = None,
+        llm_service: LLMServiceBase,
         model: str = "llama3.2", 
         max_retries: int = 3,
-        llm_service: Optional[LLMServiceBase] = None,
     ) -> None:
         """
         Initialize LLM extractor.
 
         Args:
-            client (Optional[Any]): Ollama client instance (legacy, for backward compatibility)
+            llm_service (LLMServiceBase): LLM service for any provider (required)
             model (str): Model name to use for extraction
             max_retries (int): Maximum number of retry attempts on failure
-            llm_service (Optional[LLMServiceBase]): LLM service for any provider.
-                                                     If provided, overrides client.
 
         Returns:
             None
         """
         self.llm_service = llm_service
-        self.client = client
         self.model = model
         self.max_retries = max_retries
 
@@ -351,21 +347,12 @@ class LLMExtractor(TripletExtractor):
 
         for attempt in range(self.max_retries):
             try:
-                # Use LLM service if available, fallback to direct client
-                if self.llm_service is not None:
-                    res = self.llm_service.chat(
-                        messages=[{"role": "user", "content": prompt}],
-                        model=self.model,
-                        format="json",
-                    )
-                elif self.client is not None:
-                    res = self.client.chat(
-                        model=self.model,
-                        messages=[{"role": "user", "content": prompt}],
-                        format="json",
-                    )
-                else:
-                    raise LLMError("No LLM service or client available")
+                # Use LLM service
+                res = self.llm_service.chat(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=self.model,
+                    format="json",
+                )
                 
                 data = json.loads(res["message"]["content"])
                 print(f"   > LLM extracted triplets successfully")
@@ -389,37 +376,34 @@ class LLMExtractor(TripletExtractor):
 
 def get_extractor(
     fast_mode: bool,
-    client: Optional[Any] = None,
+    llm_service: Optional[LLMServiceBase] = None,
     model: str = "llama3.2",
     max_retries: int = 3,
-    llm_service: Optional[LLMServiceBase] = None,
 ) -> TripletExtractor:
     """
     Factory function to get appropriate extractor.
 
     Args:
         fast_mode (bool): If True, use fast extractor; otherwise use LLM
-        client (Optional[Any]): Ollama client (legacy, for backward compatibility)
+        llm_service (Optional[LLMServiceBase]): LLM service for any provider (required for LLM mode)
         model (str): Model name (for LLM mode)
         max_retries (int): Maximum number of retry attempts on failure
-        llm_service (Optional[LLMServiceBase]): LLM service for any provider.
-                                                 If provided, overrides client.
 
     Returns:
         TripletExtractor: TripletExtractor instance
 
     Raises:
         ImportError: If fast mode requested but dependencies not available
-        ValueError: If LLM mode requested but no client or service provided
+        ValueError: If LLM mode requested but no service provided
     """
     if fast_mode:
         if not HAS_FAST_MODE:
             raise ImportError(
-                "Fast mode requires 'gliner' and 'textblob'. "
-                "Install with: pip install gliner textblob"
+                "Fast mode requires 'gliner' and 'vaderSentiment'. "
+                "Install with: pip install gliner vaderSentiment"
             )
         return FastExtractor()
     else:
-        if llm_service is None and client is None:
-            raise ValueError("LLM mode requires an LLM service or Ollama client")
-        return LLMExtractor(client=client, model=model, max_retries=max_retries, llm_service=llm_service)
+        if llm_service is None:
+            raise ValueError("LLM mode requires an LLM service. Please provide llm_service parameter.")
+        return LLMExtractor(llm_service=llm_service, model=model, max_retries=max_retries)

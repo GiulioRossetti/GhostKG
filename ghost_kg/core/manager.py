@@ -49,7 +49,6 @@ class AgentManager:
     def create_agent(
         self, 
         name: str, 
-        llm_host: str = "http://localhost:11434",
         llm_service: Optional[LLMServiceBase] = None,
     ) -> GhostAgent:
         """
@@ -57,9 +56,8 @@ class AgentManager:
 
         Args:
             name (str): Name of the agent
-            llm_host (str): LLM host URL (used if llm_service not provided)
             llm_service (Optional[LLMServiceBase]): LLM service instance for any provider.
-                                                     If provided, overrides llm_host.
+                                                     Optional - only needed if using CognitiveLoop.
 
         Returns:
             GhostAgent: GhostAgent instance
@@ -74,7 +72,6 @@ class AgentManager:
             self.agents[name] = GhostAgent(
                 name,
                 db_path=self.db_path,
-                llm_host=llm_host,
                 store_log_content=self.store_log_content,
                 llm_service=llm_service,
             )
