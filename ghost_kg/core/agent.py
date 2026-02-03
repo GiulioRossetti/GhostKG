@@ -26,6 +26,7 @@ except ImportError:
 from ..memory.fsrs import FSRS, Rating
 from ..storage.database import KnowledgeDB, NodeState
 from ..utils.time_utils import SimulationTime, parse_time_input
+from ..llm.service import LLMServiceBase, get_llm_service
 
 
 class GhostAgent:
@@ -43,7 +44,8 @@ class GhostAgent:
         name (str): Agent's unique identifier
         db (KnowledgeDB): Database connection for knowledge storage
         fsrs (FSRS): Memory scheduler for tracking concept strength
-        client (Client): Ollama LLM client for generation
+        llm_service (LLMServiceBase): Unified LLM service for any provider
+        client (Client): Legacy Ollama client (for backward compatibility)
         current_time (SimulationTime): Simulation clock for temporal tracking
 
     Methods:
@@ -59,6 +61,7 @@ class GhostAgent:
         db_path: str = "agent_memory.db",
         llm_host: str = "http://localhost:11434",
         store_log_content: bool = False,
+        llm_service: Optional[LLMServiceBase] = None,
     ) -> None:
         """
         Initialize a new GhostAgent.
@@ -66,9 +69,11 @@ class GhostAgent:
         Args:
             name (str): Unique identifier for the agent
             db_path (str): Path to SQLite database file
-            llm_host (str): URL for Ollama LLM server
+            llm_host (str): URL for Ollama LLM server (used if llm_service not provided)
             store_log_content (bool): If True, stores full content in log table.
                                      If False (default), stores UUID instead of content.
+            llm_service (Optional[LLMServiceBase]): LLM service instance for any provider.
+                                                     If provided, overrides llm_host.
 
         Returns:
             None
@@ -77,11 +82,22 @@ class GhostAgent:
         self.db = KnowledgeDB(db_path, store_log_content=store_log_content)
         self.fsrs = FSRS()
 
-        # Initialize ollama client if available
-        if HAS_OLLAMA:
-            self.client = Client(host=llm_host)
+        # Initialize LLM service (priority: explicit service > create from host > None)
+        if llm_service is not None:
+            self.llm_service = llm_service
+            # For backward compatibility, also set client to the service if it's Ollama
+            if hasattr(llm_service, 'client'):
+                self.client = llm_service.client
+            else:
+                self.client = None
         else:
-            self.client = None
+            # Fallback to creating Ollama service from host
+            if HAS_OLLAMA:
+                self.llm_service = get_llm_service("ollama", "llama3.2", base_url=llm_host)
+                self.client = Client(host=llm_host)  # For backward compatibility
+            else:
+                self.llm_service = None
+                self.client = None
 
         # Simulation Clock - initialized with datetime mode
         self.current_time = SimulationTime.from_datetime(

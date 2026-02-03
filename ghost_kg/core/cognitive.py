@@ -57,21 +57,26 @@ class CognitiveLoop:
                     fast_mode=True, client=None, model=None  # type: ignore[arg-type]
                 )
             else:
+                # Use agent's LLM service if available, fallback to client
+                llm_service = getattr(self.agent, 'llm_service', None)
                 self.extractor = get_extractor(
                     fast_mode=False,
                     client=self.agent.client,
                     model=self.model or "llama3.2",  # type: ignore[arg-type]
                     max_retries=3,
+                    llm_service=llm_service,
                 )
         except ImportError as e:
             print(f"Warning: {e}")
             print("Falling back to LLM mode")
             self.fast_mode = False
+            llm_service = getattr(self.agent, 'llm_service', None)
             self.extractor = get_extractor(
                 fast_mode=False,
                 client=self.agent.client,
                 model=self.model,  # type: ignore[arg-type]
                 max_retries=3,
+                llm_service=llm_service,
             )
 
     def _call_llm_with_retry(
@@ -95,13 +100,20 @@ class CognitiveLoop:
         for attempt in range(max_retries):
             try:
                 kwargs = {
-                    "model": self.model,
                     "messages": [{"role": "user", "content": prompt}],
                 }
                 if format:
                     kwargs["format"] = format
 
-                res = self.agent.client.chat(**kwargs)
+                # Use agent's LLM service if available, fallback to direct client
+                if hasattr(self.agent, 'llm_service') and self.agent.llm_service is not None:
+                    res = self.agent.llm_service.chat(model=self.model, **kwargs)
+                elif self.agent.client is not None:
+                    kwargs["model"] = self.model
+                    res = self.agent.client.chat(**kwargs)
+                else:
+                    raise LLMError("No LLM service or client available")
+                
                 return res  # type: ignore[no-any-return]
 
             except Exception as e:

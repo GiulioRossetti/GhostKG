@@ -15,6 +15,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, Union
 
 from ghost_kg.utils.exceptions import LLMError
+from ghost_kg.llm.service import LLMServiceBase
 
 # Optional dependencies for fast mode
 try:
@@ -279,20 +280,30 @@ class LLMExtractor(TripletExtractor):
     - Agent's reaction (agent's opinion)
 
     This is slower but more semantically accurate than fast mode.
+    Supports both direct Ollama client (legacy) and unified LLMService.
     """
 
-    def __init__(self, client: Any, model: str = "llama3.2", max_retries: int = 3) -> None:
+    def __init__(
+        self, 
+        client: Optional[Any] = None,
+        model: str = "llama3.2", 
+        max_retries: int = 3,
+        llm_service: Optional[LLMServiceBase] = None,
+    ) -> None:
         """
         Initialize LLM extractor.
 
         Args:
-            client (Any): Ollama client instance
+            client (Optional[Any]): Ollama client instance (legacy, for backward compatibility)
             model (str): Model name to use for extraction
             max_retries (int): Maximum number of retry attempts on failure
+            llm_service (Optional[LLMServiceBase]): LLM service for any provider.
+                                                     If provided, overrides client.
 
         Returns:
             None
         """
+        self.llm_service = llm_service
         self.client = client
         self.model = model
         self.max_retries = max_retries
@@ -340,11 +351,22 @@ class LLMExtractor(TripletExtractor):
 
         for attempt in range(self.max_retries):
             try:
-                res = self.client.chat(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    format="json",
-                )
+                # Use LLM service if available, fallback to direct client
+                if self.llm_service is not None:
+                    res = self.llm_service.chat(
+                        messages=[{"role": "user", "content": prompt}],
+                        model=self.model,
+                        format="json",
+                    )
+                elif self.client is not None:
+                    res = self.client.chat(
+                        model=self.model,
+                        messages=[{"role": "user", "content": prompt}],
+                        format="json",
+                    )
+                else:
+                    raise LLMError("No LLM service or client available")
+                
                 data = json.loads(res["message"]["content"])
                 print(f"   > LLM extracted triplets successfully")
                 return data  # type: ignore[no-any-return]
@@ -370,22 +392,25 @@ def get_extractor(
     client: Optional[Any] = None,
     model: str = "llama3.2",
     max_retries: int = 3,
+    llm_service: Optional[LLMServiceBase] = None,
 ) -> TripletExtractor:
     """
     Factory function to get appropriate extractor.
 
     Args:
         fast_mode (bool): If True, use fast extractor; otherwise use LLM
-        client (Optional[Any]): Ollama client (required for LLM mode)
+        client (Optional[Any]): Ollama client (legacy, for backward compatibility)
         model (str): Model name (for LLM mode)
         max_retries (int): Maximum number of retry attempts on failure
+        llm_service (Optional[LLMServiceBase]): LLM service for any provider.
+                                                 If provided, overrides client.
 
     Returns:
         TripletExtractor: TripletExtractor instance
 
     Raises:
         ImportError: If fast mode requested but dependencies not available
-        ValueError: If LLM mode requested but no client provided
+        ValueError: If LLM mode requested but no client or service provided
     """
     if fast_mode:
         if not HAS_FAST_MODE:
@@ -395,6 +420,6 @@ def get_extractor(
             )
         return FastExtractor()
     else:
-        if client is None:
-            raise ValueError("LLM mode requires an Ollama client")
-        return LLMExtractor(client, model, max_retries)
+        if llm_service is None and client is None:
+            raise ValueError("LLM mode requires an LLM service or Ollama client")
+        return LLMExtractor(client=client, model=model, max_retries=max_retries, llm_service=llm_service)

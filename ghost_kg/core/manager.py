@@ -12,6 +12,7 @@ from .agent import GhostAgent
 from ..utils.exceptions import AgentNotFoundError, ValidationError
 from ..memory.fsrs import Rating
 from ..storage.database import KnowledgeDB
+from ..llm.service import LLMServiceBase
 
 
 class AgentManager:
@@ -45,13 +46,20 @@ class AgentManager:
         self.agents: Dict[str, GhostAgent] = {}
         self.db = KnowledgeDB(db_path, store_log_content=store_log_content)
 
-    def create_agent(self, name: str, llm_host: str = "http://localhost:11434") -> GhostAgent:
+    def create_agent(
+        self, 
+        name: str, 
+        llm_host: str = "http://localhost:11434",
+        llm_service: Optional[LLMServiceBase] = None,
+    ) -> GhostAgent:
         """
         Create or retrieve an agent.
 
         Args:
             name (str): Name of the agent
-            llm_host (str): LLM host URL (optional, for internal LLM operations)
+            llm_host (str): LLM host URL (used if llm_service not provided)
+            llm_service (Optional[LLMServiceBase]): LLM service instance for any provider.
+                                                     If provided, overrides llm_host.
 
         Returns:
             GhostAgent: GhostAgent instance
@@ -67,7 +75,8 @@ class AgentManager:
                 name,
                 db_path=self.db_path,
                 llm_host=llm_host,
-                store_log_content=self.store_log_content
+                store_log_content=self.store_log_content,
+                llm_service=llm_service,
             )
         return self.agents[name]
 
