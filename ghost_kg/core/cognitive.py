@@ -34,6 +34,22 @@ class CognitiveLoop:
         extractor: Triplet extraction strategy (fast or LLM)
     """
 
+    @staticmethod
+    def _clamp_sentiment(sentiment: float) -> float:
+        """
+        Clamp sentiment value to valid range [-1.0, 1.0].
+        
+        LLMs sometimes return sentiment values outside the valid range.
+        This helper ensures all sentiment values are within bounds.
+        
+        Args:
+            sentiment (float): Raw sentiment value from LLM
+            
+        Returns:
+            float: Clamped sentiment value in range [-1.0, 1.0]
+        """
+        return max(-1.0, min(1.0, sentiment))
+
     def __init__(self, agent: GhostAgent, model: str = "llama3.2", fast_mode: bool = False) -> None:
         """
         Initialize cognitive loop for an agent.
@@ -167,7 +183,7 @@ class CognitiveLoop:
             source = item.get("source", "")
             relation = item.get("relation", "")
             target = item.get("target", "")
-            sentiment = item.get("sentiment", 0.0)
+            sentiment = self._clamp_sentiment(item.get("sentiment", 0.0))
             
             # Skip malformed triplets missing required fields
             if not source or not relation or not target:
@@ -179,7 +195,7 @@ class CognitiveLoop:
         for item in data.get("my_reaction", []):
             relation = item.get("relation", "")
             target = item.get("target", "")
-            s_score = item.get("sentiment", 0.0)
+            s_score = self._clamp_sentiment(item.get("sentiment", 0.0))
             rating = item.get("rating", Rating.Good)
             
             # Skip malformed triplets missing required fields
@@ -246,7 +262,7 @@ class CognitiveLoop:
             for item in data.get("my_expressed_stances", []):
                 relation = item.get("relation", "")
                 target = item.get("target", "")
-                s_score = item.get("sentiment", 0.0)
+                s_score = self._clamp_sentiment(item.get("sentiment", 0.0))
                 
                 # Skip malformed triplets missing required fields
                 if not relation or not target:
