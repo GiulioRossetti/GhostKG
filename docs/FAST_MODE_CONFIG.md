@@ -14,7 +14,7 @@ At the top of `examples/use_case_example.py`, you'll find:
 # ============================================================================
 # USE_FAST_MODE controls how triplets are extracted from text:
 #
-# - True (DEFAULT):  Uses GLiNER + TextBlob for fast, heuristic extraction
+# - True (DEFAULT):  Uses GLiNER + VADER for fast, heuristic extraction
 #                    Faster, no LLM needed for extraction, good for quick processing
 #                    Requires: pip install gliner textblob
 #
@@ -29,7 +29,7 @@ USE_FAST_MODE = True
 
 ### Fast Mode (USE_FAST_MODE = True) - DEFAULT
 
-- **Method**: Uses GLiNER for entity extraction and TextBlob for sentiment analysis
+- **Method**: Uses GLiNER for entity extraction and VADER for sentiment analysis
 - **Speed**: Very fast, no LLM calls needed for triplet extraction
 - **Accuracy**: Good for most use cases, uses heuristic rules
 - **Requirements**: `pip install gliner textblob`
@@ -37,7 +37,7 @@ USE_FAST_MODE = True
 
 **How it works:**
 1. GLiNER extracts entities (Topics, People, Concepts, Organizations)
-2. TextBlob analyzes sentiment of the text
+2. VADER analyzes sentiment of the text
 3. Creates triplets based on sentiment (supports, opposes, discusses, etc.)
 4. No external LLM needed for extraction (LLM still used for response generation)
 
@@ -89,7 +89,7 @@ When `USE_FAST_MODE = True`:
 - Triplets are set to `None` in the main loop
 - `process_and_get_context()` is called with `fast_mode=True`
 - CognitiveLoop internally uses `_absorb_fast()` method
-- GLiNER + TextBlob handle the extraction
+- GLiNER + VADER handle the extraction
 
 When `USE_FAST_MODE = False`:
 - `extract_triplets()` function is called using LLM
@@ -101,10 +101,10 @@ When `USE_FAST_MODE = False`:
 
 ### Fast Mode
 ```
-⚙️  Configuration: Triplet Extraction Mode = FAST (GLiNER + TextBlob)
+⚙️  Configuration: Triplet Extraction Mode = FAST (GLiNER + VADER)
 ...
 📥 Bob receives from Alice:
-  ⚡ Using FAST mode (GLiNER + TextBlob)
+  ⚡ Using FAST mode (GLiNER + VADER)
 ```
 
 ### LLM Mode

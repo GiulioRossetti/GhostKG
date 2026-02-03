@@ -141,6 +141,6 @@ Different examples have different requirements:
   - **Ollama** (local): Install and run `ollama serve`, then `ollama pull llama3.2`
   - **OpenAI**: Set `OPENAI_API_KEY` environment variable
   - **Anthropic**: Set `ANTHROPIC_API_KEY` environment variable
-- **Fast mode**: Requires GLiNER and TextBlob (`pip install gliner textblob`)
+- **Fast mode**: Requires GLiNER and VADER (`pip install gliner vaderSentiment`)
 
 See the [Installation Guide](https://github.com/GiulioRossetti/GhostKG#installation) for setup instructions.

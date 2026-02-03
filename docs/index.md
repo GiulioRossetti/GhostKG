@@ -161,7 +161,7 @@ Topics covered:
 **Guide to fast mode vs LLM mode for triplet extraction**
 
 Topics covered:
-- Fast mode (GLiNER + TextBlob)
+- Fast mode (GLiNER + VADER)
 - LLM mode (semantic extraction)
 - Configuration options
 - Trade-offs and use cases

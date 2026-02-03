@@ -91,7 +91,7 @@ from ghost_kg.manager import AgentManager
 
 **ghost_kg.extraction**
 - `extraction.py`: Strategies for extracting triplets from text
-  - FastExtractor: GLiNER + TextBlob (no LLM required)
+  - FastExtractor: GLiNER + VADER (no LLM required)
   - LLMExtractor: Deep semantic extraction with LLM
 
 **ghost_kg.utils**
@@ -280,12 +280,12 @@ SQLite Database
 
 **Responsibilities:**
 - Integrated LLM operations (optional)
-- Triplet extraction (fast mode: GLiNER+TextBlob, LLM mode: semantic)
+- Triplet extraction (fast mode: GLiNER+VADER, LLM mode: semantic)
 - Response generation
 - Self-reflection
 
 **Modes:**
-- Fast Mode: Heuristic extraction with GLiNER + TextBlob
+- Fast Mode: Heuristic extraction with GLiNER + VADER
 - LLM Mode: Deep semantic extraction with Ollama
 
 #### KnowledgeDB
@@ -421,7 +421,7 @@ manager.update_with_response("Alice", response)  # No triplets - uses LLM
 
 ### Why Support Both Fast and LLM Modes?
 
-**Decision**: Implement both GLiNER+TextBlob (fast) and LLM extraction
+**Decision**: Implement both GLiNER+VADER (fast) and LLM extraction
 
 **Rationale**:
 - Fast mode: Good for demos, testing, large-scale simulations

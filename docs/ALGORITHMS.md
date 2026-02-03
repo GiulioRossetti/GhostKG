@@ -389,13 +389,13 @@ Difficulty decreases when rated Easy, with linear damping providing more natural
 
 ## Sentiment Analysis
 
-### Fast Mode Sentiment (TextBlob)
+### Fast Mode Sentiment (VADER)
 
-When using fast mode, sentiment is calculated using TextBlob's polarity score:
+When using fast mode, sentiment is calculated using VADER's polarity score:
 
 **Formula:**
 ```
-sentiment = TextBlob(text).sentiment.polarity
+sentiment = VADER(text).sentiment.polarity
 ```
 
 **Range**: [-1.0, 1.0]

@@ -36,7 +36,7 @@ uv pip install -e .
 # Install with LLM support (Ollama)
 uv pip install -e ".[llm]"
 
-# Install with fast mode (GLiNER + TextBlob)
+# Install with fast mode (GLiNER + VADER)
 uv pip install -e ".[fast]"
 
 # Install with all optional features

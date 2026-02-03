@@ -388,7 +388,7 @@ def __init__(
 **Parameters**:
 - `agent`: GhostAgent instance
 - `model`: LLM model name (e.g., "llama3.2", "gpt-4", "claude-3-opus")
-- `fast_mode`: Use GLiNER+TextBlob (True) or LLM service (False)
+- `fast_mode`: Use GLiNER+VADER (True) or LLM service (False)
 
 ### Key Methods
 
@@ -398,9 +398,9 @@ def __init__(
 
 **Modes**:
 
-1. **Fast Mode** (GLiNER + TextBlob):
+1. **Fast Mode** (GLiNER + VADER):
    - Extract entities with GLiNER
-   - Analyze sentiment with TextBlob
+   - Analyze sentiment with VADER
    - Create triplets heuristically
    - Very fast, no LLM needed
 
@@ -459,7 +459,7 @@ print(response)  # "I support renewable energy initiatives..."
    - Labels: ["Topic", "Person", "Concept", "Organization"]
    - Extracts named entities from text
    
-2. **Sentiment Analysis** (TextBlob):
+2. **Sentiment Analysis** (VADER):
    - Polarity: -1.0 (negative) to 1.0 (positive)
    - Determines emotional tone
    
