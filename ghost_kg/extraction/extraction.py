@@ -281,16 +281,13 @@ class LLMExtractor(TripletExtractor):
     This is slower but more semantically accurate than fast mode.
     """
 
-    def __init__(
-        self, client: Any, model: str = "llama3.2", timeout: int = 30, max_retries: int = 3
-    ) -> None:
+    def __init__(self, client: Any, model: str = "llama3.2", max_retries: int = 3) -> None:
         """
         Initialize LLM extractor.
 
         Args:
             client (Any): Ollama client instance
             model (str): Model name to use for extraction
-            timeout (int): Timeout in seconds for LLM requests
             max_retries (int): Maximum number of retry attempts on failure
 
         Returns:
@@ -298,7 +295,6 @@ class LLMExtractor(TripletExtractor):
         """
         self.client = client
         self.model = model
-        self.timeout = timeout
         self.max_retries = max_retries
 
     def extract(self, text: str, author: str, agent_name: str) -> Dict[str, Any]:
@@ -368,15 +364,11 @@ class LLMExtractor(TripletExtractor):
                 )
                 time.sleep(wait_time)
 
-        # Should never reach here due to raise in loop
-        raise LLMError("All retries exhausted")
-
 
 def get_extractor(
     fast_mode: bool,
     client: Optional[Any] = None,
     model: str = "llama3.2",
-    timeout: int = 30,
     max_retries: int = 3,
 ) -> TripletExtractor:
     """
@@ -386,7 +378,6 @@ def get_extractor(
         fast_mode (bool): If True, use fast extractor; otherwise use LLM
         client (Optional[Any]): Ollama client (required for LLM mode)
         model (str): Model name (for LLM mode)
-        timeout (int): Timeout in seconds for LLM requests
         max_retries (int): Maximum number of retry attempts on failure
 
     Returns:
@@ -406,4 +397,4 @@ def get_extractor(
     else:
         if client is None:
             raise ValueError("LLM mode requires an Ollama client")
-        return LLMExtractor(client, model, timeout, max_retries)
+        return LLMExtractor(client, model, max_retries)

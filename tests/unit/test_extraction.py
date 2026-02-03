@@ -88,8 +88,7 @@ class TestLLMExtractor:
         """Test LLMExtractor initializes with retry parameters."""
         from unittest.mock import Mock
         mock_client = Mock()
-        extractor = LLMExtractor(mock_client, "llama3.2", timeout=60, max_retries=5)
-        assert extractor.timeout == 60
+        extractor = LLMExtractor(mock_client, "llama3.2", max_retries=5)
         assert extractor.max_retries == 5
     
     def test_extract_retry_on_failure(self):

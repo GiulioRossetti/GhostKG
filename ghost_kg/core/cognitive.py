@@ -61,7 +61,6 @@ class CognitiveLoop:
                     fast_mode=False,
                     client=self.agent.client,
                     model=self.model or "llama3.2",  # type: ignore[arg-type]
-                    timeout=30,
                     max_retries=3,
                 )
         except ImportError as e:
@@ -72,7 +71,6 @@ class CognitiveLoop:
                 fast_mode=False,
                 client=self.agent.client,
                 model=self.model,  # type: ignore[arg-type]
-                timeout=30,
                 max_retries=3,
             )
 
