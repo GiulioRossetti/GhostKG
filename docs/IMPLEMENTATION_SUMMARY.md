@@ -22,10 +22,12 @@ This implementation successfully addresses two requirements:
 **Problem**: LLM requests would fail silently, returning empty data instead of retrying transient failures.
 
 **Solution**: Implemented retry logic with exponential backoff (capped at 30 seconds) in:
+
 - `LLMExtractor.extract()` - For triplet extraction
 - `CognitiveLoop._call_llm_with_retry()` - For cognitive operations
 
 **Features**:
+
 - Configurable max_retries (default: 3)
 - Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s (capped)
 - Detailed logging of retry attempts
@@ -49,6 +51,7 @@ ghost_kg/llm/
 ```
 
 **Supported Providers**:
+
 - **Ollama** (local): llama3.2, mistral, gemma, etc.
 - **OpenAI**: gpt-4, gpt-3.5-turbo, etc.
 - **Anthropic**: claude-3-opus, claude-3-sonnet, claude-3-haiku
@@ -164,6 +167,7 @@ response = llm.chat(
 📄 **`docs/LLM_PROVIDERS.md`** (9,135 characters)
 
 Covers:
+
 - Installation for each provider
 - API key configuration
 - Usage examples
@@ -177,6 +181,7 @@ Covers:
 💻 **`examples/multi_provider_llm.py`** (9,020 characters)
 
 Demonstrates:
+
 - Using all 5 providers (Ollama, OpenAI, Anthropic, Google, Cohere)
 - Switching between providers
 - Integration with AgentManager
@@ -188,6 +193,7 @@ Demonstrates:
 ## Testing
 
 ### Test Coverage
+
 - **15 new LLM service tests** (`tests/unit/test_llm_service.py`)
 - **3 new retry logic tests** (`tests/unit/test_extraction.py`)
 - **123 total unit tests pass**
@@ -239,6 +245,7 @@ pytest tests/ -v
 ## Benefits
 
 ### For Users
+
 1. **Flexibility**: Choose the best model for your needs
 2. **Cost Control**: Start free with Ollama, scale to commercial
 3. **Privacy**: Keep data local with Ollama
@@ -246,6 +253,7 @@ pytest tests/ -v
 5. **Portability**: Switch providers without code changes
 
 ### For Developers
+
 1. **Unified API**: Single interface for all providers
 2. **Easy Integration**: Drop-in replacement ready
 3. **Well Tested**: 15 new tests, 100% pass rate
@@ -268,6 +276,7 @@ pytest tests/ -v
 ## Performance
 
 ### Retry Logic
+
 - **First retry**: 1 second
 - **Second retry**: 2 seconds  
 - **Third retry**: 4 seconds
@@ -292,6 +301,7 @@ Based on typical usage:
 ## Code Quality
 
 ### Code Review
+
 - ✅ **2 code reviews completed**
 - ✅ All issues addressed
 - ✅ Redundant env var calls removed
@@ -299,12 +309,14 @@ Based on typical usage:
 - ✅ Unreachable code removed
 
 ### Security
+
 - ✅ **CodeQL scan: 0 alerts**
 - ✅ Environment variable-based credentials
 - ✅ No hardcoded secrets
 - ✅ Input validation throughout
 
 ### Type Safety
+
 - ✅ Full type hints
 - ✅ MyPy configuration updated
 - ✅ Abstract base classes for interfaces
@@ -409,11 +421,13 @@ ollama list
 ## Support
 
 ### Documentation
+
 - **Main Guide**: `docs/LLM_PROVIDERS.md`
 - **Example Code**: `examples/multi_provider_llm.py`
 - **API Docs**: Docstrings in `ghost_kg/llm/service.py`
 
 ### Community
+
 - **Issues**: [GitHub Issues](https://github.com/GiulioRossetti/GhostKG/issues)
 - **Repository**: [GhostKG](https://github.com/GiulioRossetti/GhostKG)
 

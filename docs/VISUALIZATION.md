@@ -66,6 +66,7 @@ ghostkg export --database <db_path> [options]
 ```
 
 **Options:**
+
 - `--database`, `--db` (required): Path to database file or connection string
 - `--output`, `-o`: Output JSON file path (default: ./simulation_history.json in current directory)
 - `--agents`, `-a`: Comma-separated list of agent names (default: auto-detect)
@@ -98,6 +99,7 @@ ghostkg serve --json <json_file> [options]
 ```
 
 **Options:**
+
 - `--json`, `--json-file` (required): Path to JSON history file
 - `--host`: Host to bind server (default: localhost)
 - `--port`: Port to bind server (default: 5000)
@@ -189,6 +191,7 @@ history = exporter.export_history(
 ### ALL AGENTS View
 
 When "ALL AGENTS (Consolidated)" is selected:
+
 - Merges knowledge from all agents
 - Removes duplicate nodes and edges
 - Excludes self-referential "I" connections for clarity

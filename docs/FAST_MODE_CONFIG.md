@@ -36,6 +36,7 @@ USE_FAST_MODE = True
 - **Best for**: Quick processing, large-scale simulations, when LLM is unavailable
 
 **How it works:**
+
 1. GLiNER extracts entities (Topics, People, Concepts, Organizations)
 2. VADER analyzes sentiment of the text
 3. Creates triplets based on sentiment (supports, opposes, discusses, etc.)
@@ -50,6 +51,7 @@ USE_FAST_MODE = True
 - **Best for**: When accuracy is critical, complex texts, research purposes
 
 **How it works:**
+
 1. Sends text to LLM with structured prompt
 2. LLM extracts world facts, partner stances, and agent reactions
 3. Returns JSON with detailed semantic triplets
@@ -86,12 +88,14 @@ python examples/use_case_example.py
 ## Implementation Details
 
 When `USE_FAST_MODE = True`:
+
 - Triplets are set to `None` in the main loop
 - `process_and_get_context()` is called with `fast_mode=True`
 - CognitiveLoop internally uses `_absorb_fast()` method
 - GLiNER + VADER handle the extraction
 
 When `USE_FAST_MODE = False`:
+
 - `extract_triplets()` function is called using LLM
 - Extracted triplets are passed to `process_and_get_context()`
 - CognitiveLoop uses `_absorb_llm()` method or skips internal extraction

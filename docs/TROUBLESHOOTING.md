@@ -101,26 +101,31 @@ ghostkg serve --json history.json --port 8080
 #### Common Causes
 
 **1. Browser Security Settings**
+
 - Some browsers block localhost access in certain security modes
 - Try disabling strict security settings temporarily
 - Check if "Enhanced protection" or similar features are blocking requests
 
 **2. Firewall/Antivirus**
+
 - Some security software blocks local server connections
 - Add exception for Python or the specific port
 - Try temporarily disabling to test
 
 **3. VPN or Proxy**
+
 - VPNs can interfere with localhost access
 - Try disconnecting VPN temporarily
 - Check proxy settings in browser
 
 **4. Browser Extensions**
+
 - Ad blockers or privacy extensions might block requests
 - Try disabling extensions
 - Use incognito mode (extensions disabled by default)
 
 **5. System Hosts File**
+
 - Incorrect hosts file configuration
 - Check `/etc/hosts` (Mac/Linux) or `C:\Windows\System32\drivers\etc\hosts` (Windows)
 - Ensure `127.0.0.1 localhost` entry exists
@@ -128,16 +133,19 @@ ghostkg serve --json history.json --port 8080
 #### Platform-Specific Issues
 
 **macOS:**
+
 - Gatekeeper might block Python from network access
 - Go to System Preferences > Security & Privacy > Firewall > Firewall Options
 - Allow Python to accept incoming connections
 
 **Windows:**
+
 - Windows Firewall might block Python
 - Go to Windows Defender Firewall > Allow an app
 - Add Python to allowed apps
 
 **Linux:**
+
 - Check iptables or firewall rules
 - Ensure localhost traffic is allowed
 
@@ -263,6 +271,7 @@ ValidationError: sentiment must be between -1.0 and 1.0
 ```
 
 **Solution:** This should be automatically handled now with clamping. If it persists:
+
 1. Update to the latest version
 2. Report the issue with the specific text that caused it
 
@@ -290,6 +299,7 @@ ghostkg export --database database.db
 **Symptom:** Export completes but visualization is empty
 
 **Solution:** 
+
 1. Check if there are any logs in the database:
    ```python
    from ghost_kg.storage import KnowledgeDB

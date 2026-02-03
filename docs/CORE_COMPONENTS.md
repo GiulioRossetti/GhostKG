@@ -64,6 +64,7 @@ self.p = [
 **Range**: [0.1, ∞)
 
 **Interpretation**:
+
 - Low stability (< 1 day): Easily forgotten
 - Medium stability (1-30 days): Normal retention
 - High stability (> 30 days): Well-remembered
@@ -75,6 +76,7 @@ self.p = [
 **Range**: [1, 10]
 
 **Interpretation**:
+
 - Low difficulty (< 3): Easy to remember
 - Medium difficulty (3-7): Normal complexity
 - High difficulty (> 7): Challenging to recall
@@ -91,6 +93,7 @@ R = (1 + elapsed_days / (9 * stability)) ^ -1
 ```
 
 **Interpretation**:
+
 - R ≈ 1.0: Just learned or well-retained
 - R ≈ 0.9: At the edge of forgetting
 - R < 0.5: Likely forgotten
@@ -100,6 +103,7 @@ R = (1 + elapsed_days / (9 * stability)) ^ -1
 **Definition**: Learning state of the knowledge.
 
 **Values**:
+
 - `0` - New: Never learned
 - `1` - Learning: Recently failed, needs review
 - `2` - Review: Successfully learned, in maintenance
@@ -117,6 +121,7 @@ R = (1 + elapsed_days / (9 * stability)) ^ -1
 **Purpose**: Calculate the next memory state after a review.
 
 **Parameters**:
+
 - `current_state`: Current NodeState (stability, difficulty, etc.)
 - `rating`: Review rating (1=Again, 2=Hard, 3=Good, 4=Easy)
 - `now`: Current timestamp
@@ -255,6 +260,7 @@ def __init__(
 ```
 
 **Parameters**:
+
 - `name`: Unique agent identifier
 - `db_path`: Database file path or connection URL
 - `store_log_content`: Whether to store full content in logs
@@ -277,6 +283,7 @@ self.current_time      # Simulation time
 **Purpose**: Learn a new triplet (knowledge piece).
 
 **Parameters**:
+
 - `source`: Subject entity (e.g., "I", "Bob", "UBI")
 - `relation`: Relationship verb (e.g., "supports", "opposes")
 - `target`: Object entity (e.g., "climate action", "automation")
@@ -284,6 +291,7 @@ self.current_time      # Simulation time
 - `sentiment`: Emotional valence (-1.0 to 1.0, default: 0.0)
 
 **Process**:
+
 1. Get or create source node
 2. Get or create target node
 3. Calculate FSRS states for both nodes
@@ -314,6 +322,7 @@ agent.learn_triplet(
 - Others' opinions
 
 **Process**:
+
 1. Query agent's stance (edges with source="I" or agent name)
 2. Query world knowledge (other entities' relationships)
 3. Format into readable text
@@ -333,6 +342,7 @@ context = agent.get_memory_view("climate change")
 **Purpose**: Set the agent's current time (for simulation).
 
 **Parameters**:
+
 - `new_time`: Can be one of:
   - `datetime.datetime`: Real datetime with timezone
   - `(day, hour)` tuple: Round-based time where day >= 1, hour in [0, 23]
@@ -356,6 +366,7 @@ agent.set_time(sim_time)
 ```
 
 **Notes**:
+
 - Round-based time is perfect for game simulations, agent-based models, or any scenario with discrete time steps
 - You can switch between datetime and round-based time modes as needed
 - Round-based time is automatically stored in the database with `sim_day` and `sim_hour` columns
@@ -386,6 +397,7 @@ def __init__(
 ```
 
 **Parameters**:
+
 - `agent`: GhostAgent instance
 - `model`: LLM model name (e.g., "llama3.2", "gpt-4", "claude-3-opus")
 - `fast_mode`: Use GLiNER+VADER (True) or LLM service (False)
@@ -421,6 +433,7 @@ loop.absorb("Climate change requires urgent action.", author="Bob")
 **Purpose**: Extract agent's own beliefs from their statements.
 
 **Process**:
+
 1. Send agent's statement to LLM
 2. Extract expressed stances
 3. Learn triplets with source="I"
@@ -437,6 +450,7 @@ loop.reflect("I believe in renewable energy.")
 **Purpose**: Generate a response on a topic.
 
 **Process**:
+
 1. Get memory view for topic
 2. Create prompt with context
 3. Generate response with LLM
@@ -455,6 +469,7 @@ print(response)  # "I support renewable energy initiatives..."
 **Requirements**: `pip install gliner vaderSentiment`
 
 **Process**:
+
 1. **Entity Extraction** (GLiNER):
    - Labels: ["Topic", "Person", "Concept", "Organization"]
    - Extracts named entities from text
@@ -476,6 +491,7 @@ print(response)  # "I support renewable energy initiatives..."
    - Agent reaction: ("I", "heard about", entity)
 
 **Trade-offs**:
+
 - ✅ Very fast (no LLM calls)
 - ✅ Works offline
 - ✅ Predictable results
@@ -517,6 +533,7 @@ CREATE TABLE kg_nodes (
 ```
 
 **Indexes:**
+
 - `idx_kg_nodes_owner` on `owner_id`
 - `idx_kg_nodes_last_review` on `(owner_id, last_review)`
 
@@ -541,6 +558,7 @@ CREATE TABLE kg_edges (
 ```
 
 **Indexes:**
+
 - `idx_kg_edges_owner_source` on `(owner_id, source)`
 - `idx_kg_edges_owner_target` on `(owner_id, target)`
 - `idx_kg_edges_created` on `(owner_id, created_at)`
@@ -562,6 +580,7 @@ CREATE TABLE kg_logs (
 ```
 
 **Indexes:**
+
 - `idx_kg_logs_agent_time` on `(agent_name, timestamp)`
 - `idx_kg_logs_action` on `(action_type, timestamp)`
 
@@ -572,12 +591,14 @@ CREATE TABLE kg_logs (
 **Purpose**: Insert or update a node with FSRS state.
 
 **Parameters**:
+
 - `owner_id`: Agent name
 - `node_id`: Node identifier
 - `fsrs_state`: NodeState object (optional)
 - `timestamp`: Current time
 
 **Behavior**:
+
 - If node exists: Update FSRS state
 - If node doesn't exist: Create new node
 - If no fsrs_state: Create node without FSRS data
@@ -587,6 +608,7 @@ CREATE TABLE kg_logs (
 **Purpose**: Add a triplet (edge) to the knowledge graph.
 
 **Parameters**:
+
 - `owner_id`: Agent name
 - `source`: Subject entity
 - `relation`: Relationship verb
@@ -595,6 +617,7 @@ CREATE TABLE kg_logs (
 - `timestamp`: Current time
 
 **Behavior**:
+
 - Ensures source and target nodes exist
 - Inserts or replaces edge
 - Updates timestamp
@@ -618,6 +641,7 @@ LIMIT 8
 ```
 
 **Parameters**:
+
 - `owner_id`: Agent name
 - `topic`: Topic keyword (with wildcards)
 - `current_time`: Reference time for recency
@@ -641,6 +665,7 @@ LIMIT ?
 ```
 
 **Parameters**:
+
 - `owner_id`: Agent name
 - `topic`: Topic keyword
 - `limit`: Max results
@@ -652,6 +677,7 @@ LIMIT ?
 **Purpose**: Log an interaction for debugging/analysis.
 
 **Parameters**:
+
 - `agent`: Agent name
 - `action`: "READ" or "WRITE"
 - `content`: Text content
@@ -681,6 +707,7 @@ def __init__(self, db_path: str = "agent_memory.db", store_log_content: bool = F
 ```
 
 **Parameters**:
+
 - `db_path`: SQLite database file path
 - `store_log_content`: If True, stores full content in logs. If False (default), uses UUID references for efficiency
 
@@ -691,6 +718,7 @@ def __init__(self, db_path: str = "agent_memory.db", store_log_content: bool = F
 **Purpose**: Create or retrieve an agent.
 
 **Parameters**:
+
 - `name`: Agent identifier
 - `llm_service`: Optional LLMService instance (supports multiple providers)
 
@@ -727,6 +755,7 @@ manager.set_agent_time("Alice", time)
 **Purpose**: Update agent's KG with incoming content.
 
 **Parameters**:
+
 - `agent_name`: Target agent
 - `content`: Text content
 - `author`: Source of content
@@ -760,6 +789,7 @@ context = manager.get_context("Alice", "automation")
 **Purpose**: Update agent's KG with generated response.
 
 **Parameters**:
+
 - `agent_name`: Agent who generated response
 - `response`: Generated text
 - `triplets`: Extracted beliefs (optional)

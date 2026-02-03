@@ -61,16 +61,16 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - API Reference: API.md
   - User Guide:
       - Architecture: ARCHITECTURE.md
       - Core Components: CORE_COMPONENTS.md
       - Configuration: CONFIGURATION.md
       - Visualization: VISUALIZATION.md
-  - Database:
-      - Schema: DATABASE_SCHEMA.md
-      - Configuration: DATABASE_CONFIG.md
+      - DBMS Configuration: DATABASE_CONFIG.md
   - Developer Guide:
       - Development: DEVELOPMENT.md
+      - DBMS Schema: DATABASE_SCHEMA.md
       - Troubleshooting: TROUBLESHOOTING.md
   - Examples: examples/index.md
-  - API Reference: API.md
+

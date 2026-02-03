@@ -20,6 +20,7 @@ All 3 CognitiveLoop tests mentioned in the problem statement are **PASSING**:
 **Purpose**: Verify that `_call_llm_with_retry()` method successfully calls the LLM and returns the response.
 
 **What it tests**:
+
 - LLM call is made with correct parameters
 - Response is returned as-is (full dict structure)
 - Works with both `llm_service` and legacy `client`
@@ -43,6 +44,7 @@ def _call_llm_with_retry(self, prompt: str, format: Optional[str] = None,
 **Purpose**: Verify that `_call_llm_with_retry()` properly handles failures and raises `LLMError` after exhausting retries.
 
 **What it tests**:
+
 - Retry logic executes up to `max_retries` times
 - Exponential backoff is applied between retries
 - `LLMError` is raised after all retries fail
@@ -63,6 +65,7 @@ for attempt in range(max_retries):
 ```
 
 **Key features**:
+
 - Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s (capped)
 - Clear error messages with attempt count
 - Proper exception chaining
@@ -72,6 +75,7 @@ for attempt in range(max_retries):
 **Purpose**: Verify that `reflect()` method gracefully handles malformed triplets with missing required fields.
 
 **What it tests**:
+
 - Missing `relation` field doesn't cause KeyError
 - Missing `target` field doesn't cause KeyError
 - Malformed triplets are skipped with warning message
@@ -95,6 +99,7 @@ for item in data.get("my_expressed_stances", []):
 ```
 
 **Robustness features**:
+
 - Uses `.get()` with defaults instead of direct key access
 - Validates required fields before processing
 - Logs warnings for debugging
@@ -104,17 +109,20 @@ for item in data.get("my_expressed_stances", []):
 
 ### 1. Retry Logic is Critical
 LLM services can be unreliable due to:
+
 - Network issues
 - Rate limits
 - Temporary service outages
 - Token limits
 
 The retry logic with exponential backoff ensures:
+
 - Transient failures don't break the application
 - Servers aren't overwhelmed with immediate retries
 - Users get clear error messages
 
 ### 2. LLMService Abstraction
+
 The tests verify that the new LLMService abstraction works correctly:
 - Can use Ollama (local, free)
 - Can use OpenAI (commercial, high-quality)
@@ -123,12 +131,14 @@ The tests verify that the new LLMService abstraction works correctly:
 
 ### 3. Robustness Against LLM Errors
 LLMs sometimes generate malformed JSON with:
+
 - Missing fields
 - Wrong types
 - Extra fields
 - Completely invalid structure
 
 The robust error handling ensures:
+
 - Application doesn't crash
 - Valid data is still processed
 - Debugging information is available
@@ -139,15 +149,18 @@ The robust error handling ensures:
 Updated the following documentation files to reflect LLMService abstraction:
 
 ### 1. docs/CORE_COMPONENTS.md
+
 - **GhostAgent**: Added `llm_service` parameter and attribute
 - **CognitiveLoop**: Updated model parameter to show multi-provider examples
 - **AgentManager**: Added `llm_service` to `create_agent()`
 
 ### 2. docs/api/cognitive.md
+
 - Updated "LLM Mode" section
 - Listed all supported providers (Ollama, OpenAI, Anthropic, Google, Cohere)
 
 ### 3. docs/api/agent.md
+
 - Updated architecture diagram
 - Changed "LLM Client (Ollama, optional)" to "LLM Service (supports multiple providers)"
 
@@ -236,6 +249,7 @@ loop = CognitiveLoop(agent, model="gpt-4")
 ✅ **Multi-provider support working**
 
 The CognitiveLoop is production-ready with:
+
 - Reliable retry logic
 - Multi-provider LLM support
 - Graceful error handling

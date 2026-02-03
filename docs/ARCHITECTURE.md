@@ -521,7 +521,10 @@ manager = AgentManager(db_path="custom_path.db")
 ### LLM Host
 
 ```python
-agent = GhostAgent("Alice", llm_host="http://custom:11434")
+from ghost_kg.llm import get_llm_service
+
+llm = get_llm_service("ollama", "llama3.2")
+agent = GhostAgent("Alice", llm_service=llm)
 ```
 
 ### Fast Mode

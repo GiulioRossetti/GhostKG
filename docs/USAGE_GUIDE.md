@@ -17,6 +17,7 @@ This guide explains the different ways to use GhostKG, from simple external API 
 **Use this when**: You want to manage knowledge graphs externally and handle LLM calls in your own code.
 
 **Pros**:
+
 - Maximum control over LLM interactions
 - No LLM dependencies required
 - Integrate with any LLM or text generation system
@@ -74,6 +75,7 @@ manager.update_with_response(
 ```
 
 **Key Points**:
+
 - `AgentManager` is your main interface
 - You manually extract triplets or provide them
 - You call your own LLM externally
@@ -86,6 +88,7 @@ manager.update_with_response(
 **Use this when**: You want automatic triplet extraction and reply generation using local Ollama models.
 
 **Pros**:
+
 - Fully automated extraction and generation
 - Free and private (no API costs)
 - No API keys needed
@@ -143,6 +146,7 @@ print(f"Alice says: {response}")
 ```
 
 **Key Points**:
+
 - `CognitiveLoop` handles extraction and generation automatically
 - LLM runs locally (private and free)
 - Triplets extracted automatically from text
@@ -155,6 +159,7 @@ print(f"Alice says: {response}")
 **Use this when**: You need higher quality extraction/generation and are willing to pay for commercial APIs.
 
 **Pros**:
+
 - Highest quality extraction and generation
 - No local compute needed
 - Access to GPT-4, Claude 3, Gemini, etc.
@@ -242,6 +247,7 @@ loop = CognitiveLoop(agent, model="claude-3-opus-20240229")
 ```
 
 **Key Points**:
+
 - Create `LLMServiceBase` instance for your provider
 - Pass to `GhostAgent` as `llm_service` parameter
 - Same API as Mode 2, just different backend
@@ -255,6 +261,7 @@ loop = CognitiveLoop(agent, model="claude-3-opus-20240229")
 **Use this when**: You want automatic knowledge management but want to control LLM calls yourself.
 
 **Pros**:
+
 - Balance of automation and control
 - Use any LLM service in your code
 - Automatic knowledge graph management
@@ -306,6 +313,7 @@ manager.update_with_response(
 ```
 
 **Key Points**:
+
 - Combine `AgentManager` with your own LLM calls
 - Use GhostKG's context generation
 - Full control over prompts and generation

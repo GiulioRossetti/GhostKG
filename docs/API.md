@@ -5,6 +5,7 @@
 GhostKG provides a comprehensive API for building dynamic knowledge graph systems for LLM agents with built-in memory decay. This reference covers all exposed APIs and their usage.
 
 **Key Features:**
+
 1. **Manage multiple agents** with individual knowledge graphs
 2. **Flexible triplet extraction** strategies (fast local or deep LLM-based)
 3. **Multi-provider LLM support** (Ollama, OpenAI, Anthropic, Google, Cohere)
@@ -171,6 +172,7 @@ response = your_llm_api.generate(context, topic)
 ```
 
 This method is perfect for the common workflow where you:
+
 1. Receive content from a peer
 2. Update your KG with that content
 3. Immediately need context to generate a response
@@ -316,6 +318,7 @@ from ghost_kg import FastExtractor, LLMExtractor, get_extractor
 Fast mode uses **GLiNER** for entity extraction and **VADER** for sentiment analysis - no LLM required!
 
 **Features:**
+
 - ⚡ Very fast (~100 messages/second)
 - 🔒 Works offline, no API calls
 - 📦 Uses local models (GLiNER + VADER)
@@ -352,6 +355,7 @@ print(result["entities"])         # Extracted entities
 ```
 
 **How It Works:**
+
 1. **GLiNER** extracts entities (Topics, People, Concepts, Organizations)
 2. **VADER** analyzes sentiment (optimized for social/conversational text)
 3. Heuristic rules map sentiment to relations (supports, opposes, discusses, etc.)
@@ -383,6 +387,7 @@ print(result["entities"])         # Extracted entities
 LLM mode uses a language model for deep semantic understanding.
 
 **Features:**
+
 - 🎯 High quality semantic extraction
 - 🧠 Understands complex relationships
 - 🌐 Supports multiple LLM providers
@@ -480,9 +485,11 @@ from ghost_kg.llm import get_llm_service, LLMServiceBase
 ### 3.1 Supported Providers
 
 **Local:**
+
 - **Ollama**: Run models locally (Llama, Mistral, Gemma, etc.)
 
 **Commercial (via LangChain):**
+
 - **OpenAI**: GPT-4, GPT-3.5, etc.
 - **Anthropic**: Claude 3 (Opus, Sonnet, Haiku)
 - **Google**: Gemini Pro
@@ -768,12 +775,14 @@ SELECT * FROM nodes WHERE sim_day = 5 AND sim_hour >= 14;
 ### 4.6 Use Cases
 
 **DateTime mode is best for:**
+
 - Real-world simulations
 - Historical analysis
 - Integration with external time systems
 - Variable time gaps (minutes, hours, days)
 
 **Round-based mode is best for:**
+
 - Turn-based games
 - Discrete simulation models
 - Deterministic testing
@@ -822,6 +831,7 @@ manager.learn_triplet("Alice", "details", "about", "implementation", rating=Rati
 GhostKG automatically handles memory decay using FSRS:
 
 **Key Concepts:**
+
 - **Stability (S)**: How long a memory lasts
 - **Retrievability (R)**: Probability of recall at current time
 - **Difficulty (D)**: How hard the concept is to remember
@@ -833,11 +843,13 @@ R(t) = (1 + t / (9S))^(-1)
 ```
 
 Where:
+
 - `R(t)` = retrievability at time t
 - `t` = elapsed time since last review (in days)
 - `S` = stability (memory strength)
 
 **Automatic Updates:**
+
 - Each time a memory is reviewed, stability increases
 - The longer between reviews, the more retrievability decreases
 - Stronger memories (high stability) last longer

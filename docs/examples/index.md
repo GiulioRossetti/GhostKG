@@ -34,6 +34,7 @@ Learn how to integrate GhostKG with your own application that uses external LLMs
 **File:** `examples/use_case_example.py`
 
 A complete example of two agents (Alice and Bob) having a multi-round conversation about Greenland using LLM services. Demonstrates:
+
 - Setting up the simulation time
 - Processing content and retrieving context atomically
 - Using LLM service (supports Ollama, OpenAI, Anthropic, etc.)
@@ -42,9 +43,6 @@ A complete example of two agents (Alice and Bob) having a multi-round conversati
 
 **Best for:** Understanding the complete workflow of multi-agent simulations with any LLM provider.
 
----
-
-### 3. [Temporal Simulation](hourly_simulation.md)
 ---
 
 ### 4. [Temporal Simulation](hourly_simulation.md)
