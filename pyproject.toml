@@ -37,6 +37,41 @@ llm = [
     "ollama>=0.1.6,<1.0",
 ]
 
+# LangChain support for commercial LLM providers
+langchain = [
+    "langchain-core>=0.1.0,<1.0",
+]
+
+# Individual LangChain provider packages
+langchain-openai = [
+    "langchain-core>=0.1.0,<1.0",
+    "langchain-openai>=0.0.5,<1.0",
+]
+
+langchain-anthropic = [
+    "langchain-core>=0.1.0,<1.0",
+    "langchain-anthropic>=0.1.0,<1.0",
+]
+
+langchain-google = [
+    "langchain-core>=0.1.0,<1.0",
+    "langchain-google-genai>=0.0.5,<1.0",
+]
+
+langchain-cohere = [
+    "langchain-core>=0.1.0,<1.0",
+    "langchain-cohere>=0.0.5,<1.0",
+]
+
+# All LangChain providers
+langchain-all = [
+    "langchain-core>=0.1.0,<1.0",
+    "langchain-openai>=0.0.5,<1.0",
+    "langchain-anthropic>=0.1.0,<1.0",
+    "langchain-google-genai>=0.0.5,<1.0",
+    "langchain-cohere>=0.0.5,<1.0",
+]
+
 # Fast mode for local triplet extraction without LLM
 fast = [
     "gliner>=0.1.0",
@@ -94,6 +129,11 @@ all = [
     "flask>=2.0.0,<4.0",
     "psycopg2-binary>=2.9.0,<3.0.0",
     "pymysql>=1.1.0,<2.0.0",
+    "langchain-core>=0.1.0,<1.0",
+    "langchain-openai>=0.0.5,<1.0",
+    "langchain-anthropic>=0.1.0,<1.0",
+    "langchain-google-genai>=0.0.5,<1.0",
+    "langchain-cohere>=0.0.5,<1.0",
 ]
 
 [project.urls]
@@ -169,6 +209,26 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "yaml.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "langchain_core.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "langchain_openai.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "langchain_anthropic.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "langchain_google_genai.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "langchain_cohere.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
