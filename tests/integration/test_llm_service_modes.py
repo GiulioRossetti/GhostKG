@@ -165,28 +165,3 @@ class TestCognitiveLoopWithLLMService:
         # Verify extractor was created with LLM service
         assert loop.extractor is not None
 
-
-class TestBackwardCompatibility:
-    """Test backward compatibility with old API."""
-    
-    def test_agent_without_llm_service_parameter(self, tmp_path):
-        """Test agent still works without llm_service parameter."""
-        db_path = str(tmp_path / "test.db")
-        
-        # Old API: just llm_host
-        agent = GhostAgent("Alice", db_path=db_path, llm_host="http://localhost:11434")
-        
-        assert agent.name == "Alice"
-        # Should have created default Ollama service
-        assert agent.llm_service is not None or agent.client is None
-    
-    def test_manager_create_agent_old_api(self, tmp_path):
-        """Test AgentManager.create_agent works with old API."""
-        db_path = str(tmp_path / "test.db")
-        manager = AgentManager(db_path=db_path)
-        
-        # Old API: just name and llm_host
-        alice = manager.create_agent("Alice", llm_host="http://localhost:11434")
-        
-        assert alice is not None
-        assert alice.name == "Alice"

@@ -249,14 +249,15 @@ def __init__(
     self, 
     name: str, 
     db_path: str = "agent_memory.db",
-    llm_host: str = "http://localhost:11434"
+    store_log_content: bool = False,
+    llm_service: Optional[LLMServiceBase] = None,
 )
 ```
 
 **Parameters**:
 - `name`: Unique agent identifier
-- `db_path`: SQLite database file path
-- `llm_host`: LLM server URL (for backward compatibility with Ollama)
+- `db_path`: Database file path or connection URL
+- `store_log_content`: Whether to store full content in logs
 - `llm_service`: Optional LLMService instance (supports Ollama, OpenAI, Anthropic, etc.)
 
 ### Attributes
@@ -265,7 +266,6 @@ def __init__(
 self.name              # Agent's name
 self.db                # KnowledgeDB instance
 self.fsrs              # FSRS instance
-self.client            # LLM client (backward compatibility)
 self.llm_service       # LLMService instance (supports multiple providers)
 self.current_time      # Simulation time
 ```
@@ -664,22 +664,29 @@ def __init__(self, db_path: str = "agent_memory.db")
 
 ### Key Methods
 
-#### create_agent(name, llm_host, llm_service)
+#### create_agent(name, llm_service)
 
 **Purpose**: Create or retrieve an agent.
 
 **Parameters**:
 - `name`: Agent identifier
-- `llm_host`: Optional LLM host URL (for backward compatibility)
 - `llm_service`: Optional LLMService instance (supports multiple providers)
 
 **Returns**: GhostAgent instance
 
 **Example**:
 ```python
+from ghost_kg import AgentManager
+from ghost_kg.llm import get_llm_service
+
 manager = AgentManager("agents.db")
-alice = manager.create_agent("Alice")
-bob = manager.create_agent("Bob")
+
+# Create LLM service (optional, only needed for CognitiveLoop)
+llm = get_llm_service("ollama", "llama3.2")
+
+# Create agents
+alice = manager.create_agent("Alice", llm_service=llm)
+bob = manager.create_agent("Bob", llm_service=llm)
 ```
 
 #### set_agent_time(agent_name, time)
