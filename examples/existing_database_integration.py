@@ -124,7 +124,7 @@ def verify_coexistence():
     
     # Verify GhostKG data
     print("\nGhostKG data (edges table):")
-    cursor.execute("SELECT source, relation, target FROM edges LIMIT 5")
+    cursor.execute("SELECT source, relation, target FROM kg_edges LIMIT 5")
     for row in cursor.fetchall():
         print(f"  - {row[0]} --{row[1]}--> {row[2]}")
     
