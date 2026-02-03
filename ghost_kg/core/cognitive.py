@@ -107,8 +107,8 @@ class CognitiveLoop:
             except Exception as e:
                 if attempt == max_retries - 1:
                     raise LLMError(f"LLM call failed after {max_retries} attempts: {e}") from e
-                # Exponential backoff
-                wait_time = 2**attempt
+                # Exponential backoff (capped at 30 seconds)
+                wait_time = min(2**attempt, 30)
                 print(
                     f"LLM call failed (attempt {attempt + 1}/{max_retries}), retrying in {wait_time}s..."
                 )

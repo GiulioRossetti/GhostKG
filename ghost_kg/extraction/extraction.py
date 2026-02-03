@@ -356,8 +356,8 @@ class LLMExtractor(TripletExtractor):
                     raise LLMError(
                         f"LLM extraction failed after {self.max_retries} attempts: {e}"
                     ) from e
-                # Not the last attempt, retry with exponential backoff
-                wait_time = 2**attempt
+                # Not the last attempt, retry with exponential backoff (capped at 30 seconds)
+                wait_time = min(2**attempt, 30)
                 print(
                     f"   ! LLM extraction failed (attempt {attempt + 1}/{self.max_retries}), "
                     f"retrying in {wait_time}s... Error: {e}"

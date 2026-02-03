@@ -181,8 +181,10 @@ class LangChainLLMService(LLMServiceBase):
                 kwargs = {"model": self.model}
                 if self.api_key:
                     kwargs["api_key"] = self.api_key
-                elif os.getenv("OPENAI_API_KEY"):
-                    kwargs["api_key"] = os.getenv("OPENAI_API_KEY")
+                else:
+                    env_key = os.getenv("OPENAI_API_KEY")
+                    if env_key:
+                        kwargs["api_key"] = env_key
                 if self.base_url:
                     kwargs["base_url"] = self.base_url
                 kwargs.update(provider_kwargs)
@@ -200,8 +202,10 @@ class LangChainLLMService(LLMServiceBase):
                 kwargs = {"model": self.model}
                 if self.api_key:
                     kwargs["anthropic_api_key"] = self.api_key
-                elif os.getenv("ANTHROPIC_API_KEY"):
-                    kwargs["anthropic_api_key"] = os.getenv("ANTHROPIC_API_KEY")
+                else:
+                    env_key = os.getenv("ANTHROPIC_API_KEY")
+                    if env_key:
+                        kwargs["anthropic_api_key"] = env_key
                 if self.base_url:
                     kwargs["anthropic_api_url"] = self.base_url
                 kwargs.update(provider_kwargs)
@@ -219,8 +223,10 @@ class LangChainLLMService(LLMServiceBase):
                 kwargs = {"model": self.model}
                 if self.api_key:
                     kwargs["google_api_key"] = self.api_key
-                elif os.getenv("GOOGLE_API_KEY"):
-                    kwargs["google_api_key"] = os.getenv("GOOGLE_API_KEY")
+                else:
+                    env_key = os.getenv("GOOGLE_API_KEY")
+                    if env_key:
+                        kwargs["google_api_key"] = env_key
                 kwargs.update(provider_kwargs)
                 return ChatGoogleGenerativeAI(**kwargs)
             except ImportError:
@@ -236,8 +242,10 @@ class LangChainLLMService(LLMServiceBase):
                 kwargs = {"model": self.model}
                 if self.api_key:
                     kwargs["cohere_api_key"] = self.api_key
-                elif os.getenv("COHERE_API_KEY"):
-                    kwargs["cohere_api_key"] = os.getenv("COHERE_API_KEY")
+                else:
+                    env_key = os.getenv("COHERE_API_KEY")
+                    if env_key:
+                        kwargs["cohere_api_key"] = env_key
                 kwargs.update(provider_kwargs)
                 return ChatCohere(**kwargs)
             except ImportError:
