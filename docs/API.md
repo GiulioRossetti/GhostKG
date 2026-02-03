@@ -23,7 +23,7 @@ GhostKG provides a comprehensive API for building dynamic knowledge graph system
 
 ---
 
-## 1. Agent Management API
+## Agent Management API
 
 The `AgentManager` class provides the main high-level API for managing multiple agents and their knowledge graphs.
 
@@ -49,7 +49,7 @@ manager = AgentManager(db_path="my_agents.db", config=config)
 
 ### Agent Operations
 
-#### 1.1 Create or Get Agents
+### 1.1 Create or Get Agents
 
 ```python
 # Create a new agent or get existing one
@@ -60,7 +60,7 @@ bob = manager.create_agent("Bob")
 agent = manager.get_agent("Alice")
 ```
 
-#### 1.2 Set Agent Time
+### 1.2 Set Agent Time
 
 Control time for simulations or tracking. Supports both **datetime objects** and **round-based (day, hour) tuples**.
 
@@ -99,7 +99,7 @@ manager.set_agent_time("Alice", (5, 14))
 
 See [Time Management API](#time-management-api) for more details.
 
-#### 1.3 Absorb Content (Update KG with Input)
+### 1.3 Absorb Content (Update KG with Input)
 
 When an agent receives content, update their KG:
 
@@ -132,7 +132,7 @@ manager.absorb_content(
 )
 ```
 
-#### 1.4 Get Context for Reply
+### 1.4 Get Context for Reply
 
 Retrieve all relevant context for an agent to reply about a topic:
 
@@ -144,7 +144,7 @@ context = manager.get_context("Alice", topic="UBI")
 response = your_llm_api.generate(context, topic)
 ```
 
-#### 1.5 Process Content and Get Context (Combined Operation)
+### 1.5 Process Content and Get Context (Combined Operation)
 
 **New in this update**: Atomic operation that updates KG and returns context:
 
@@ -175,7 +175,7 @@ This method is perfect for the common workflow where you:
 2. Update your KG with that content
 3. Immediately need context to generate a response
 
-#### 1.6 Update with Response
+### 1.6 Update with Response
 
 After generating a response, update the agent's KG with what they said:
 
@@ -205,7 +205,7 @@ manager.update_with_response(
 )
 ```
 
-#### 1.7 Direct Triplet Learning
+### 1.7 Direct Triplet Learning
 
 Directly add triplets to an agent's KG:
 
@@ -222,7 +222,7 @@ manager.learn_triplet(
 )
 ```
 
-#### 1.8 Retrieve Agent Knowledge
+### 1.8 Retrieve Agent Knowledge
 
 Get the agent's knowledge graph:
 
@@ -301,7 +301,7 @@ See `examples/use_case_example.py` for a complete working implementation.
 
 ---
 
-## 2. Triplet Extraction API
+## Triplet Extraction API
 
 GhostKG provides two strategies for extracting knowledge triplets from text: **Fast Mode** (local, no LLM required) and **LLM Mode** (deep semantic extraction).
 
@@ -467,7 +467,7 @@ result = extractor.extract("Some text", "Author", "Agent")
 
 ---
 
-## 3. LLM Service API
+## LLM Service API
 
 GhostKG provides a unified interface for multiple LLM providers: Ollama (local), OpenAI, Anthropic, Google, and Cohere.
 
@@ -654,7 +654,7 @@ except LLMError as e:
 
 ---
 
-## 4. Time Management API
+## Time Management API
 
 GhostKG supports two time representations: **datetime objects** (absolute time) and **round-based tuples** (day, hour) for simulations.
 
@@ -781,7 +781,7 @@ SELECT * FROM nodes WHERE sim_day = 5 AND sim_hour >= 14;
 
 ---
 
-## 5. Memory System API
+## Memory System API
 
 GhostKG uses FSRS (Free Spaced Repetition Scheduler) for memory decay modeling.
 
@@ -862,7 +862,7 @@ manager = AgentManager(db_path="agents.db", config=config)
 
 ---
 
-## 6. Configuration API
+## Configuration API
 
 ### Import
 
