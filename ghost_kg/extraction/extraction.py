@@ -10,8 +10,11 @@ The module includes thread-safe model caching to avoid reloading models.
 
 import json
 import threading
+import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, Union
+
+from ghost_kg.utils.exceptions import LLMError
 
 # Optional dependencies for fast mode
 try:
@@ -278,23 +281,29 @@ class LLMExtractor(TripletExtractor):
     This is slower but more semantically accurate than fast mode.
     """
 
-    def __init__(self, client: Any, model: str = "llama3.2") -> None:
+    def __init__(
+        self, client: Any, model: str = "llama3.2", timeout: int = 30, max_retries: int = 3
+    ) -> None:
         """
         Initialize LLM extractor.
 
         Args:
             client (Any): Ollama client instance
             model (str): Model name to use for extraction
+            timeout (int): Timeout in seconds for LLM requests
+            max_retries (int): Maximum number of retry attempts on failure
 
         Returns:
             None
         """
         self.client = client
         self.model = model
+        self.timeout = timeout
+        self.max_retries = max_retries
 
     def extract(self, text: str, author: str, agent_name: str) -> Dict[str, Any]:
         """
-        Extract triplets using LLM semantic analysis.
+        Extract triplets using LLM semantic analysis with retry logic.
 
         Args:
             text (str): Input text
@@ -303,6 +312,9 @@ class LLMExtractor(TripletExtractor):
 
         Returns:
             Dict[str, Any]: Dict with world_facts, partner_stance, my_reaction
+
+        Raises:
+            LLMError: If all retries fail
         """
         print(f"\n[{agent_name}] reading {author}: '{text[:40]}...'")
 
@@ -330,23 +342,42 @@ class LLMExtractor(TripletExtractor):
         }}
         """
 
-        try:
-            res = self.client.chat(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                format="json",
-            )
-            data = json.loads(res["message"]["content"])
-            print(f"   > LLM extracted triplets successfully")
-            return data  # type: ignore[no-any-return]
+        for attempt in range(self.max_retries):
+            try:
+                res = self.client.chat(
+                    model=self.model,
+                    messages=[{"role": "user", "content": prompt}],
+                    format="json",
+                )
+                data = json.loads(res["message"]["content"])
+                print(f"   > LLM extracted triplets successfully")
+                return data  # type: ignore[no-any-return]
 
-        except Exception as e:
-            print(f"   ! LLM extraction failed: {e}")
-            return {"world_facts": [], "partner_stance": [], "my_reaction": []}
+            except Exception as e:
+                if attempt == self.max_retries - 1:
+                    # Last attempt failed, raise LLMError
+                    print(f"   ! LLM extraction failed after {self.max_retries} attempts: {e}")
+                    raise LLMError(
+                        f"LLM extraction failed after {self.max_retries} attempts: {e}"
+                    ) from e
+                # Not the last attempt, retry with exponential backoff
+                wait_time = 2**attempt
+                print(
+                    f"   ! LLM extraction failed (attempt {attempt + 1}/{self.max_retries}), "
+                    f"retrying in {wait_time}s... Error: {e}"
+                )
+                time.sleep(wait_time)
+
+        # Should never reach here due to raise in loop
+        raise LLMError("All retries exhausted")
 
 
 def get_extractor(
-    fast_mode: bool, client: Optional[Any] = None, model: str = "llama3.2"
+    fast_mode: bool,
+    client: Optional[Any] = None,
+    model: str = "llama3.2",
+    timeout: int = 30,
+    max_retries: int = 3,
 ) -> TripletExtractor:
     """
     Factory function to get appropriate extractor.
@@ -355,6 +386,8 @@ def get_extractor(
         fast_mode (bool): If True, use fast extractor; otherwise use LLM
         client (Optional[Any]): Ollama client (required for LLM mode)
         model (str): Model name (for LLM mode)
+        timeout (int): Timeout in seconds for LLM requests
+        max_retries (int): Maximum number of retry attempts on failure
 
     Returns:
         TripletExtractor: TripletExtractor instance
@@ -373,4 +406,4 @@ def get_extractor(
     else:
         if client is None:
             raise ValueError("LLM mode requires an Ollama client")
-        return LLMExtractor(client, model)
+        return LLMExtractor(client, model, timeout, max_retries)

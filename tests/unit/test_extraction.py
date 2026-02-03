@@ -83,6 +83,55 @@ class TestLLMExtractor:
         extractor = LLMExtractor(client, "llama3.2")
         # Just verify the method exists
         assert hasattr(extractor, 'extract')
+    
+    def test_initialization_with_retry_params(self):
+        """Test LLMExtractor initializes with retry parameters."""
+        from unittest.mock import Mock
+        mock_client = Mock()
+        extractor = LLMExtractor(mock_client, "llama3.2", timeout=60, max_retries=5)
+        assert extractor.timeout == 60
+        assert extractor.max_retries == 5
+    
+    def test_extract_retry_on_failure(self):
+        """Test that extract retries on failure."""
+        from unittest.mock import Mock, patch
+        from ghost_kg.utils.exceptions import LLMError
+        
+        mock_client = Mock()
+        # Simulate failures followed by success
+        mock_client.chat.side_effect = [
+            Exception("Connection error"),  # First attempt fails
+            {"message": {"content": '{"world_facts": [], "partner_stance": [], "my_reaction": []}'}}  # Second succeeds
+        ]
+        
+        extractor = LLMExtractor(mock_client, "llama3.2", max_retries=3)
+        
+        with patch('time.sleep'):  # Skip actual sleep during test
+            result = extractor.extract("test text", "TestAuthor", "TestAgent")
+        
+        # Should succeed after retry
+        assert result is not None
+        assert "world_facts" in result
+        # Should have been called twice
+        assert mock_client.chat.call_count == 2
+    
+    def test_extract_raises_after_max_retries(self):
+        """Test that extract raises LLMError after max retries."""
+        from unittest.mock import Mock, patch
+        from ghost_kg.utils.exceptions import LLMError
+        
+        mock_client = Mock()
+        # All attempts fail
+        mock_client.chat.side_effect = Exception("Connection error")
+        
+        extractor = LLMExtractor(mock_client, "llama3.2", max_retries=2)
+        
+        with patch('time.sleep'):  # Skip actual sleep during test
+            with pytest.raises(LLMError, match="LLM extraction failed after 2 attempts"):
+                extractor.extract("test text", "TestAuthor", "TestAgent")
+        
+        # Should have been called max_retries times
+        assert mock_client.chat.call_count == 2
 
 
 class TestGetExtractor:
