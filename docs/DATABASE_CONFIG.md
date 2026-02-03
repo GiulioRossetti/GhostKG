@@ -3,6 +3,7 @@
 ## Overview
 
 GhostKG supports multiple database backends through SQLAlchemy ORM:
+
 - **SQLite** (default) - Embedded, file-based or in-memory
 - **PostgreSQL** - Scalable, enterprise-grade RDBMS
 - **MySQL** - Popular, cloud-friendly RDBMS
@@ -247,17 +248,20 @@ manager = DatabaseManager(db_url="postgresql://...")
 ### SQLite
 
 **Pros:**
+
 - No setup required
 - Fast for single-user scenarios
 - Perfect for development and testing
 - Portable database files
 
 **Cons:**
+
 - Not suitable for concurrent writes
 - Limited scalability
 - Single server only
 
 **Best for:**
+
 - Development
 - Single-agent simulations
 - Embedded applications
@@ -266,17 +270,20 @@ manager = DatabaseManager(db_url="postgresql://...")
 ### PostgreSQL
 
 **Pros:**
+
 - Excellent concurrency support
 - Powerful features (JSON, full-text search)
 - Battle-tested reliability
 - Great for production
 
 **Cons:**
+
 - Requires separate server
 - More complex setup
 - Higher resource usage
 
 **Best for:**
+
 - Production deployments
 - Multi-agent simulations
 - Concurrent access scenarios
@@ -285,16 +292,19 @@ manager = DatabaseManager(db_url="postgresql://...")
 ### MySQL
 
 **Pros:**
+
 - Widely available
 - Good cloud support (AWS RDS, Google Cloud SQL)
 - Easy replication
 - Familiar to many developers
 
 **Cons:**
+
 - Requires separate server
 - Some feature limitations vs PostgreSQL
 
 **Best for:**
+
 - Cloud deployments
 - Shared hosting environments
 - MySQL-centric infrastructure

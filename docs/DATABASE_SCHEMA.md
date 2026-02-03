@@ -5,6 +5,7 @@ This document describes the database schema used by GhostKG for storing knowledg
 ## Overview
 
 GhostKG uses SQLite for persistence, with three main tables (prefixed with `kg_` to avoid conflicts):
+
 - **kg_nodes**: Entities in the knowledge graph with FSRS memory states
 - **kg_edges**: Relationships (triplets) between entities with sentiment
 - **kg_logs**: Interaction history for debugging and analysis
@@ -43,24 +44,24 @@ agent.learn_triplet("Python", "is", "great", Rating.Good)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    SQLite Database                       │
-│                                                          │
-│  ┌────────────────────┐                                │
-│  │     kg_nodes       │◄───┐                           │
-│  │  (Entities/KG)     │    │                           │
-│  └────────────────────┘    │  Foreign Keys             │
-│           ▲                 │                           │
-│           │                 │                           │
-│           │                 │                           │
-│  ┌────────────────────┐    │                           │
-│  │      edges         │────┘                           │
-│  │   (Triplets)       │                                │
-│  └────────────────────┘                                │
-│                                                          │
-│  ┌────────────────────┐                                │
-│  │       logs         │                                │
-│  │   (History)        │                                │
-│  └────────────────────┘                                │
+│                    SQLite Database                      │
+│                                                         │
+│  ┌────────────────────┐                                 │
+│  │     kg_nodes       │◄───┐                            │
+│  │  (Entities/KG)     │    │                            │
+│  └────────────────────┘    │  Foreign Keys              │
+│           ▲                │                            │
+│           │                │                            │
+│           │                │                            │
+│  ┌────────────────────┐    │                            │
+│  │      edges         │────┘                            │
+│  │   (Triplets)       │                                 │
+│  └────────────────────┘                                 │
+│                                                         │
+│  ┌────────────────────┐                                 │
+│  │       logs         │                                 │
+│  │   (History)        │                                 │
+│  └────────────────────┘                                 │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -267,24 +268,24 @@ id | agent_name | action_type | content                      | annotations      
 
 ```
 ┌─────────────────┐
-│     nodes       │
+│     kg_nodes    │
 │  ┌───────────┐  │
-│  │ owner_id  │◄─┼───────────────┐
-│  │ id        │  │               │
-│  │ stability │  │               │
-│  │ difficulty│  │               │
-│  │ ...       │  │               │
-│  └───────────┘  │               │
-└─────────────────┘               │
+│  │ owner_id  │◄─┼────────────────┐
+│  │ id        │  │                │
+│  │ stability │  │                │
+│  │ difficulty│  │                │
+│  │ ...       │  │                │
+│  └───────────┘  │                │
+└─────────────────┘                │
          ▲                         │
          │ FK                      │
          │                         │
 ┌─────────────────┐                │
-│     edges       │                │
+│     kg_edges    │                │
 │  ┌───────────┐  │                │
 │  │ owner_id  │──┼────────────────┘
-│  │ source    │──┼──(FK to nodes.id)
-│  │ target    │──┼──(FK to nodes.id)
+│  │ source    │──┼──(FK to kg_nodes.id)
+│  │ target    │──┼──(FK to kg_nodes.id)
 │  │ relation  │  │
 │  │ sentiment │  │
 │  │ ...       │  │
@@ -292,7 +293,7 @@ id | agent_name | action_type | content                      | annotations      
 └─────────────────┘
 
 ┌─────────────────┐
-│     logs        │
+│     kg_logs     │
 │  ┌───────────┐  │
 │  │ id        │  │
 │  │agent_name │  │  (No FK - independent)
@@ -318,7 +319,7 @@ When inserting an edge, both source and target nodes must exist. The `upsert_nod
 
 ```sql
 SELECT source, relation, target, sentiment 
-FROM edges
+FROM kg_edges
 WHERE owner_id = 'Alice'
   AND (source = 'I' OR source = 'Alice')
   AND (
@@ -335,7 +336,7 @@ LIMIT 8;
 
 ```sql
 SELECT source, relation, target
-FROM edges
+FROM kg_edges
 WHERE owner_id = 'Alice'
   AND source != 'I'
   AND source != 'Alice'
@@ -354,7 +355,7 @@ SELECT n.id, n.stability, n.difficulty, n.reps, n.state,
 FROM nodes n
 WHERE n.owner_id = 'Alice'
   AND n.id IN (
-    SELECT DISTINCT target FROM edges WHERE owner_id = 'Alice' AND source = 'I'
+    SELECT DISTINCT target FROM kg_edges WHERE owner_id = 'Alice' AND source = 'I'
   )
 ORDER BY n.last_review DESC;
 ```
@@ -377,8 +378,8 @@ LIMIT 20;
 
 ```sql
 SELECT DISTINCT e2.target
-FROM edges e1
-JOIN edges e2 ON e1.owner_id = e2.owner_id AND e1.target = e2.source
+FROM kg_edges e1
+JOIN kg_edges e2 ON e1.owner_id = e2.owner_id AND e1.target = e2.source
 WHERE e1.owner_id = 'Alice'
   AND e1.source = 'climate change'
 ORDER BY e2.created_at DESC;
@@ -411,9 +412,9 @@ Potential future triggers:
 ```sql
 -- Auto-update node.last_review when edge is created
 CREATE TRIGGER update_node_review 
-AFTER INSERT ON edges
+AFTER INSERT ON kg_edges
 BEGIN
-  UPDATE nodes 
+  UPDATE kg_nodes 
   SET last_review = NEW.created_at
   WHERE owner_id = NEW.owner_id 
     AND (id = NEW.source OR id = NEW.target);
@@ -487,7 +488,7 @@ def migrate_v1_to_v2(db_path):
     conn = sqlite3.connect(db_path)
     
     # Example: Add new column
-    conn.execute("ALTER TABLE nodes ADD COLUMN version INTEGER DEFAULT 1")
+    conn.execute("ALTER TABLE kg_nodes ADD COLUMN version INTEGER DEFAULT 1")
     
     conn.commit()
     conn.close()
@@ -510,10 +511,10 @@ Always use parameterized queries:
 
 ```python
 # ✅ Safe
-cursor.execute("SELECT * FROM nodes WHERE owner_id = ?", (agent_name,))
+cursor.execute("SELECT * FROM kg_nodes WHERE owner_id = ?", (agent_name,))
 
 # ❌ Unsafe
-cursor.execute(f"SELECT * FROM nodes WHERE owner_id = '{agent_name}'")
+cursor.execute(f"SELECT * FROM kg_nodes WHERE owner_id = '{agent_name}'")
 ```
 
 ### Access Control
@@ -536,9 +537,9 @@ SELECT
     COUNT(*) as row_count
 FROM sqlite_master sm
 JOIN (
-    SELECT 'nodes' as name UNION
-    SELECT 'edges' UNION
-    SELECT 'logs'
+    SELECT 'kg_nodes' as name UNION
+    SELECT 'kg_edges' UNION
+    SELECT 'kg_logs'
 ) t ON sm.name = t.name
 GROUP BY sm.name;
 
@@ -559,9 +560,9 @@ def check_db_health(db_path):
     
     # Check orphaned edges
     orphaned = conn.execute("""
-        SELECT COUNT(*) FROM edges e
+        SELECT COUNT(*) FROM kg_edges e
         WHERE NOT EXISTS (
-            SELECT 1 FROM nodes n 
+            SELECT 1 FROM kg_nodes n 
             WHERE n.owner_id = e.owner_id AND n.id = e.source
         )
     """).fetchone()[0]
@@ -574,6 +575,7 @@ def check_db_health(db_path):
 ## Conclusion
 
 The GhostKG database schema is designed for:
+
 - **Simplicity**: Three tables, clear relationships
 - **Efficiency**: Proper indexes for common queries
 - **Flexibility**: JSON annotations for extensibility

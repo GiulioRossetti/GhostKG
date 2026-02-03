@@ -5,9 +5,11 @@ GhostKG supports both local and commercial LLM providers through a unified inter
 ## Supported Providers
 
 ### Local Models
+
 - **Ollama**: Run models locally (Llama, Mistral, Gemma, etc.)
 
 ### Commercial Providers (via LangChain)
+
 - **OpenAI**: GPT-4, GPT-3.5, and other OpenAI models
 - **Anthropic**: Claude 3 (Opus, Sonnet, Haiku)
 - **Google**: Gemini Pro and other Google models
@@ -273,16 +275,19 @@ response = llm.chat(
 ## Model Recommendations
 
 ### For Development/Testing
+
 - **Ollama (llama3.2)**: Fast, free, runs locally
 - **OpenAI (gpt-3.5-turbo)**: Fast, low cost
 
 ### For Production Quality
+
 - **OpenAI (gpt-4)**: Excellent quality, balanced cost
 - **Anthropic (claude-3-opus)**: Top quality, higher cost
 - **Anthropic (claude-3-sonnet)**: Good quality, lower cost
 - **Google (gemini-pro)**: Good quality, competitive pricing
 
 ### For Privacy/Security
+
 - **Ollama (any model)**: Completely local, no data leaves your machine
 
 ## Cost Considerations
@@ -384,6 +389,7 @@ ollama list
 ## Examples
 
 See the complete working example in `examples/multi_provider_llm.py` which demonstrates:
+
 - Using all supported providers
 - Switching between providers
 - Error handling

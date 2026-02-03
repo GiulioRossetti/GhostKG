@@ -8,7 +8,7 @@ This is the most comprehensive example, demonstrating a complete multi-round con
 
 Alice (a Denmark politician) and Bob (an American alt-right analyst) discuss Greenland. The example showcases:
 - The `process_and_get_context()` atomic operation
-- Both **Fast Mode** (GLiNER + TextBlob) and **LLM Mode** for triplet extraction
+- Both **Fast Mode** (GLiNER + VADER) and **LLM Mode** for triplet extraction
 - LLM service integration (supports Ollama, OpenAI, Anthropic, etc.)
 - Knowledge graph evolution across 10 conversation rounds
 
@@ -24,7 +24,7 @@ This example requires:
 
 **Optional for Fast Mode:**
 - GLiNER: `pip install gliner`
-- TextBlob: `pip install textblob`
+- VADER: `pip install vaderSentiment`
 
 ## Configuration
 
@@ -43,7 +43,7 @@ llm_service = get_llm_service("ollama", "llama3.2", host="http://localhost:11434
 # llm_service = get_llm_service("anthropic", "claude-3-opus-20240229")
 
 # Choose extraction mode:
-USE_FAST_MODE = False  # True for GLiNER+TextBlob, False for LLM extraction
+USE_FAST_MODE = False  # True for GLiNER+VADER, False for LLM extraction
 ```
 
 ## Step-by-Step Walkthrough
@@ -142,14 +142,14 @@ if USE_FAST_MODE:
         agent_name, topic, content,
         author=peer,
         triplets=None,
-        fast_mode=True  # Triggers GLiNER + TextBlob
+        fast_mode=True  # Triggers GLiNER + VADER
     )
 ```
 
 **Fast Mode characteristics:**
 - ~100x faster than LLM extraction
 - Uses GLiNER for named entity recognition
-- Uses TextBlob for sentiment analysis
+- Uses VADER for sentiment analysis (optimized for social/conversational text)
 - Good for real-time applications
 
 ### Step 6: The Atomic Operation

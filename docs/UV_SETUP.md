@@ -36,7 +36,7 @@ uv pip install -e .
 # Install with LLM support (Ollama)
 uv pip install -e ".[llm]"
 
-# Install with fast mode (GLiNER + TextBlob)
+# Install with fast mode (GLiNER + VADER)
 uv pip install -e ".[fast]"
 
 # Install with all optional features
@@ -107,17 +107,20 @@ GhostKG uses the following dependency groups:
 ### Optional Dependencies
 
 #### `llm` - LLM Support
+
 - `ollama` - For semantic triplet extraction with LLMs
 
 Install with: `uv pip install -e ".[llm]"`
 
 #### `fast` - Fast Mode
+
 - `gliner` - Entity extraction without LLM
 - `textblob` - Sentiment analysis
 
 Install with: `uv pip install -e ".[fast]"`
 
 #### `dev` - Development Tools
+
 - `pytest`, `pytest-cov` - Testing
 - `mypy` - Type checking
 - `black` - Code formatting
@@ -128,6 +131,7 @@ Install with: `uv pip install -e ".[fast]"`
 Install with: `uv pip install -e ".[dev]"`
 
 #### `docs` - Documentation
+
 - `mkdocs` - Documentation generator
 - `mkdocs-material` - Material theme
 - `mkdocstrings` - API docs from docstrings
@@ -135,6 +139,7 @@ Install with: `uv pip install -e ".[dev]"`
 Install with: `uv pip install -e ".[docs]"`
 
 #### `all` - All Optional Features
+
 Installs both `llm` and `fast` dependencies.
 
 Install with: `uv pip install -e ".[all]"`

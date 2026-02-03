@@ -10,12 +10,14 @@ Successfully removed ALL parameters tagged "(for backward compatibility)" from t
 ## Motivation
 
 The original implementation had multiple ways to provide LLM access:
+
 1. `llm_host` parameter (legacy Ollama-only)
 2. `llm_service` parameter (new unified approach)
 3. `client` attribute (direct Ollama client)
 4. Auto-creation from `llm_host` if no `llm_service` provided
 
 This caused confusion:
+
 - Users didn't know which method to use
 - Documentation was inconsistent
 - Code had multiple fallback paths
@@ -45,6 +47,7 @@ loop = CognitiveLoop(agent)
 ### 1. ghost_kg/core/agent.py
 
 **Removed**:
+
 - `llm_host` parameter from `__init__()`
 - `client` attribute
 - Ollama import: `from ollama import Client`
@@ -101,6 +104,7 @@ def _call_llm_with_retry(...) -> Dict[str, Any]:
 ### 3. ghost_kg/extraction/extraction.py
 
 **Removed**:
+
 - `client` parameter from `LLMExtractor.__init__()`
 - `client` attribute
 - `client` parameter from `get_extractor()` factory
@@ -125,6 +129,7 @@ def __init__(
 ### 4. ghost_kg/core/manager.py
 
 **Removed**:
+
 - `llm_host` parameter from `create_agent()`
 - Passing `llm_host` to GhostAgent
 
@@ -168,12 +173,14 @@ def mock_agent(tmp_path):
 All tests updated to use `mock_agent.llm_service` instead of `mock_agent.client`.
 
 **tests/integration/test_llm_service_modes.py**:
+
 - Removed `TestBackwardCompatibility` class entirely
 - Removed 2 tests for old API
 
 ### 6. Documentation Updates
 
 **docs/CORE_COMPONENTS.md**:
+
 - Removed mentions of `llm_host` parameter
 - Removed mentions of `client` attribute
 - Removed "(for backward compatibility)" tags
@@ -204,31 +211,37 @@ Please provide llm_service parameter.
 ## Benefits
 
 ### 1. Simpler API
+
 - One parameter: `llm_service`
 - No confusion about which parameter to use
 - Clear documentation
 
 ### 2. Less Code
+
 - Removed ~100 lines of fallback logic
 - Removed conditional branches
 - Simpler initialization
 
 ### 3. Better Errors
+
 - Fail fast with clear messages
 - Point to exact problem
 - Include solution in error message
 
 ### 4. Easier Testing
+
 - Mock `llm_service` instead of `client`
 - No need to test fallback paths
 - Simpler test fixtures
 
 ### 5. Cleaner Imports
+
 - No Ollama dependency in core modules
 - Only LLMService abstraction
 - Better separation of concerns
 
 ### 6. Easier Maintenance
+
 - One code path to maintain
 - No backward compatibility burden
 - Simpler to understand
@@ -296,15 +309,18 @@ llm = get_llm_service("cohere", "command", api_key="...")
 ## Test Results
 
 ### Before Changes
+
 - 240 tests (with backward compat tests)
 
 ### After Changes
+
 - 238 tests (removed 2 backward compat tests)
 - **All passing** ✅
 - 12 skipped (optional dependencies)
 - 0 failures
 
 ### Test Categories
+
 - ✅ Unit tests: All passing
 - ✅ Integration tests: All passing
 - ✅ Performance tests: All passing

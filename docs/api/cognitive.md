@@ -48,7 +48,7 @@ loop.reflect("I believe in economic security")
 
 ### Fast Mode
 - Uses GLiNER for entity extraction
-- Uses TextBlob for sentiment analysis
+- Uses VADER for sentiment analysis
 - No LLM required
 - Fast processing (~100 messages/second)
 

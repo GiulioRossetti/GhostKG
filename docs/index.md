@@ -13,6 +13,7 @@ Welcome to the comprehensive documentation for **GhostKG** - a dynamic knowledge
 **Complete system architecture and design philosophy**
 
 Topics covered:
+
 - System overview and design principles
 - Component relationships and data flow
 - Layer responsibilities
@@ -25,6 +26,7 @@ Topics covered:
 **Read this if you want to**: Understand how GhostKG is structured and why design decisions were made.
 
 **Cross-references**:
+
 - [Core Components](CORE_COMPONENTS.md) - Detailed component specifications
 - [Algorithms](ALGORITHMS.md) - Mathematical foundations
 - [Database Schema](DATABASE_SCHEMA.md) - Persistence layer details
@@ -35,6 +37,7 @@ Topics covered:
 **Detailed documentation of each component in the system**
 
 Topics covered:
+
 - **FSRS Memory System** - Spaced repetition algorithm
 - **NodeState** - Memory state data structure
 - **GhostAgent** - Individual agent with knowledge graph
@@ -45,6 +48,7 @@ Topics covered:
 **Read this if you want to**: Understand what each component does and how to use it.
 
 **Cross-references**:
+
 - [API Documentation](API.md) - How to use the external API
 - [Algorithms](ALGORITHMS.md) - Mathematical details of FSRS
 - [Database Schema](DATABASE_SCHEMA.md) - Storage details
@@ -55,6 +59,7 @@ Topics covered:
 **Mathematical and algorithmic foundations**
 
 Topics covered:
+
 - FSRS v4.5 algorithm details
 - Memory decay calculations
 - Retrievability formula and decay curves
@@ -67,6 +72,7 @@ Topics covered:
 **Read this if you want to**: Understand the mathematics behind memory modeling and forgetting curves.
 
 **Cross-references**:
+
 - [Core Components](CORE_COMPONENTS.md) - FSRS class implementation
 - [Architecture](ARCHITECTURE.md) - Why FSRS was chosen
 - Scientific papers on spaced repetition (see references in document)
@@ -77,6 +83,7 @@ Topics covered:
 **Complete database schema and query patterns**
 
 Topics covered:
+
 - Schema overview and ER diagrams
 - **nodes** table - Entities with FSRS states
 - **edges** table - Relationships (triplets)
@@ -89,6 +96,7 @@ Topics covered:
 **Read this if you want to**: Understand how data is stored and queried.
 
 **Cross-references**:
+
 - [Core Components](CORE_COMPONENTS.md) - KnowledgeDB class
 - [Architecture](ARCHITECTURE.md) - Why SQLite was chosen
 - [Algorithms](ALGORITHMS.md) - Query complexity analysis
@@ -99,6 +107,7 @@ Topics covered:
 **External API reference for integrating GhostKG**
 
 Topics covered:
+
 - AgentManager API overview
 - Creating and managing agents
 - Absorbing content (updating KG with input)
@@ -110,6 +119,7 @@ Topics covered:
 **Read this if you want to**: Integrate GhostKG with your own LLM or application.
 
 **Cross-references**:
+
 - [Core Components](CORE_COMPONENTS.md) - AgentManager details
 - [Architecture](ARCHITECTURE.md) - Integration patterns
 - [Examples](examples/index.md) - Working code examples
@@ -120,6 +130,7 @@ Topics covered:
 **Guide to using UV package manager with GhostKG**
 
 Topics covered:
+
 - Installing UV package manager
 - Installation with different feature sets (llm, fast, dev, docs, all)
 - Development workflow with UV
@@ -131,6 +142,7 @@ Topics covered:
 **Read this if you want to**: Use modern, fast package management with UV or understand the dependency structure.
 
 **Cross-references**:
+
 - [README on GitHub](https://github.com/GiulioRossetti/GhostKG#installation) - Installation instructions
 - [Fast Mode Configuration](FAST_MODE_CONFIG.md) - Fast mode dependencies
 
@@ -140,6 +152,7 @@ Topics covered:
 **Complete guide to configuring GhostKG**
 
 Topics covered:
+
 - Configuration structure and options
 - Default configuration and customization
 - Loading from environment variables
@@ -152,6 +165,7 @@ Topics covered:
 **Read this if you want to**: Customize GhostKG for your specific needs or deploy to different environments.
 
 **Cross-references**:
+
 - [UV Setup](UV_SETUP.md) - Dependency management
 - [Core Components](CORE_COMPONENTS.md) - Components that use configuration
 
@@ -161,7 +175,8 @@ Topics covered:
 **Guide to fast mode vs LLM mode for triplet extraction**
 
 Topics covered:
-- Fast mode (GLiNER + TextBlob)
+
+- Fast mode (GLiNER + VADER)
 - LLM mode (semantic extraction)
 - Configuration options
 - Trade-offs and use cases
@@ -170,6 +185,7 @@ Topics covered:
 **Read this if you want to**: Choose between fast heuristic extraction or deep LLM-based extraction.
 
 **Cross-references**:
+
 - [Core Components](CORE_COMPONENTS.md) - CognitiveLoop fast mode
 - [Algorithms](ALGORITHMS.md) - Sentiment analysis in fast mode
 - [UV Setup](UV_SETUP.md) - Installing fast mode dependencies

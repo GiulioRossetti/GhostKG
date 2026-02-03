@@ -59,7 +59,7 @@ CREATE TABLE users (
 
 ### GhostKG Schema (Added)
 ```sql
-CREATE TABLE nodes (
+CREATE TABLE kg_nodes (
     owner_id TEXT, 
     id TEXT,
     stability REAL DEFAULT 0, 
@@ -87,6 +87,7 @@ CREATE TABLE nodes (
 ## Conclusion
 
 The demonstration proves that GhostKG successfully:
+
 1. Connects to existing databases
 2. Creates its tables without conflicts
 3. Preserves existing data

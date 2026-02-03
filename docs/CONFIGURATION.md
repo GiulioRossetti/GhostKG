@@ -5,6 +5,7 @@ This guide explains how to configure GhostKG using the configuration system.
 ## Overview
 
 GhostKG uses a dataclass-based configuration system that provides:
+
 - Type-safe configuration with validation
 - Multiple loading methods (code, env vars, YAML, JSON)
 - Sensible defaults for quick start
@@ -33,6 +34,7 @@ config = GhostKGConfig()
 ```
 
 This uses:
+
 - Default FSRS parameters optimized for general use
 - SQLite database at `./agent_memory.db`
 - Ollama at `localhost:11434` with `llama3.2` model
@@ -102,10 +104,12 @@ config = GhostKGConfig.from_env()
 ```
 
 **Environment Variable Format**: `GHOSTKG_{SECTION}_{PARAMETER}`
+
 - Section: `LLM`, `DATABASE`, `FAST_MODE`
 - Parameter: uppercase version of config attribute
 
 **Type Conversion**:
+
 - Strings: Used as-is
 - Integers: Auto-converted (e.g., `GHOSTKG_LLM_TIMEOUT=60`)
 - Floats: Auto-converted (e.g., `GHOSTKG_DATABASE_TIMEOUT=10.5`)
@@ -205,14 +209,14 @@ FSRS (Free Spaced Repetition Scheduler) algorithm configuration.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `parameters` | `List[float]` | 17 optimized values | FSRS algorithm parameters |
+| `parameters` | `List[float]` | 21 optimized values | FSRS algorithm parameters |
 
 **Example**:
 ```python
 from ghost_kg import FSRSConfig
 
 fsrs = FSRSConfig(
-    parameters=[0.4, 0.6, 2.4, ...] # 17 float values
+    parameters=[0.212, 1.2931, 2.3065, ...]  # 21 float values
 )
 ```
 
@@ -389,6 +393,7 @@ except ConfigurationError as e:
 ```
 
 **Validation Rules**:
+
 - Database path cannot be empty
 - All timeout values must be positive
 - LLM max_retries must be at least 1
@@ -437,6 +442,7 @@ config = GhostKGConfig.from_yaml(str(config_path))
 **Problem**: Variables not being picked up
 
 **Solution**: 
+
 - Check variable names are correct (uppercase, `GHOSTKG_` prefix)
 - Check variables are exported: `export GHOSTKG_LLM_MODEL=llama2`
 - Verify with: `echo $GHOSTKG_LLM_MODEL`

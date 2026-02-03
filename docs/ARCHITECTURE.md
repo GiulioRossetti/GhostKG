@@ -91,7 +91,7 @@ from ghost_kg.manager import AgentManager
 
 **ghost_kg.extraction**
 - `extraction.py`: Strategies for extracting triplets from text
-  - FastExtractor: GLiNER + TextBlob (no LLM required)
+  - FastExtractor: GLiNER + VADER (no LLM required)
   - LLMExtractor: Deep semantic extraction with LLM
 
 **ghost_kg.utils**
@@ -280,12 +280,12 @@ SQLite Database
 
 **Responsibilities:**
 - Integrated LLM operations (optional)
-- Triplet extraction (fast mode: GLiNER+TextBlob, LLM mode: semantic)
+- Triplet extraction (fast mode: GLiNER+VADER, LLM mode: semantic)
 - Response generation
 - Self-reflection
 
 **Modes:**
-- Fast Mode: Heuristic extraction with GLiNER + TextBlob
+- Fast Mode: Heuristic extraction with GLiNER + VADER
 - LLM Mode: Deep semantic extraction with Ollama
 
 #### KnowledgeDB
@@ -297,9 +297,9 @@ SQLite Database
 - Interaction logging
 
 **Schema:**
-- `nodes` - Entities with FSRS state
-- `edges` - Relationships (triplets) with sentiment
-- `logs` - Interaction history with annotations
+- `kg_nodes` - Entities with FSRS state
+- `kg_edges` - Relationships (triplets) with sentiment
+- `kg_logs` - Interaction history with annotations
 
 ### Persistence Layer
 
@@ -421,7 +421,7 @@ manager.update_with_response("Alice", response)  # No triplets - uses LLM
 
 ### Why Support Both Fast and LLM Modes?
 
-**Decision**: Implement both GLiNER+TextBlob (fast) and LLM extraction
+**Decision**: Implement both GLiNER+VADER (fast) and LLM extraction
 
 **Rationale**:
 - Fast mode: Good for demos, testing, large-scale simulations
@@ -521,7 +521,10 @@ manager = AgentManager(db_path="custom_path.db")
 ### LLM Host
 
 ```python
-agent = GhostAgent("Alice", llm_host="http://custom:11434")
+from ghost_kg.llm import get_llm_service
+
+llm = get_llm_service("ollama", "llama3.2")
+agent = GhostAgent("Alice", llm_service=llm)
 ```
 
 ### Fast Mode

@@ -72,11 +72,13 @@ These parameters are optimized based on research into human memory and spaced re
 The retrievability R represents the probability that the agent can recall a piece of knowledge at time t.
 
 **Formula (FSRS-6):**
+
 ```
 R(t) = (1 + factor × Δt / S)^(-w_20)
 ```
 
 Where:
+
 - `R(t)` = Retrievability at time t
 - `Δt` = Elapsed time since last review (in days)
 - `S` = Current stability (in days)
@@ -84,6 +86,7 @@ Where:
 - `factor` = 0.9^(-1/w_20) - 1 (ensures R(S,S) = 90%)
 
 **Interpretation:**
+
 - At Δt = 0 (just reviewed): R = 1.0 (perfect recall)
 - At Δt = S: R = 0.9 (90% chance of recall)
 - As Δt → ∞: R → 0 (forgotten)
@@ -150,6 +153,7 @@ S_new = p[rating - 1]
 ```
 
 **Values (FSRS-6):**
+
 - Rating = 1 (Again): S = 0.212 days
 - Rating = 2 (Hard): S = 1.2931 days
 - Rating = 3 (Good): S = 2.3065 days
@@ -170,6 +174,7 @@ S_next = S × (1 + exp(p[8]) × (11 - D_next) × (S^(-p[9]))
 ```
 
 Where:
+
 - `penalty = p[15]` if rating = 2 (Hard), else 1
 - `bonus = p[16]` if rating = 4 (Easy), else 1
 - `R` = Current retrievability
@@ -313,6 +318,7 @@ D_initial = min(max(p[4] - exp(p[5] × (rating - 1)) + 1, 1), 10)
 ```
 
 **Values (FSRS-6):**
+
 - Rating = 1 (Again): D = 6.4133 - exp(0.8334 × 0) + 1 = 6.4133 - 1 + 1 ≈ 6.41
 - Rating = 2 (Hard): D = 6.4133 - exp(0.8334 × 1) + 1 ≈ 6.41 - 2.30 + 1 ≈ 5.11
 - Rating = 3 (Good): D = 6.4133 - exp(0.8334 × 2) + 1 ≈ 6.41 - 5.30 + 1 ≈ 2.11
@@ -389,13 +395,13 @@ Difficulty decreases when rated Easy, with linear damping providing more natural
 
 ## Sentiment Analysis
 
-### Fast Mode Sentiment (TextBlob)
+### Fast Mode Sentiment (VADER)
 
-When using fast mode, sentiment is calculated using TextBlob's polarity score:
+When using fast mode, sentiment is calculated using VADER's polarity score:
 
 **Formula:**
 ```
-sentiment = TextBlob(text).sentiment.polarity
+sentiment = VADER(text).sentiment.polarity
 ```
 
 **Range**: [-1.0, 1.0]
@@ -455,7 +461,7 @@ The LLM is prompted to provide sentiment on the [-1.0, 1.0] scale.
 **SQL:**
 ```sql
 SELECT source, relation, target, sentiment 
-FROM edges
+FROM kg_edges
 WHERE owner_id = ?
   AND (source = 'I' OR source = ?)
   AND (
@@ -482,7 +488,7 @@ LIMIT 8
 **SQL:**
 ```sql
 SELECT source, relation, target
-FROM edges
+FROM kg_edges
 WHERE owner_id = ?
   AND source != 'I'
   AND source != ?

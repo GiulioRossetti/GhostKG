@@ -16,8 +16,8 @@ from ghost_kg.extraction import FastExtractor, LLMExtractor, get_extractor
 
 Two extraction strategies are available:
 
-- **FastExtractor**: Local extraction using GLiNER + TextBlob (no LLM required)
-- **LLMExtractor**: Semantic extraction using Ollama LLM
+- **FastExtractor**: Local extraction using GLiNER + VADER (no LLM required)
+- **LLMExtractor**: Semantic extraction using LLM service (multiple providers supported)
 
 ## Extraction Strategies
 
@@ -25,26 +25,35 @@ Two extraction strategies are available:
 
 Fast mode uses local models for quick extraction:
 
-- **GLiNER**: Zero-shot named entity recognition
-- **TextBlob**: Sentiment analysis
-- **Rule-based**: Relation extraction
+- **GLiNER**: Zero-shot named entity recognition for extracting entities
+- **VADER**: Sentiment analysis optimized for social media and conversational text
+- **Rule-based**: Sentiment-to-relation mapping based on intensity
 
 **Pros:**
 - Fast (~100 messages/second)
-- No external dependencies
-- Works offline
+- No external dependencies (works offline)
+- No LLM API costs
+- Good quality for most use cases
 
 **Cons:**
-- Lower quality triplets
-- Limited semantic understanding
+- Lower quality than LLM for complex semantic understanding
+- Limited to heuristic relation extraction
+
+**Installation:**
+
+```bash
+pip install ghost-kg[fast]
+# Or: pip install gliner vaderSentiment
+```
 
 ### LLM Mode (LLMExtractor)
 
-LLM mode uses an LLM service for high-quality extraction:
+LLM mode uses a language model service for high-quality extraction:
 
 - **Semantic understanding**: Better context comprehension
 - **Relation detection**: More accurate relationship identification
 - **Sentiment analysis**: Nuanced emotional understanding
+- **Multi-provider**: Supports Ollama, OpenAI, Anthropic, Google, Cohere
 
 **Pros:**
 - High quality triplets
@@ -57,22 +66,32 @@ LLM mode uses an LLM service for high-quality extraction:
 - Requires LLM service
 - May incur API costs (for commercial providers)
 
+**Installation:**
+
+```bash
+pip install ghost-kg[llm]  # For Ollama
+# Or for commercial providers:
+pip install ghost-kg[langchain-openai]
+pip install ghost-kg[langchain-anthropic]
+# etc.
+```
+
 ## Basic Usage
 
 ```python
 from ghost_kg.extraction import get_extractor, FastExtractor, LLMExtractor
 from ghost_kg.llm import get_llm_service
 
-# Fast mode extraction
-fast_extractor = get_extractor(fast_mode=True, client=None, model=None)
-triplets = fast_extractor.extract_triplets(
-    agent_name="Alice",
-    text="I think climate action is urgent",
-    author="Self"
+# Fast mode extraction (GLiNER + VADER)
+fast_extractor = get_extractor(fast_mode=True)
+result = fast_extractor.extract(
+    text="I strongly support climate action because it's urgent",
+    author="Alice",
+    agent_name="Bob"
 )
 
 # LLM mode extraction with Ollama
-llm_service = get_llm_service("ollama", "llama3.2", host="http://localhost:11434")
+llm_service = get_llm_service("ollama", "llama3.2", base_url="http://localhost:11434")
 llm_extractor = get_extractor(
     fast_mode=False,
     llm_service=llm_service,
@@ -83,22 +102,34 @@ llm_extractor = get_extractor(
 # llm_service = get_llm_service("openai", "gpt-4")
 # llm_extractor = get_extractor(fast_mode=False, llm_service=llm_service, model="gpt-4")
 
-triplets = llm_extractor.extract_triplets(
-    agent_name="Alice",
+result = llm_extractor.extract(
     text="I think climate action is urgent",
-    author="Self"
+    author="Alice",
+    agent_name="Bob"
 )
 ```
 
 ## Triplet Format
 
-Extractors return triplets as:
+Extractors return triplets in this format:
 
 ```python
 {
-    "world_facts": [(source, relation, target, sentiment), ...],
-    "partner_stance": [(source, relation, target, sentiment), ...],
-    "my_reaction": [(relation, target, sentiment), ...]
+    "world_facts": [
+        {"source": "concept", "relation": "verb", "target": "concept"},
+        ...
+    ],
+    "partner_stance": [
+        {"source": "Author", "relation": "verb", "target": "concept", "sentiment": 0.5},
+        ...
+    ],
+    "my_reaction": [
+        {"source": "I", "relation": "verb", "target": "concept", "rating": 3, "sentiment": 0.3},
+        ...
+    ],
+    "mode": "FAST" or "LLM",
+    "sentiment": 0.67,  # Overall sentiment (Fast mode only)
+    "entities": ["entity1", "entity2"]  # Extracted entities (Fast mode only)
 }
 ```
 

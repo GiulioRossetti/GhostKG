@@ -17,6 +17,7 @@ The `triplets` parameter was incorrectly identified as an "outdated pattern" and
 ### Why External Triplets Are Important
 
 Users need the ability to:
+
 1. **Use their own NLP pipelines** - Integrate custom extraction methods
 2. **Avoid LLM API costs** - Skip internal LLM usage when cost is a concern
 3. **Have full control** - Decide exactly what gets added to the knowledge graph
@@ -30,17 +31,20 @@ Users need the ability to:
 Restored the optional `triplets` parameter to three AgentManager methods:
 
 **`absorb_content(triplets: Optional[List[Tuple[str, str, str]]])`**
+
 - Format: `[(source, relation, target), ...]`
 - Use case: Agent absorbing content from external source
 - Example: `[("Bob", "says", "climate_urgent")]`
 
 **`update_with_response(triplets: Optional[List[Tuple[str, str, float]]])`**
+
 - Format: `[(relation, target, sentiment), ...]`
 - Source is always "I" (the agent's own beliefs)
 - Use case: Agent's own response/reflection
 - Example: `[("support", "UBI", 0.8)]`
 
 **`process_and_get_context(triplets: Optional[List[Tuple[str, str, str]]])`**
+
 - Format: `[(source, relation, target), ...]`
 - Use case: Atomic absorb + context operation
 - Passes through to `absorb_content()`
@@ -65,6 +69,7 @@ manager.absorb_content("Alice", text, author="Bob")
 ### 3. Added Validation
 
 Added proper validation for triplet formats:
+
 - Must be a list
 - Each triplet must be a 3-tuple
 - Correct tuple structure for each method
@@ -77,11 +82,13 @@ Increased timeout threshold in `test_large_knowledge_base_query` from 10s to 15s
 ## Test Results
 
 ### Before Fix
+
 - ❌ 22 tests failed
 - ✅ 218 tests passed
 - 12 tests skipped
 
 ### After Fix
+
 - ✅ **240 tests passed** (100% pass rate)
 - ❌ **0 tests failed**
 - 12 tests skipped (optional dependencies)
@@ -89,6 +96,7 @@ Increased timeout threshold in `test_large_knowledge_base_query` from 10s to 15s
 ### Test Categories
 
 **Unit Tests** (100% pass):
+
 - `test_manager.py`: All 17 tests pass
 - `test_agent.py`: All 9 tests pass
 - `test_storage.py`: All 23 tests pass
@@ -96,11 +104,13 @@ Increased timeout threshold in `test_large_knowledge_base_query` from 10s to 15s
 - And 150+ more unit tests
 
 **Integration Tests** (100% pass):
+
 - `test_multi_agent.py`: All 5 tests pass
 - `test_workflows.py`: All 5 tests pass
 - `test_llm_service_modes.py`: All 8 tests pass
 
 **Performance Tests** (100% pass):
+
 - `test_benchmarks.py`: All 7 tests pass
 - `test_memory.py`: All 6 tests pass
 
@@ -122,6 +132,7 @@ All 8 example scripts verified:
 ## Files Changed
 
 ### Core Library
+
 1. **`ghost_kg/core/manager.py`** (+256 lines, -35 lines)
    - Restored `triplets` parameter to 3 methods
    - Added validation logic
@@ -129,6 +140,7 @@ All 8 example scripts verified:
    - Updated documentation
 
 ### Tests
+
 2. **`tests/performance/test_memory.py`** (+1 line, -1 line)
    - Increased timeout threshold: 10s → 15s
 
@@ -203,6 +215,7 @@ manager.update_with_response("Alice", response, triplets=triplets)
 ## Conclusion
 
 The test suite is now fully operational with 240/240 tests passing. The `triplets` parameter has been correctly restored as an optional feature that provides users with the flexibility to:
+
 - Compute triplets externally (no LLM required)
 - Use internal LLM extraction (automatic)
 - Mix both approaches as needed
