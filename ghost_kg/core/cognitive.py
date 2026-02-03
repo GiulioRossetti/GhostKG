@@ -34,6 +34,22 @@ class CognitiveLoop:
         extractor: Triplet extraction strategy (fast or LLM)
     """
 
+    @staticmethod
+    def _clamp_sentiment(sentiment: float) -> float:
+        """
+        Clamp sentiment value to valid range [-1.0, 1.0].
+        
+        LLMs sometimes return sentiment values outside the valid range.
+        This helper ensures all sentiment values are within bounds.
+        
+        Args:
+            sentiment (float): Raw sentiment value from LLM
+            
+        Returns:
+            float: Clamped sentiment value in range [-1.0, 1.0]
+        """
+        return max(-1.0, min(1.0, sentiment))
+
     def __init__(self, agent: GhostAgent, model: str = "llama3.2", fast_mode: bool = False) -> None:
         """
         Initialize cognitive loop for an agent.
@@ -54,22 +70,35 @@ class CognitiveLoop:
         try:
             if self.fast_mode:
                 self.extractor = get_extractor(
-                    fast_mode=True, client=None, model=None  # type: ignore[arg-type]
+                    fast_mode=True, llm_service=None, model=None  # type: ignore[arg-type]
                 )
             else:
+                # Require LLM service for LLM mode
+                if self.agent.llm_service is None:
+                    raise ValueError(
+                        "LLM service is required for CognitiveLoop in LLM mode. "
+                        "Please provide llm_service when creating the agent."
+                    )
                 self.extractor = get_extractor(
                     fast_mode=False,
-                    client=self.agent.client,
+                    llm_service=self.agent.llm_service,
                     model=self.model or "llama3.2",  # type: ignore[arg-type]
+                    max_retries=3,
                 )
         except ImportError as e:
             print(f"Warning: {e}")
             print("Falling back to LLM mode")
             self.fast_mode = False
+            if self.agent.llm_service is None:
+                raise ValueError(
+                    "LLM service is required for CognitiveLoop. "
+                    "Please provide llm_service when creating the agent."
+                ) from e
             self.extractor = get_extractor(
                 fast_mode=False,
-                client=self.agent.client,
+                llm_service=self.agent.llm_service,
                 model=self.model,  # type: ignore[arg-type]
+                max_retries=3,
             )
 
     def _call_llm_with_retry(
@@ -88,25 +117,30 @@ class CognitiveLoop:
             Dict[str, Any]: LLM response
 
         Raises:
-            LLMError: If all retries fail
+            LLMError: If all retries fail or if no LLM service is available
         """
+        # Require LLM service
+        if self.agent.llm_service is None:
+            raise LLMError("No LLM service available. Please provide llm_service when creating the agent.")
+        
         for attempt in range(max_retries):
             try:
                 kwargs = {
-                    "model": self.model,
                     "messages": [{"role": "user", "content": prompt}],
                 }
                 if format:
                     kwargs["format"] = format
 
-                res = self.agent.client.chat(**kwargs)
+                # Use agent's LLM service
+                res = self.agent.llm_service.chat(model=self.model, **kwargs)
+                
                 return res  # type: ignore[no-any-return]
 
             except Exception as e:
                 if attempt == max_retries - 1:
                     raise LLMError(f"LLM call failed after {max_retries} attempts: {e}") from e
-                # Exponential backoff
-                wait_time = 2**attempt
+                # Exponential backoff (capped at 30 seconds)
+                wait_time = min(2**attempt, 30)
                 print(
                     f"LLM call failed (attempt {attempt + 1}/{max_retries}), retrying in {wait_time}s..."
                 )
@@ -149,7 +183,7 @@ class CognitiveLoop:
             source = item.get("source", "")
             relation = item.get("relation", "")
             target = item.get("target", "")
-            sentiment = item.get("sentiment", 0.0)
+            sentiment = self._clamp_sentiment(item.get("sentiment", 0.0))
             
             # Skip malformed triplets missing required fields
             if not source or not relation or not target:
@@ -161,7 +195,7 @@ class CognitiveLoop:
         for item in data.get("my_reaction", []):
             relation = item.get("relation", "")
             target = item.get("target", "")
-            s_score = item.get("sentiment", 0.0)
+            s_score = self._clamp_sentiment(item.get("sentiment", 0.0))
             rating = item.get("rating", Rating.Good)
             
             # Skip malformed triplets missing required fields
@@ -228,7 +262,7 @@ class CognitiveLoop:
             for item in data.get("my_expressed_stances", []):
                 relation = item.get("relation", "")
                 target = item.get("target", "")
-                s_score = item.get("sentiment", 0.0)
+                s_score = self._clamp_sentiment(item.get("sentiment", 0.0))
                 
                 # Skip malformed triplets missing required fields
                 if not relation or not target:

@@ -8,9 +8,12 @@ from ghost_kg import CognitiveLoop, GhostAgent, LLMError, ExtractionError
 def mock_agent(tmp_path):
     """Create a mock agent for testing."""
     db_path = tmp_path / "test.db"
-    agent = GhostAgent("TestAgent", str(db_path))
-    # Mock the client to avoid actual LLM calls
-    agent.client = Mock()
+    # Create mock LLM service
+    mock_llm_service = Mock()
+    mock_llm_service.chat.return_value = {
+        'message': {'content': '{"result": "test"}'}
+    }
+    agent = GhostAgent("TestAgent", str(db_path), llm_service=mock_llm_service)
     return agent
 
 
@@ -52,7 +55,7 @@ class TestCognitiveLoop:
             loop = CognitiveLoop(mock_agent)
             
             # Mock successful LLM response
-            mock_agent.client.chat.return_value = {
+            mock_agent.llm_service.chat.return_value = {
                 'message': {'content': '{"result": "test"}'}
             }
             
@@ -68,7 +71,7 @@ class TestCognitiveLoop:
             loop = CognitiveLoop(mock_agent)
             
             # Mock failed LLM response
-            mock_agent.client.chat.side_effect = Exception("LLM error")
+            mock_agent.llm_service.chat.side_effect = Exception("LLM error")
             
             with pytest.raises(LLMError):
                 loop._call_llm_with_retry("test prompt", max_retries=2)
@@ -164,7 +167,7 @@ class TestCognitiveLoop:
             mock_agent.learn_triplet = Mock()
             
             # Mock LLM response with missing fields
-            mock_agent.client.chat.return_value = {
+            mock_agent.llm_service.chat.return_value = {
                 'message': {'content': '{"my_expressed_stances": [{"relation": "support"}, {"target": "UBI"}, {}, {"relation": "oppose", "target": "taxes"}]}'}
             }
             
@@ -180,3 +183,51 @@ class TestCognitiveLoop:
             
             # Verify that valid triplet was processed (learn_triplet called once for valid entry)
             assert mock_agent.learn_triplet.call_count == 1
+    
+    def test_sentiment_clamping(self, mock_agent):
+        """Test that sentiment values outside [-1.0, 1.0] are clamped."""
+        with patch('ghost_kg.core.cognitive.get_extractor') as mock_get_extractor:
+            mock_get_extractor.return_value = Mock()
+            loop = CognitiveLoop(mock_agent)
+            
+            # Test clamping for values outside the valid range
+            assert loop._clamp_sentiment(2.0) == 1.0  # Too high
+            assert loop._clamp_sentiment(-2.0) == -1.0  # Too low
+            assert loop._clamp_sentiment(1.5) == 1.0  # Above max
+            assert loop._clamp_sentiment(-1.5) == -1.0  # Below min
+            
+            # Test valid values are unchanged
+            assert loop._clamp_sentiment(0.5) == 0.5
+            assert loop._clamp_sentiment(-0.5) == -0.5
+            assert loop._clamp_sentiment(1.0) == 1.0
+            assert loop._clamp_sentiment(-1.0) == -1.0
+            assert loop._clamp_sentiment(0.0) == 0.0
+    
+    def test_absorb_clamps_sentiment(self, mock_agent):
+        """Test that absorb() properly clamps sentiment values from LLM."""
+        with patch('ghost_kg.core.cognitive.get_extractor') as mock_get_extractor:
+            mock_extractor = Mock()
+            # Return data with out-of-range sentiment values
+            mock_extractor.extract.return_value = {
+                "partner_stance": [{"source": "Partner", "relation": "support", "target": "Topic", "sentiment": 2.5}],
+                "my_reaction": [{"relation": "oppose", "target": "Topic", "sentiment": -3.0}]
+            }
+            mock_get_extractor.return_value = mock_extractor
+            
+            loop = CognitiveLoop(mock_agent)
+            
+            # Mock learn_triplet to verify clamped values
+            original_learn = mock_agent.learn_triplet
+            learned_triplets = []
+            def capture_learn(*args, **kwargs):
+                learned_triplets.append(kwargs.get('sentiment'))
+                return original_learn(*args, **kwargs)
+            
+            mock_agent.learn_triplet = capture_learn
+            
+            loop.absorb("Test content", author="TestAuthor")
+            
+            # Verify sentiments were clamped to valid range
+            assert len(learned_triplets) == 2
+            assert learned_triplets[0] == 1.0  # Was 2.5, clamped to 1.0
+            assert learned_triplets[1] == -1.0  # Was -3.0, clamped to -1.0

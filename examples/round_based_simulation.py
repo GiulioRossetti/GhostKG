@@ -163,7 +163,7 @@ def run_round_based_simulation():
     cursor.execute(
         """
         SELECT id, sim_day, sim_hour, created_at 
-        FROM nodes 
+        FROM kg_nodes 
         WHERE owner_id = 'Alice' AND sim_day IS NOT NULL 
         LIMIT 3
     """
@@ -178,7 +178,7 @@ def run_round_based_simulation():
     cursor.execute(
         """
         SELECT source, relation, target, sim_day, sim_hour 
-        FROM edges 
+        FROM kg_edges 
         WHERE owner_id = 'Alice' AND sim_day IS NOT NULL 
         LIMIT 3
     """

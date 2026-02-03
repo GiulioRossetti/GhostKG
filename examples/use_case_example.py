@@ -11,7 +11,7 @@ In the main program:
 - A passes the generated text to ghost_kg to update its KG
 
 This example shows two agents (Alice and Bob) in multi-round communication.
-Uses ollama with llama3.2 for all LLM-related tasks.
+Uses LLMService abstraction which supports both Ollama and commercial LLMs.
 """
 
 import sys
@@ -19,11 +19,11 @@ import os
 import datetime
 import json
 from datetime import timedelta
-from ollama import Client
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from ghost_kg import AgentManager, Rating
+from ghost_kg.llm import get_llm_service
 
 DB_PATH = "use_case_example.db"
 LLM_MODEL = "llama3.2"
@@ -37,14 +37,19 @@ LLM_MODEL = "llama3.2"
 #                    Faster, no LLM needed for extraction, good for quick processing
 #                    Requires: pip install gliner textblob
 #
-# - False:           Uses LLM (ollama) for deep semantic extraction
+# - False:           Uses LLM for deep semantic extraction
 #                    Slower, more accurate, extracts complex relationships
-#                    Requires: ollama running with llama3.2
+#                    Requires: LLM service (Ollama or commercial)
 # ============================================================================
 USE_FAST_MODE = False
 
-# Initialize ollama client (needed for response generation and LLM mode)
-ollama_client = Client(host="http://localhost:11434")
+# Initialize LLM service (supports Ollama, OpenAI, Anthropic, etc.)
+# For Ollama (default):
+llm_service = get_llm_service("ollama", LLM_MODEL, host="http://localhost:11434")
+# For OpenAI (requires OPENAI_API_KEY env var):
+# llm_service = get_llm_service("openai", "gpt-4")
+# For Anthropic (requires ANTHROPIC_API_KEY env var):
+# llm_service = get_llm_service("anthropic", "claude-3-opus-20240229")
 
 # Cleanup
 if os.path.exists(DB_PATH):
@@ -55,10 +60,11 @@ def external_llm_generate(
     agent_name: str, context: str, topic: str, agent_profile: str
 ) -> str:
     """
-    Use ollama with llama3.2 to generate a response based on context.
+    Use LLM service to generate a response based on context.
+    Works with any LLM provider (Ollama, OpenAI, Anthropic, etc.)
     """
-    print(f"  [Ollama LLM] Generating response for {agent_name}...")
-    print(f"  [Ollama LLM] Using context: {context[:100]}...")
+    print(f"  [LLM] Generating response for {agent_name}...")
+    print(f"  [LLM] Using context: {context[:100]}...")
 
     prompt = f"""
     You are {agent_name}: a {agent_profile}. Talking about {topic}.
@@ -67,8 +73,9 @@ def external_llm_generate(
     """
 
     try:
-        res = ollama_client.chat(
-            model=LLM_MODEL, messages=[{"role": "user", "content": prompt}]
+        res = llm_service.chat(
+            messages=[{"role": "user", "content": prompt}],
+            model=LLM_MODEL
         )
         response = res["message"]["content"]
         return response
@@ -80,7 +87,8 @@ def external_llm_generate(
 
 def extract_triplets(text: str, author: str):
     """
-    Use ollama with llama3.2 to extract triplets from text.
+    Use LLM service to extract triplets from text.
+    Works with any LLM provider (Ollama, OpenAI, Anthropic, etc.)
     """
     prompt = f"""
     Analyze this text by {author}: "{text}"
@@ -105,9 +113,9 @@ def extract_triplets(text: str, author: str):
     """
 
     try:
-        res = ollama_client.chat(
-            model=LLM_MODEL,
+        res = llm_service.chat(
             messages=[{"role": "user", "content": prompt}],
+            model=LLM_MODEL,
             format="json",
         )
         data = json.loads(res["message"]["content"])
@@ -131,8 +139,9 @@ def extract_triplets(text: str, author: str):
 
 def extract_response_triplets(text: str, agent_name: str):
     """
-    Use ollama with llama3.2 to extract triplets from agent's own response.
+    Use LLM service to extract triplets from agent's own response.
     Returns list of (relation, target, sentiment) tuples.
+    Works with any LLM provider (Ollama, OpenAI, Anthropic, etc.)
     """
     prompt = f"""
     You are {agent_name}. You just said: "{text}"
@@ -143,9 +152,9 @@ def extract_response_triplets(text: str, agent_name: str):
     """
 
     try:
-        res = ollama_client.chat(
-            model=LLM_MODEL,
+        res = llm_service.chat(
             messages=[{"role": "user", "content": prompt}],
+            model=LLM_MODEL,
             format="json",
         )
         data = json.loads(res["message"]["content"])

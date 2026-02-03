@@ -40,7 +40,7 @@ Fast mode uses local models for quick extraction:
 
 ### LLM Mode (LLMExtractor)
 
-LLM mode uses Ollama for high-quality extraction:
+LLM mode uses an LLM service for high-quality extraction:
 
 - **Semantic understanding**: Better context comprehension
 - **Relation detection**: More accurate relationship identification
@@ -50,17 +50,18 @@ LLM mode uses Ollama for high-quality extraction:
 - High quality triplets
 - Better semantic understanding
 - Contextual extraction
+- Supports multiple providers (Ollama, OpenAI, Anthropic, etc.)
 
 **Cons:**
 - Slower (~1-5 messages/second)
-- Requires LLM server
-- Network dependency
+- Requires LLM service
+- May incur API costs (for commercial providers)
 
 ## Basic Usage
 
 ```python
 from ghost_kg.extraction import get_extractor, FastExtractor, LLMExtractor
-from ollama import Client
+from ghost_kg.llm import get_llm_service
 
 # Fast mode extraction
 fast_extractor = get_extractor(fast_mode=True, client=None, model=None)
@@ -70,13 +71,18 @@ triplets = fast_extractor.extract_triplets(
     author="Self"
 )
 
-# LLM mode extraction
-client = Client(host="http://localhost:11434")
+# LLM mode extraction with Ollama
+llm_service = get_llm_service("ollama", "llama3.2", host="http://localhost:11434")
 llm_extractor = get_extractor(
     fast_mode=False,
-    client=client,
+    llm_service=llm_service,
     model="llama3.2"
 )
+
+# Or with OpenAI
+# llm_service = get_llm_service("openai", "gpt-4")
+# llm_extractor = get_extractor(fast_mode=False, llm_service=llm_service, model="gpt-4")
+
 triplets = llm_extractor.extract_triplets(
     agent_name="Alice",
     text="I think climate action is urgent",

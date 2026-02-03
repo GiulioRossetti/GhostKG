@@ -2,22 +2,25 @@
 
 **Source:** `examples/use_case_example.py`
 
-This is the most comprehensive example, demonstrating a complete multi-round conversation between two agents using Ollama's LLaMA model for text generation and triplet extraction.
+This is the most comprehensive example, demonstrating a complete multi-round conversation between two agents using LLM services for text generation and triplet extraction.
 
 ## Overview
 
 Alice (a Denmark politician) and Bob (an American alt-right analyst) discuss Greenland. The example showcases:
 - The `process_and_get_context()` atomic operation
 - Both **Fast Mode** (GLiNER + TextBlob) and **LLM Mode** for triplet extraction
-- Ollama integration for response generation
+- LLM service integration (supports Ollama, OpenAI, Anthropic, etc.)
 - Knowledge graph evolution across 10 conversation rounds
 
 ## Prerequisites
 
 This example requires:
-1. **Ollama** installed and running: `curl -fsSL https://ollama.com/install.sh | sh`
-2. **LLaMA 3.2 model** downloaded: `ollama pull llama3.2`
-3. **Ollama client**: `pip install ollama`
+1. **An LLM service** - Choose one:
+   - **Ollama** (local, free): `curl -fsSL https://ollama.com/install.sh | sh` then `ollama pull llama3.2`
+   - **OpenAI** (commercial): Set `OPENAI_API_KEY` environment variable
+   - **Anthropic** (commercial): Set `ANTHROPIC_API_KEY` environment variable
+
+2. **Required packages**: `pip install ghost-kg`
 
 **Optional for Fast Mode:**
 - GLiNER: `pip install gliner`
@@ -25,14 +28,22 @@ This example requires:
 
 ## Configuration
 
-At the top of the file, you can choose the extraction mode:
+At the top of the file, configure your LLM service:
 
 ```python
-# Fast Mode: Uses GLiNER + TextBlob (quick, heuristic)
-USE_FAST_MODE = True
+from ghost_kg.llm import get_llm_service
 
-# LLM Mode: Uses Ollama for extraction (slower, more accurate)
-USE_FAST_MODE = False
+# Option 1: Ollama (local)
+llm_service = get_llm_service("ollama", "llama3.2", host="http://localhost:11434")
+
+# Option 2: OpenAI (commercial)
+# llm_service = get_llm_service("openai", "gpt-4")
+
+# Option 3: Anthropic (commercial)
+# llm_service = get_llm_service("anthropic", "claude-3-opus-20240229")
+
+# Choose extraction mode:
+USE_FAST_MODE = False  # True for GLiNER+TextBlob, False for LLM extraction
 ```
 
 ## Step-by-Step Walkthrough
@@ -83,11 +94,11 @@ Sets up opposing viewpoints to create an interesting conversation.
 
 ### Step 4: Triplet Extraction (LLM Mode)
 
-When `USE_FAST_MODE = False`, the example uses Ollama to extract structured knowledge:
+When `USE_FAST_MODE = False`, the example uses an LLM service to extract structured knowledge:
 
 ```python
 def extract_triplets(text: str, author: str):
-    """Use Ollama to extract semantic triplets."""
+    """Use LLM service to extract semantic triplets."""
     
     prompt = f"""
     Analyze this text by {author}: "{text}"
@@ -103,9 +114,9 @@ def extract_triplets(text: str, author: str):
     - partner_stance: What {author} believes
     """
     
-    response = ollama_client.chat(
-        model="llama3.2",
+    response = llm_service.chat(
         messages=[{"role": "user", "content": prompt}],
+        model=LLM_MODEL,
         format="json"
     )
     
@@ -117,6 +128,7 @@ def extract_triplets(text: str, author: str):
 - LLMs can understand semantic relationships, not just keywords
 - Extracts beliefs, intentions, and complex relationships
 - Returns structured triplets: `(source, relation, target)`
+- Works with any LLM provider (Ollama, OpenAI, Anthropic, etc.)
 
 ### Step 5: Fast Mode Alternative
 
@@ -168,7 +180,7 @@ context = manager.process_and_get_context(
 ```python
 def external_llm_generate(agent_name: str, context: str, 
                           topic: str, profile: str) -> str:
-    """Use Ollama to generate agent response."""
+    """Use LLM service to generate agent response."""
     
     prompt = f"""
     You are {agent_name}: {profile}. 
@@ -180,9 +192,9 @@ def external_llm_generate(agent_name: str, context: str,
     Prioritize YOUR STANCE.
     """
     
-    response = ollama_client.chat(
-        model="llama3.2",
-        messages=[{"role": "user", "content": prompt}]
+    response = llm_service.chat(
+        messages=[{"role": "user", "content": prompt}],
+        model=LLM_MODEL
     )
     
     return response["message"]["content"]
@@ -193,6 +205,7 @@ def external_llm_generate(agent_name: str, context: str,
 - Bob: "an American alt-right geopolitical analyst supporting expansion"
 
 These profiles guide the LLM to generate appropriate responses.
+Works with any configured LLM provider.
 
 ### Step 8: Extract Response Triplets
 
@@ -214,10 +227,11 @@ def extract_response_triplets(text: str, agent_name: str):
     ]}}
     """
     
-    # ... Ollama call and parsing
+    # ... LLM service call and parsing
 ```
 
-Returns tuples: `(relation, target, sentiment)`
+Returns tuples: `(relation, target, sentiment)`.
+Works with any LLM provider.
 
 ### Step 9: Update with Response
 
@@ -344,10 +358,16 @@ USE CASE: Two Agents Multi-Round Communication
 ## Running the Example
 
 ```bash
-# Make sure Ollama is running
-ollama serve
+# Option 1: With Ollama (local, free)
+ollama serve  # Start Ollama server
+ollama pull llama3.2  # Download model
 
-# In another terminal
+# Option 2: With commercial LLM (OpenAI, Anthropic, etc.)
+export OPENAI_API_KEY="sk-..."  # Set API key
+# or
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# Run the example
 cd examples
 python use_case_example.py
 ```
@@ -359,11 +379,17 @@ python use_case_example.py
 Change these variables to experiment:
 
 ```python
+# LLM Service configuration
+llm_service = get_llm_service("ollama", "llama3.2")  # Or "openai", "gpt-4"
+
 # Number of conversation rounds
 num_rounds = 10  # Try 3 for quick tests, 20 for longer conversations
 
 # Extraction mode
 USE_FAST_MODE = True  # True = fast, False = accurate
+
+# Model selection
+LLM_MODEL = "llama3.2"  # Or "gpt-4", "claude-3-opus-20240229", etc.
 
 # LLM model
 LLM_MODEL = "llama3.2"  # Or "llama3", "mistral", etc.

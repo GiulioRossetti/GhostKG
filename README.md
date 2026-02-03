@@ -157,6 +157,30 @@ loop.absorb("I think UBI is necessary.", author="Bob")
 response = loop.reply("UBI", partner_name="Bob")
 ```
 
+### Option 3: Commercial LLM Providers
+
+Use OpenAI, Anthropic, Google, or Cohere with GhostKG:
+
+```python
+from ghost_kg import GhostAgent, CognitiveLoop
+from ghost_kg.llm import get_llm_service
+import datetime
+
+# Create LLM service (OpenAI, Anthropic, Google, Cohere)
+llm_service = get_llm_service("openai", "gpt-4")  # or "anthropic", "google", etc.
+
+# Create agent with commercial LLM
+agent = GhostAgent("Alice", db_path="agent.db", llm_service=llm_service)
+loop = CognitiveLoop(agent, model="gpt-4")
+
+# Use like Option 2, but with GPT-4/Claude/etc.
+agent.set_time(datetime.datetime.now(datetime.timezone.utc))
+loop.absorb("I think UBI is necessary.", author="Bob")
+response = loop.reply("UBI", partner_name="Bob")
+```
+
+**📖 See [Usage Guide](docs/USAGE_GUIDE.md) for detailed examples of all usage modes and [LLM Providers](docs/LLM_PROVIDERS.md) for provider setup.**
+
 ## Privacy & Storage Control
 
 GhostKG provides fine-grained control over what data is stored in logs:
@@ -316,6 +340,14 @@ See [Visualization Guide](docs/VISUALIZATION.md) for detailed documentation.
 
 Comprehensive documentation is available in the `docs/` directory:
 
+### Getting Started
+- **[📖 Usage Guide](docs/USAGE_GUIDE.md)** - Complete guide to different usage modes (NEW!)
+  - Mode 1: External API (no internal LLM)
+  - Mode 2: Integrated LLM (Ollama self-hosted)
+  - Mode 3: Integrated LLM (OpenAI/Anthropic/etc.)
+  - Mode 4: Hybrid mode (external LLM + KG management)
+- **[🔌 LLM Providers](docs/LLM_PROVIDERS.md)** - Multi-provider LLM setup guide
+
 ### Core Documentation
 - **[📑 Documentation Index](docs/index.md)** - Complete documentation overview with cross-references
 - **[🏗️ Architecture & Design](docs/ARCHITECTURE.md)** - System architecture and design philosophy
@@ -336,6 +368,7 @@ Comprehensive documentation is available in the `docs/` directory:
 
 Working code examples in the `examples/` directory:
 
+- **[multi_provider_llm.py](examples/multi_provider_llm.py)** - Using different LLM providers (Ollama, OpenAI, Anthropic, Google, Cohere) (NEW!)
 - **[use_case_example.py](examples/use_case_example.py)** - Two agents multi-round communication with configurable extraction modes
 - **[external_program.py](examples/external_program.py)** - Complete example of external program integration
 - **[hourly_simulation.py](examples/hourly_simulation.py)** - Time-based agent conversation simulation

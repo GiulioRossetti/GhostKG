@@ -8,6 +8,7 @@ from datetime import timedelta
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from ghost_kg import GhostAgent, CognitiveLoop, Rating
+from ghost_kg.llm import get_llm_service
 
 DB_PATH = "hourly_simulation.db"
 
@@ -18,15 +19,16 @@ if os.path.exists(DB_PATH):
 
 def run_hourly_simulation():
     print("⏳ Initializing Temporal Simulation...")
+    llm = get_llm_service("ollama", "llama3.2")
 
     # 1. Setup Start Time (Day 1, 09:00 AM)
     sim_time = datetime.datetime(2025, 1, 1, 9, 0, 0, tzinfo=datetime.timezone.utc)
 
     # 2. Init Agents
-    alice = GhostAgent("Alice", db_path=DB_PATH)
+    alice = GhostAgent("Alice", db_path=DB_PATH, llm_service=llm)
     alice_mind = CognitiveLoop(alice)
 
-    bob = GhostAgent("Bob", db_path=DB_PATH)
+    bob = GhostAgent("Bob", db_path=DB_PATH, llm_service=llm)
     bob_mind = CognitiveLoop(bob)
 
     # Sync clocks

@@ -15,17 +15,10 @@ import datetime
 import re
 from typing import Any, Optional, Union, Tuple
 
-try:
-    from ollama import Client
-
-    HAS_OLLAMA = True
-except ImportError:
-    Client = None
-    HAS_OLLAMA = False
-
 from ..memory.fsrs import FSRS, Rating
 from ..storage.database import KnowledgeDB, NodeState
 from ..utils.time_utils import SimulationTime, parse_time_input
+from ..llm.service import LLMServiceBase
 
 
 class GhostAgent:
@@ -37,13 +30,13 @@ class GhostAgent:
     - Personal knowledge graph (stored in database)
     - Memory system (FSRS-based strength tracking)
     - Temporal awareness (simulation clock)
-    - LLM client for text generation
+    - Optional LLM service for text generation (required for CognitiveLoop)
 
     Attributes:
         name (str): Agent's unique identifier
         db (KnowledgeDB): Database connection for knowledge storage
         fsrs (FSRS): Memory scheduler for tracking concept strength
-        client (Client): Ollama LLM client for generation
+        llm_service (Optional[LLMServiceBase]): Unified LLM service for any provider
         current_time (SimulationTime): Simulation clock for temporal tracking
 
     Methods:
@@ -57,8 +50,8 @@ class GhostAgent:
         self,
         name: str,
         db_path: str = "agent_memory.db",
-        llm_host: str = "http://localhost:11434",
         store_log_content: bool = False,
+        llm_service: Optional[LLMServiceBase] = None,
     ) -> None:
         """
         Initialize a new GhostAgent.
@@ -66,9 +59,11 @@ class GhostAgent:
         Args:
             name (str): Unique identifier for the agent
             db_path (str): Path to SQLite database file
-            llm_host (str): URL for Ollama LLM server
             store_log_content (bool): If True, stores full content in log table.
                                      If False (default), stores UUID instead of content.
+            llm_service (Optional[LLMServiceBase]): LLM service instance for any provider
+                                                     (Ollama, OpenAI, Anthropic, etc.).
+                                                     Optional - only needed if using CognitiveLoop.
 
         Returns:
             None
@@ -76,12 +71,7 @@ class GhostAgent:
         self.name = name
         self.db = KnowledgeDB(db_path, store_log_content=store_log_content)
         self.fsrs = FSRS()
-
-        # Initialize ollama client if available
-        if HAS_OLLAMA:
-            self.client = Client(host=llm_host)
-        else:
-            self.client = None
+        self.llm_service = llm_service
 
         # Simulation Clock - initialized with datetime mode
         self.current_time = SimulationTime.from_datetime(
