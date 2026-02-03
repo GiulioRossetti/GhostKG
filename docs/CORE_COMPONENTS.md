@@ -677,11 +677,12 @@ LIMIT ?
 ### Initialization
 
 ```python
-def __init__(self, db_path: str = "agent_memory.db")
+def __init__(self, db_path: str = "agent_memory.db", store_log_content: bool = False)
 ```
 
 **Parameters**:
 - `db_path`: SQLite database file path
+- `store_log_content`: If True, stores full content in logs. If False (default), uses UUID references for efficiency
 
 ### Key Methods
 
