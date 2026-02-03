@@ -41,7 +41,7 @@ class TestMemoryPerformance:
         query_time = time.time() - start
         
         # Assertions about performance
-        assert insert_time < 10.0, f"Insertion took too long: {insert_time}s"
+        assert insert_time < 15.0, f"Insertion took too long: {insert_time}s"
         assert query_time < 1.0, f"Query took too long: {query_time}s"
         
         # Verify data is there

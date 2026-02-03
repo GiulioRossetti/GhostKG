@@ -120,18 +120,22 @@ class AgentManager:
         agent_name: str,
         content: str,
         author: str = "User",
+        triplets: Optional[List[Tuple[str, str, str]]] = None,
         fast_mode: bool = False,
     ) -> None:
         """
         Update agent's KG with content they are replying to.
 
-        The agent will use its internal LLM to extract triplets from the content.
-        For explicit triplet addition, use learn_triplet() instead.
+        This allows external programs to:
+        1. Provide their own triplet extraction (via triplets parameter)
+        2. Let the agent extract triplets internally (if triplets=None and LLM available)
 
         Args:
             agent_name (str): Name of the agent
             content (str): The content to absorb
             author (str): Author of the content
+            triplets (Optional[List[Tuple[str, str, str]]]): Optional list of (source, relation, target) triplets
+                     If provided, these will be learned directly without using internal LLM
             fast_mode (bool): If True, use faster processing (if supported by LLM)
 
         Returns:
@@ -145,10 +149,15 @@ class AgentManager:
             >>> manager = AgentManager()
             >>> alice = manager.create_agent("Alice")
             >>> manager.set_agent_time("Alice", datetime.datetime.now(datetime.timezone.utc))
-            >>> # Let internal LLM extract triplets
+            >>> # With pre-extracted triplets (external computation)
+            >>> manager.absorb_content(
+            ...     "Alice",
+            ...     "Bob says climate action is urgent",
+            ...     author="Bob",
+            ...     triplets=[("Bob", "says", "climate_urgent")]
+            ... )
+            >>> # Without triplets (requires LLM)
             >>> manager.absorb_content("Alice", "The economy is recovering", author="News")
-            >>> # For explicit triplet addition, use learn_triplet
-            >>> manager.learn_triplet("Alice", "Bob", "says", "climate urgent")
 
         See Also:
             - learn_triplet(): Directly add specific triplets
@@ -165,11 +174,34 @@ class AgentManager:
         if not agent:
             raise AgentNotFoundError(f"Agent '{agent_name}' not found")
 
-        # Let agent extract triplets internally using LLM
-        from .cognitive import CognitiveLoop
+        if triplets:
+            # Validate triplets
+            if not isinstance(triplets, list):
+                raise ValidationError("triplets must be a list")
+            for triplet in triplets:
+                if not isinstance(triplet, (tuple, list)) or len(triplet) != 3:
+                    raise ValidationError(
+                        "Each triplet must be a 3-tuple (source, relation, target)"
+                    )
 
-        loop = CognitiveLoop(agent, fast_mode=fast_mode)
-        loop.absorb(content, author=author)
+            # External program provides triplets
+            for source, relation, target in triplets:
+                agent.learn_triplet(source, relation, target, rating=Rating.Good)
+
+            # Log the interaction
+            self.db.log_interaction(
+                agent_name,
+                "READ",
+                content,
+                {"author": author, "triplets_count": len(triplets), "external": True},
+                timestamp=agent.current_time,
+            )
+        else:
+            # Let agent extract triplets internally (requires LLM)
+            from .cognitive import CognitiveLoop
+
+            loop = CognitiveLoop(agent, fast_mode=fast_mode)
+            loop.absorb(content, author=author)
 
     def get_context(self, agent_name: str, topic: str) -> str:
         """
@@ -219,6 +251,7 @@ class AgentManager:
         topic: str,
         text: str,
         author: str = "User",
+        triplets: Optional[List[Tuple[str, str, str]]] = None,
         fast_mode: bool = False,
     ) -> str:
         """
@@ -235,6 +268,8 @@ class AgentManager:
             topic (str): The topic of the content
             text (str): The text content to process
             author (str): Author of the content
+            triplets (Optional[List[Tuple[str, str, str]]]): Optional list of (source, relation, target) triplets
+                     If provided, these will be learned directly without using internal LLM
             fast_mode (bool): If True, use faster processing
 
         Returns:
@@ -244,6 +279,7 @@ class AgentManager:
             >>> manager = AgentManager()
             >>> manager.create_agent("Alice")
             >>> manager.set_agent_time("Alice", datetime.datetime.now())
+            >>> # With external triplets
             >>> context = manager.process_and_get_context(
             ...     "Alice", "climate", "Bob says climate change is urgent",
             ...     author="Bob"
@@ -257,7 +293,7 @@ class AgentManager:
             - learn_triplet(): Directly add specific triplets
         """
         # Update KG with the content
-        self.absorb_content(agent_name, text, author, fast_mode)
+        self.absorb_content(agent_name, text, author, triplets, fast_mode)
 
         # Return updated context for the topic
         return self.get_context(agent_name, topic)
@@ -266,17 +302,21 @@ class AgentManager:
         self,
         agent_name: str,
         response: str,
+        triplets: Optional[List[Tuple[str, str, float]]] = None,
         context: Optional[str] = None,
     ) -> None:
         """
         Update agent's personal KG with the text they generated as response.
 
-        The agent will use its internal LLM to reflect on their response.
-        For explicit triplet addition, use learn_triplet() instead.
+        This allows external programs to:
+        1. Provide their own triplet extraction (via triplets parameter)
+        2. Let the agent reflect internally (if triplets=None and LLM available)
 
         Args:
             agent_name (str): Name of the agent
             response (str): The response text generated
+            triplets (Optional[List[Tuple[str, str, float]]]): Optional list of (relation, target, sentiment) triplets
+                     Source is always "I". If provided, these will be learned directly without using internal LLM
             context (Optional[str]): Optional context that was used to generate the response
                     This will be stored in the logs annotations
 
@@ -289,10 +329,11 @@ class AgentManager:
         Example:
             >>> manager = AgentManager()
             >>> manager.create_agent("Alice")
-            >>> # Let internal LLM reflect on response
-            >>> manager.update_with_response("Alice", "I support UBI for safety")
-            >>> # For explicit triplet addition, use learn_triplet
-            >>> manager.learn_triplet("Alice", "I", "support", "UBI", sentiment=0.8)
+            >>> # With external triplets (source is always "I")
+            >>> manager.update_with_response("Alice", "I support UBI for safety",
+            ...     triplets=[("support", "UBI", 0.8)])
+            >>> # Or let internal LLM reflect
+            >>> manager.update_with_response("Alice", "I think Python is great")
 
         See Also:
             - learn_triplet(): Directly add specific triplets with sentiment
@@ -302,24 +343,51 @@ class AgentManager:
         if not agent:
             raise ValueError(f"Agent '{agent_name}' not found")
 
-        # Let agent reflect internally using LLM
-        from .cognitive import CognitiveLoop
+        if triplets:
+            # Validate triplets
+            if not isinstance(triplets, list):
+                raise ValidationError("triplets must be a list")
+            for triplet in triplets:
+                if not isinstance(triplet, (tuple, list)) or len(triplet) != 3:
+                    raise ValidationError(
+                        "Each triplet must be a 3-tuple (relation, target, sentiment)"
+                    )
 
-        loop = CognitiveLoop(agent)
-        loop.reflect(response)
+            # External program provides triplets (source is always "I")
+            for relation, target, sentiment in triplets:
+                agent.learn_triplet("I", relation, target, rating=Rating.Good, sentiment=sentiment)
 
-        # Log the interaction with context
-        annotations = {"external": False}
-        if context is not None:
-            annotations["context_used"] = context  # type: ignore[assignment]
+            # Log the interaction with context
+            annotations = {"external": True, "triplets_count": len(triplets)}
+            if context is not None:
+                annotations["context_used"] = context  # type: ignore[assignment]
 
-        self.db.log_interaction(
-            agent_name,
-            "WRITE",
-            response,
-            annotations,
-            timestamp=agent.current_time,
-        )
+            self.db.log_interaction(
+                agent_name,
+                "WRITE",
+                response,
+                annotations,
+                timestamp=agent.current_time,
+            )
+        else:
+            # Let agent reflect internally using LLM
+            from .cognitive import CognitiveLoop
+
+            loop = CognitiveLoop(agent)
+            loop.reflect(response)
+
+            # Log the interaction with context
+            annotations = {"external": False}
+            if context is not None:
+                annotations["context_used"] = context  # type: ignore[assignment]
+
+            self.db.log_interaction(
+                agent_name,
+                "WRITE",
+                response,
+                annotations,
+                timestamp=agent.current_time,
+            )
 
     def learn_triplet(
         self,
