@@ -142,7 +142,7 @@ class TestGetExtractor:
     )
     def test_get_fast_extractor(self):
         """Test getting fast extractor."""
-        extractor = get_extractor(fast_mode=True, client=None)
+        extractor = get_extractor(fast_mode=True)
         assert isinstance(extractor, FastExtractor)
     
     @pytest.mark.skipif(
@@ -151,9 +151,9 @@ class TestGetExtractor:
     )
     def test_get_llm_extractor(self):
         """Test getting LLM extractor."""
-        from ollama import Client
-        client = Client()
-        extractor = get_extractor(fast_mode=False, client=client)
+        from ghost_kg.llm import get_llm_service
+        llm_service = get_llm_service("ollama", "llama3.2")
+        extractor = get_extractor(fast_mode=False, llm_service=llm_service)
         assert isinstance(extractor, LLMExtractor)
     
     def test_get_extractor_no_dependencies(self):
