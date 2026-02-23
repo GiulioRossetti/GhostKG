@@ -67,12 +67,28 @@ class TestAgentManager:
         
         agent = manager.get_agent("Alice")
         assert agent.current_time == now
+
+    def test_set_agent_time_round_tuple(self, manager):
+        """Test setting agent time using round-based tuple."""
+        manager.create_agent("Alice")
+        manager.set_agent_time("Alice", (2, 13))
+        agent = manager.get_agent("Alice")
+        assert agent.current_time.is_round_mode()
+        assert agent.current_time.day == 2
+        assert agent.current_time.hour == 13
     
     def test_set_agent_time_nonexistent(self, manager):
         """Test setting time for non-existent agent."""
         now = datetime.now(timezone.utc)
         with pytest.raises(AgentNotFoundError):
             manager.set_agent_time("NonExistent", now)
+
+    def test_initialization_with_db_url(self, temp_db):
+        """Test manager can initialize with explicit db_url."""
+        db_url = f"sqlite:///{temp_db}"
+        manager = AgentManager(db_url=db_url)
+        manager.create_agent("Alice")
+        assert manager.db is not None
     
     def test_absorb_content(self, manager):
         """Test absorbing content."""

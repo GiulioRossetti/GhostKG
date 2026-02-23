@@ -151,7 +151,9 @@ class TestManagerValidation:
         manager.create_agent("test_agent")
         
         # Invalid time type
-        with pytest.raises(ValidationError, match="time must be a datetime object"):
+        with pytest.raises(
+            ValidationError, match="time must be datetime, \\(day, hour\\), or SimulationTime"
+        ):
             manager.set_agent_time("test_agent", "not a datetime")
         
         # Non-existent agent

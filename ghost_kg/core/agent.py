@@ -13,7 +13,7 @@ Each agent maintains:
 
 import datetime
 import re
-from typing import Any, Optional, Union, Tuple
+from typing import Any, Optional, Tuple, Union
 
 from ..memory.fsrs import FSRS, Rating
 from ..storage.database import KnowledgeDB, NodeState
@@ -50,6 +50,7 @@ class GhostAgent:
         self,
         name: str,
         db_path: str = "agent_memory.db",
+        db_url: Optional[str] = None,
         store_log_content: bool = False,
         llm_service: Optional[LLMServiceBase] = None,
     ) -> None:
@@ -59,6 +60,8 @@ class GhostAgent:
         Args:
             name (str): Unique identifier for the agent
             db_path (str): Path to SQLite database file
+            db_url (Optional[str]): SQLAlchemy DB URL. When provided, it takes
+                                   precedence over db_path.
             store_log_content (bool): If True, stores full content in log table.
                                      If False (default), stores UUID instead of content.
             llm_service (Optional[LLMServiceBase]): LLM service instance for any provider
@@ -69,7 +72,7 @@ class GhostAgent:
             None
         """
         self.name = name
-        self.db = KnowledgeDB(db_path, store_log_content=store_log_content)
+        self.db = KnowledgeDB(db_path=db_path, db_url=db_url, store_log_content=store_log_content)
         self.fsrs = FSRS()
         self.llm_service = llm_service
 

@@ -6,12 +6,13 @@ with individual agent Knowledge Graphs without handling the LLM logic.
 """
 
 import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from .agent import GhostAgent
 from ..utils.exceptions import AgentNotFoundError, ValidationError
 from ..memory.fsrs import Rating
 from ..storage.database import KnowledgeDB
+from ..utils.time_utils import SimulationTime
 from ..llm.service import LLMServiceBase
 
 
@@ -28,13 +29,18 @@ class AgentManager:
     """
 
     def __init__(
-        self, db_path: str = "agent_memory.db", store_log_content: bool = False
+        self,
+        db_path: str = "agent_memory.db",
+        db_url: Optional[str] = None,
+        store_log_content: bool = False,
     ) -> None:
         """
         Initialize the AgentManager.
 
         Args:
             db_path (str): Path to the SQLite database file
+            db_url (Optional[str]): SQLAlchemy DB URL. When provided, it takes
+                                    precedence over db_path.
             store_log_content (bool): If True, stores full content in log table.
                                      If False (default), stores UUID instead of content.
 
@@ -42,9 +48,10 @@ class AgentManager:
             None
         """
         self.db_path = db_path
+        self.db_url = db_url
         self.store_log_content = store_log_content
         self.agents: Dict[str, GhostAgent] = {}
-        self.db = KnowledgeDB(db_path, store_log_content=store_log_content)
+        self.db = KnowledgeDB(db_path=db_path, db_url=db_url, store_log_content=store_log_content)
 
     def create_agent(
         self, 
@@ -72,6 +79,7 @@ class AgentManager:
             self.agents[name] = GhostAgent(
                 name,
                 db_path=self.db_path,
+                db_url=self.db_url,
                 store_log_content=self.store_log_content,
                 llm_service=llm_service,
             )
@@ -89,13 +97,20 @@ class AgentManager:
         """
         return self.agents.get(name)
 
-    def set_agent_time(self, agent_name: str, time: datetime.datetime) -> None:
+    def set_agent_time(
+        self,
+        agent_name: str,
+        time: Union[datetime.datetime, Tuple[int, int], SimulationTime],
+    ) -> None:
         """
         Set the current time for an agent (for simulation/tracking purposes).
 
         Args:
             agent_name (str): Name of the agent
-            time (datetime.datetime): Current time to set
+            time: Current simulation time. Supported formats:
+                - datetime.datetime
+                - (day, hour) tuple
+                - SimulationTime object
 
         Returns:
             None
@@ -104,8 +119,14 @@ class AgentManager:
             AgentNotFoundError: If agent doesn't exist
             ValidationError: If time is invalid
         """
-        if not isinstance(time, datetime.datetime):
-            raise ValidationError("time must be a datetime object")
+        valid = isinstance(time, (datetime.datetime, SimulationTime)) or (
+            isinstance(time, tuple)
+            and len(time) == 2
+            and isinstance(time[0], int)
+            and isinstance(time[1], int)
+        )
+        if not valid:
+            raise ValidationError("time must be datetime, (day, hour), or SimulationTime")
 
         agent = self.get_agent(agent_name)
         if not agent:
