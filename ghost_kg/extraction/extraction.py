@@ -9,26 +9,22 @@ The module includes thread-safe model caching to avoid reloading models.
 """
 
 import json
+import importlib.util
 import threading
 import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, Union
 
-from ghost_kg.utils.exceptions import LLMError
 from ghost_kg.llm.service import LLMServiceBase
+from ghost_kg.utils.exceptions import LLMError
 
-# Optional dependencies for fast mode.
-# Some environments raise runtime errors (not ImportError) while importing
-# heavy ML stacks. In that case we must gracefully disable fast mode.
-try:
-    from gliner import GLiNER
-    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
-    HAS_FAST_MODE = True
-except Exception:
-    GLiNER = None
-    SentimentIntensityAnalyzer = None
-    HAS_FAST_MODE = False
+# Optional fast-mode dependencies are loaded lazily to avoid import-time crashes
+# in environments with incompatible torch/numpy stacks.
+GLiNER = None
+SentimentIntensityAnalyzer = None
+HAS_FAST_MODE = bool(
+    importlib.util.find_spec("gliner") and importlib.util.find_spec("vaderSentiment")
+)
 
 
 class ModelCache:
@@ -51,6 +47,15 @@ class ModelCache:
         """
         if not HAS_FAST_MODE:
             return None
+
+        global GLiNER
+        if GLiNER is None:
+            try:
+                from gliner import GLiNER as _GLiNER
+
+                GLiNER = _GLiNER
+            except Exception:
+                return None
 
         if cls._model is None:
             with cls._lock:
@@ -100,12 +105,31 @@ class FastExtractor(TripletExtractor):
         Raises:
             ImportError: If required dependencies are not installed
         """
+        global SentimentIntensityAnalyzer
         if not HAS_FAST_MODE:
             raise ImportError(
                 "Fast mode requires 'gliner' and 'vaderSentiment'. "
                 "Install with: pip install gliner vaderSentiment"
             )
+        if SentimentIntensityAnalyzer is None:
+            try:
+                from vaderSentiment.vaderSentiment import (
+                    SentimentIntensityAnalyzer as _SentimentIntensityAnalyzer,
+                )
+
+                SentimentIntensityAnalyzer = _SentimentIntensityAnalyzer
+            except Exception as e:
+                raise ImportError(
+                    "Fast mode dependencies failed to load at runtime. "
+                    "Use extraction_mode='triplets' or fix torch/numpy compatibility."
+                ) from e
+
         self.model = ModelCache.get_gliner_model()
+        if self.model is None:
+            raise ImportError(
+                "GLiNER failed to initialize. Use extraction_mode='triplets' "
+                "or fix torch/numpy compatibility."
+            )
         self.sentiment_analyzer = SentimentIntensityAnalyzer()  # type: ignore[misc]
 
     def extract(self, text: str, author: str, agent_name: str) -> Dict[str, Any]:
