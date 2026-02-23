@@ -40,7 +40,6 @@ Package Structure:
 
 # Import from subpackages
 from .core import AgentManager, CognitiveLoop, GhostAgent
-from .extraction import FastExtractor, LLMExtractor, get_extractor
 from .memory import FSRS, AgentCache, Rating, clear_global_cache, get_global_cache
 from .storage import KnowledgeDB, NodeState
 from .utils import (
@@ -63,6 +62,20 @@ from .utils import (
     has_llm_support,
 )
 from .utils.time_utils import SimulationTime, parse_time_input
+
+# Extraction is optional at import time: missing/broken ML deps must not
+# prevent core AgentManager usage.
+try:
+    from .extraction import FastExtractor, LLMExtractor, get_extractor
+except Exception:
+    FastExtractor = None  # type: ignore[assignment]
+    LLMExtractor = None  # type: ignore[assignment]
+
+    def get_extractor(*args, **kwargs):  # type: ignore[override]
+        raise RuntimeError(
+            "Extraction dependencies are unavailable. "
+            "Install optional fast/LLM dependencies or use direct triplets mode."
+        )
 
 # Backward compatibility: Also export core module for old imports
 from . import core

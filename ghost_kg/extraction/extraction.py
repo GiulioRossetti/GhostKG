@@ -17,13 +17,15 @@ from typing import Any, Dict, Optional, Union
 from ghost_kg.utils.exceptions import LLMError
 from ghost_kg.llm.service import LLMServiceBase
 
-# Optional dependencies for fast mode
+# Optional dependencies for fast mode.
+# Some environments raise runtime errors (not ImportError) while importing
+# heavy ML stacks. In that case we must gracefully disable fast mode.
 try:
     from gliner import GLiNER
     from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
     HAS_FAST_MODE = True
-except ImportError:
+except Exception:
     GLiNER = None
     SentimentIntensityAnalyzer = None
     HAS_FAST_MODE = False
