@@ -230,6 +230,29 @@ class KnowledgeDB:
     def _get_new_session(self) -> Session:
         """Create a new session for isolated operations."""
         return self.db_manager.get_session()
+
+    @staticmethod
+    def _resolve_event_time(
+        timestamp: Optional[Union[datetime.datetime, SimulationTime]],
+    ) -> Tuple[datetime.datetime, Optional[int], Optional[int]]:
+        """
+        Resolve storage timestamps:
+        - created_at/timestamp: always real current UTC for event ordering
+        - sim_day/sim_hour: derived from SimulationTime when available
+        """
+        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        if timestamp is None:
+            return now_utc, None, None
+        if isinstance(timestamp, SimulationTime):
+            round_time = timestamp.to_round()
+            sim_day = round_time[0] if round_time else None
+            sim_hour = round_time[1] if round_time else None
+            return now_utc, sim_day, sim_hour
+        # datetime mode: preserve provided wall-clock timestamp.
+        ts = timestamp
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=datetime.timezone.utc)
+        return ts, None, None
     
     def _execute_with_session(self, operation, *args, **kwargs):
         """Execute an operation with proper session management."""
@@ -284,21 +307,7 @@ class KnowledgeDB:
         if not owner_id or not node_id:
             raise ValidationError("owner_id and node_id are required")
 
-        # Handle timestamp
-        if timestamp is None:
-            ts = datetime.datetime.now(datetime.timezone.utc)
-            sim_day = None
-            sim_hour = None
-        elif isinstance(timestamp, SimulationTime):
-            ts = timestamp.to_datetime()
-            round_time = timestamp.to_round()
-            sim_day = round_time[0] if round_time else None
-            sim_hour = round_time[1] if round_time else None
-        else:
-            # datetime.datetime
-            ts = timestamp
-            sim_day = None
-            sim_hour = None
+        ts, sim_day, sim_hour = self._resolve_event_time(timestamp)
 
         try:
             def _upsert(session):
@@ -383,21 +392,7 @@ class KnowledgeDB:
         if not -1.0 <= sentiment <= 1.0:
             raise ValidationError(f"sentiment must be between -1.0 and 1.0, got {sentiment}")
 
-        # Handle timestamp
-        if timestamp is None:
-            ts = datetime.datetime.now(datetime.timezone.utc)
-            sim_day = None
-            sim_hour = None
-        elif isinstance(timestamp, SimulationTime):
-            ts = timestamp.to_datetime()
-            round_time = timestamp.to_round()
-            sim_day = round_time[0] if round_time else None
-            sim_hour = round_time[1] if round_time else None
-        else:
-            # datetime.datetime
-            ts = timestamp
-            sim_day = None
-            sim_hour = None
+        ts, sim_day, sim_hour = self._resolve_event_time(timestamp)
 
         try:
             session = self._get_new_session()
@@ -484,21 +479,7 @@ class KnowledgeDB:
         if not agent or not action:
             raise ValidationError("agent and action are required")
 
-        # Handle timestamp
-        if timestamp is None:
-            ts = datetime.datetime.now(datetime.timezone.utc)
-            sim_day = None
-            sim_hour = None
-        elif isinstance(timestamp, SimulationTime):
-            ts = timestamp.to_datetime()
-            round_time = timestamp.to_round()
-            sim_day = round_time[0] if round_time else None
-            sim_hour = round_time[1] if round_time else None
-        else:
-            # datetime.datetime
-            ts = timestamp
-            sim_day = None
-            sim_hour = None
+        ts, sim_day, sim_hour = self._resolve_event_time(timestamp)
 
         # Use instance default if not specified
         should_store = store_content if store_content is not None else self.store_log_content

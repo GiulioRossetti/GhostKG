@@ -1,10 +1,13 @@
 """Unit tests for AgentManager."""
+import datetime as dt
+import os
+import tempfile
+from datetime import datetime, timezone
+
 import pytest
+
 from ghost_kg import AgentManager, AgentNotFoundError, ValidationError
 from ghost_kg.utils.time_utils import SimulationTime
-from datetime import datetime, timezone
-import tempfile
-import os
 
 
 class TestAgentManager:
@@ -205,3 +208,23 @@ class TestAgentManager:
         dt_time = SimulationTime.from_datetime(datetime(2025, 1, 3, 14, 0, tzinfo=timezone.utc))
         as_round = dt_time.to_round()
         assert as_round == (3, 14)
+
+    def test_created_at_uses_now_while_sim_fields_follow_round(self, manager):
+        """Round-based interactions should keep sim_day/sim_hour and write current created_at."""
+        manager.create_agent("Alice")
+        manager.set_agent_time("Alice", (4, 9))
+        start = dt.datetime.now(dt.timezone.utc)
+        manager.learn_triplet("Alice", "I", "LIKE", "post:123")
+        end = dt.datetime.now(dt.timezone.utc)
+
+        row = manager.db.conn.execute(
+            "SELECT created_at, sim_day, sim_hour FROM kg_edges WHERE owner_id = ? ORDER BY created_at DESC LIMIT 1",
+            ("Alice",),
+        ).fetchone()
+        assert row is not None
+        created_at = dt.datetime.fromisoformat(str(row["created_at"]))
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=dt.timezone.utc)
+        assert start <= created_at <= end
+        assert row["sim_day"] == 4
+        assert row["sim_hour"] == 9
