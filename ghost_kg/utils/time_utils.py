@@ -8,6 +8,9 @@ supporting both real datetime objects and simplified round-based time.
 import datetime
 from typing import Optional, Tuple, Union
 
+# Synthetic epoch used to map round-based simulation time to concrete datetimes.
+SIMULATION_EPOCH = datetime.datetime(2025, 1, 1, tzinfo=datetime.timezone.utc)
+
 
 class SimulationTime:
     """
@@ -86,13 +89,31 @@ class SimulationTime:
         return self.day is not None
     
     def to_datetime(self) -> Optional[datetime.datetime]:
-        """Get datetime representation (None if in round mode)."""
-        return self.datetime_value
-    
+        """
+        Get datetime representation.
+
+        For round mode, returns a deterministic synthetic datetime based on SIMULATION_EPOCH.
+        """
+        if self.datetime_value is not None:
+            return self.datetime_value
+        if self.day is not None and self.hour is not None:
+            return SIMULATION_EPOCH + datetime.timedelta(days=self.day - 1, hours=self.hour)
+        return None
+
     def to_round(self) -> Optional[Tuple[int, int]]:
-        """Get round-based representation (None if in datetime mode)."""
+        """
+        Get round-based representation.
+
+        For datetime mode, derives day/hour relative to SIMULATION_EPOCH.
+        """
         if self.day is not None and self.hour is not None:
             return (self.day, self.hour)
+        if self.datetime_value is not None:
+            dt = self.datetime_value.astimezone(datetime.timezone.utc)
+            delta = dt - SIMULATION_EPOCH
+            day = max(1, delta.days + 1)
+            hour = int(dt.hour)
+            return (day, hour)
         return None
     
     def __str__(self) -> str:

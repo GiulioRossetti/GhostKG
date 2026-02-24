@@ -1,6 +1,7 @@
 """Unit tests for AgentManager."""
 import pytest
 from ghost_kg import AgentManager, AgentNotFoundError, ValidationError
+from ghost_kg.utils.time_utils import SimulationTime
 from datetime import datetime, timezone
 import tempfile
 import os
@@ -193,3 +194,14 @@ class TestAgentManager:
         manager.create_agent("Alice")
         with pytest.raises(ValidationError):
             manager.absorb_content("Alice", None, "author")
+
+    def test_simulation_time_round_datetime_mapping(self):
+        """Round mode should still map to datetime and datetime mode should map to round."""
+        round_time = SimulationTime.from_round(3, 14)
+        dt = round_time.to_datetime()
+        assert dt is not None
+        assert dt.tzinfo is not None
+
+        dt_time = SimulationTime.from_datetime(datetime(2025, 1, 3, 14, 0, tzinfo=timezone.utc))
+        as_round = dt_time.to_round()
+        assert as_round == (3, 14)
