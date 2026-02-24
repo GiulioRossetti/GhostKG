@@ -127,6 +127,22 @@ class TestAgentManager:
         
         context = manager.get_context("Alice", "Python")
         assert isinstance(context, str)
+
+    def test_get_context_flexible_topic_matching(self, manager, monkeypatch):
+        """Test context retrieval tries token-level topic variants."""
+        agent = manager.create_agent("Alice")
+        seen = []
+
+        def _fake_get_memory_view(topic):
+            seen.append(topic)
+            if str(topic).lower() == "ai":
+                return "- AI related memory"
+            return "(I have forgotten the details about topic)"
+
+        monkeypatch.setattr(agent, "get_memory_view", _fake_get_memory_view)
+        context = manager.get_context("Alice", "AI in Education")
+        assert isinstance(context, str)
+        assert any(str(t).lower() == "ai" for t in seen)
     
     def test_get_context_nonexistent_agent(self, manager):
         """Test getting context for non-existent agent."""

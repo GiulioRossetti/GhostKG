@@ -6,6 +6,7 @@ with individual agent Knowledge Graphs without handling the LLM logic.
 """
 
 import datetime
+import re
 from typing import Dict, List, Optional, Tuple, Union
 
 from .agent import GhostAgent
@@ -260,8 +261,48 @@ class AgentManager:
         agent = self.get_agent(agent_name)
         if not agent:
             raise AgentNotFoundError(f"Agent '{agent_name}' not found")
+        contexts: List[str] = []
+        seen = set()
+        for candidate in self._topic_candidates(topic):
+            ctx = agent.get_memory_view(candidate)
+            norm = str(ctx or "").strip()
+            if not norm or norm in seen:
+                continue
+            if norm.lower().startswith("(i have forgotten"):
+                continue
+            seen.add(norm)
+            contexts.append(norm)
 
+        if contexts:
+            merged_lines: List[str] = []
+            line_seen = set()
+            for ctx in contexts:
+                for line in ctx.splitlines():
+                    clean = line.strip()
+                    key = clean.lower()
+                    if not clean or key in line_seen:
+                        continue
+                    line_seen.add(key)
+                    merged_lines.append(clean)
+            return "\n".join(merged_lines)
         return agent.get_memory_view(topic)
+
+    @staticmethod
+    def _topic_candidates(topic: str) -> List[str]:
+        base = str(topic or "").strip()
+        if not base:
+            return []
+        candidates: List[str] = [base]
+        lowered = base.lower()
+        titled = base.title()
+        for variant in (lowered, titled):
+            if variant not in candidates:
+                candidates.append(variant)
+        tokens = re.findall(r"[a-z0-9_#-]{2,}", lowered)
+        for token in tokens[:8]:
+            if token not in candidates:
+                candidates.append(token)
+        return candidates
 
     def process_and_get_context(
         self,
