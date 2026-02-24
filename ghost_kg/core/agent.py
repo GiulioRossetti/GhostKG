@@ -123,7 +123,10 @@ class GhostAgent:
         if not text:
             return None
         clean = text.strip().lower()
-        clean = re.sub(r"[^a-z0-9\s]", "", clean)
+        # Preserve token boundaries by converting punctuation to spaces
+        # instead of deleting chars (e.g., "destroying-the-economy").
+        clean = re.sub(r"[^a-z0-9]+", " ", clean)
+        clean = re.sub(r"\s+", " ", clean).strip()
 
         # Handle explicit self-references
         if clean == "i":

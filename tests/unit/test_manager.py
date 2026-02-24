@@ -228,3 +228,16 @@ class TestAgentManager:
         assert start <= created_at <= end
         assert row["sim_day"] == 4
         assert row["sim_hour"] == 9
+
+    def test_normalization_preserves_word_boundaries(self, manager):
+        """Punctuation should not collapse adjacent words into a single token."""
+        manager.create_agent("Alice")
+        manager.learn_triplet("Alice", "Market-News", "is-about", "destroying-the-economy")
+        row = manager.db.conn.execute(
+            "SELECT source, relation, target FROM kg_edges WHERE owner_id = ? ORDER BY created_at DESC LIMIT 1",
+            ("Alice",),
+        ).fetchone()
+        assert row is not None
+        assert row["source"] == "market news"
+        assert row["relation"] == "is about"
+        assert row["target"] == "destroying the economy"
